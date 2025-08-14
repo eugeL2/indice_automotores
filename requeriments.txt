@@ -2,5 +2,6 @@ streamlit
 pandas
 numpy
 plotly
-plotly-express
+plotly-express==0.4.1
+
 
