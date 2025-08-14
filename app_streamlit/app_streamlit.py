@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly
-import plotly.express as px
+# import plotly.express as px
 import plotly.graph_objects as go # Necesario para go.Figure en caso de datos vacíos
 
 ds_mo_ipc = 'df_mo_long_ipc.csv'
@@ -111,5 +111,6 @@ st.plotly_chart(fig3, use_container_width=True)
 st.subheader('4. Costo de Instalación (Ajustados por IPC)')
 fig4 = create_filtered_plot(df_mo_long_ipc, 'instalacion_ipc', 'Costo de Instalación (IPC)')
 st.plotly_chart(fig4, use_container_width=True)
+
 
 
