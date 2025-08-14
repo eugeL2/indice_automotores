@@ -4,16 +4,16 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go # Necesario para go.Figure en caso de datos vacíos
 
-ds_mo_ipc = 'df_mo_long_ipc.csv'
-ds_mo = 'df_mo_long.csv'
-ds_rep_ipc = 'df_long_ipc.csv'
-ds_rep = 'df_long.csv'
+DS_MO_IPC = 'df_mo_long_ipc.csv'
+DS_MO = 'df_mo_long.csv'
+DS_REP_IPC = 'df_long_ipc.csv'
+DS_REP = 'df_long.csv'
 
 try:
-    df_mo_long_ipc = pd.read_csv(ds_mo_ipc)
-    df_mo_long = pd.read_csv(ds_mo)
-    df_long_ipc = pd.read_csv(ds_rep_ipc)
-    df_long = pd.read_csv(ds_rep)
+    df_mo_long_ipc = pd.read_csv(DS_MO_IPC)
+    df_mo_long = pd.read_csv(DS_MO)
+    df_long_ipc = pd.read_csv(DS_REP_IPC)
+    df_long = pd.read_csv(DS_REP)
 
 except FileNotFoundError:
     st.error("Error: Asegúrate de que los archivos CSV (df_mo_long_ipc.csv, df_mo_long.csv, df_long_ipc.csv, df_long.csv) estén en el mismo directorio que tu script.")
@@ -110,6 +110,7 @@ st.plotly_chart(fig3, use_container_width=True)
 st.subheader('4. Costo de Instalación (Ajustados por IPC)')
 fig4 = create_filtered_plot(df_mo_long_ipc, 'instalacion_ipc', 'Costo de Instalación (IPC)')
 st.plotly_chart(fig4, use_container_width=True)
+
 
 
 
