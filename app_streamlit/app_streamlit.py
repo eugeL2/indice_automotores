@@ -12,7 +12,7 @@ ds_rep_ipc = 'df_long_ipc.csv'
 ds_rep = 'df_long.csv'
 
 def load_original_data(file_name):
-    url = f'https://raw.githubusercontent.com/euglpz/indice_automotores/main/{file_name}.csv'
+    url = f'https://raw.githubusercontent.com/euglpz/indice_automotores/app_streamlit/{file_name}.csv'
     response = requests.get(url)
     if response.status_code == 200:
         return pd.read_csv(StringIO(response.text))
@@ -124,6 +124,7 @@ st.plotly_chart(fig3, use_container_width=True)
 st.subheader('4. Costo de Instalación (Ajustados por IPC)')
 fig4 = create_filtered_plot(df_mo_long_ipc, 'instalacion_ipc', 'Costo de Instalación (IPC)')
 st.plotly_chart(fig4, use_container_width=True)
+
 
 
 
