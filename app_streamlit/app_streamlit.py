@@ -11,23 +11,23 @@ ds_mo = 'df_mo_long.csv'
 ds_rep_ipc = 'df_long_ipc.csv'
 ds_rep = 'df_long.csv'
 
-def load_original_data(file_name):
-    url = f'https://raw.githubusercontent.com/eugeL2/indice_automotores/refs/heads/main/app_streamlit/{file_name}.csv'
-    response = requests.get(url)
-    if response.status_code == 200:
-        return pd.read_csv(StringIO(response.text))
-    else:
-        st.error("Failed to load data from GitHub.")
-        return None
+# def load_original_data(file_name):
+#     url = f'https://raw.githubusercontent.com/eugeL2/indice_automotores/refs/heads/main/app_streamlit/{file_name}.csv'
+#     response = requests.get(url)
+#     if response.status_code == 200:
+#         return pd.read_csv(StringIO(response.text))
+#     else:
+#         st.error("Failed to load data from GitHub.")
+#         return None
 try:
-    # df_mo_long_ipc = pd.read_csv(ds_mo_ipc)
-    df_mo_long_ipc = load_original_data(ds_mo_ipc)
-    # df_mo_long = pd.read_csv(ds_mo)
-    df_mo_long = load_original_data(ds_mo)
-    # df_long_ipc = pd.read_csv(ds_rep_ipc)
-    df_long_ipc = load_original_data(ds_rep_ipc)
-    # df_long = pd.read_csv(ds_rep)
-    df_long = load_original_data(ds_rep)
+    df_mo_long_ipc = pd.read_csv(ds_mo_ipc)
+    # df_mo_long_ipc = load_original_data(ds_mo_ipc)
+    df_mo_long = pd.read_csv(ds_mo)
+    # df_mo_long = load_original_data(ds_mo)
+    df_long_ipc = pd.read_csv(ds_rep_ipc)
+    # df_long_ipc = load_original_data(ds_rep_ipc)
+    df_long = pd.read_csv(ds_rep)
+    # df_long = load_original_data(ds_rep)
 
 except FileNotFoundError:
     st.error("Error: Asegúrate de que los archivos CSV (df_mo_long_ipc.csv, df_mo_long.csv, df_long_ipc.csv, df_long.csv) estén en el mismo directorio que tu script.")
@@ -124,6 +124,7 @@ st.plotly_chart(fig3, use_container_width=True)
 st.subheader('4. Costo de Instalación (Ajustados por IPC)')
 fig4 = create_filtered_plot(df_mo_long_ipc, 'instalacion_ipc', 'Costo de Instalación (IPC)')
 st.plotly_chart(fig4, use_container_width=True)
+
 
 
 
