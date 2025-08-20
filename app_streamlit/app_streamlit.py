@@ -34,16 +34,16 @@ except FileNotFoundError:
     st.stop() # Detiene la ejecución de la app si los archivos no se encuentran
 
 # --- 2. Preprocesamiento de Datos (como en tu app de Dash) ---
-# for df_temp in [df_long, df_mo_long, df_long_ipc, df_mo_long_ipc]:
-#     df_temp['fecha'] = pd.to_datetime(df_temp['fecha'])
-#     if 'tipo_cristal' in df_temp.columns:
-#         # Limpiar el nombre de la columna para que sea más legible en la leyenda/facetas
-#         df_temp['tipo_cristal'] = df_temp['tipo_cristal'].astype(str).str.replace('_', ' ').str.title()
-#     # Asegurarse de que 'marca' y 'zona' sean string para evitar problemas de tipo en Plotly
-#     if 'marca' in df_temp.columns:
-#         df_temp['marca'] = df_temp['marca'].astype(str)
-#     if 'zona' in df_temp.columns:
-#         df_temp['zona'] = df_temp['zona'].astype(str)
+for df_temp in [df_long, df_mo_long, df_long_ipc, df_mo_long_ipc]:
+    df_temp['fecha'] = pd.to_datetime(df_temp['fecha'])
+    if 'tipo_cristal' in df_temp.columns:
+        # Limpiar el nombre de la columna para que sea más legible en la leyenda/facetas
+        df_temp['tipo_cristal'] = df_temp['tipo_cristal'].astype(str).str.replace('_', ' ').str.title()
+    # Asegurarse de que 'marca' y 'zona' sean string para evitar problemas de tipo en Plotly
+    if 'marca' in df_temp.columns:
+        df_temp['marca'] = df_temp['marca'].astype(str)
+    if 'zona' in df_temp.columns:
+        df_temp['zona'] = df_temp['zona'].astype(str)
 
 
 # --- 3. Definir la Interfaz de Usuario (UI) de Streamlit ---
