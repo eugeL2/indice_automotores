@@ -9,11 +9,12 @@ try:
     df_mo_long = pd.read_csv('df_mo_long.csv')
     df_long_ipc = pd.read_csv('df_long_ipc.csv')
     df_long = pd.read_csv('df_long.csv')
-except FileNotFoundError:
-    st.error("Error: Asegúrate de que los archivos CSV (df_mo_long_ipc.csv, df_mo_long.csv, df_long_ipc.csv, df_long.csv) estén en el mismo directorio que tu script.")
-    st.stop() # Detiene la ejecución de la app si los archivos no se encuentran
 
-# --- 2. Preprocesamiento de Datos (como en tu app de Dash) ---
+except FileNotFoundError:
+    st.error("Error: No se encuentran los archivos CSV.")
+    # la app se detiene si no encuentra los archivos
+    st.stop() 
+
 for df_temp in [df_long, df_mo_long, df_long_ipc, df_mo_long_ipc]:
     df_temp['fecha'] = pd.to_datetime(df_temp['fecha'])
     if 'tipo_cristal' in df_temp.columns:
@@ -26,15 +27,14 @@ for df_temp in [df_long, df_mo_long, df_long_ipc, df_mo_long_ipc]:
         df_temp['zona'] = df_temp['zona'].astype(str)
 
 
-# --- 3. Definir la Interfaz de Usuario (UI) de Streamlit ---
-
-st.set_page_config(layout="wide") # Opcional: usa el ancho completo de la página
+# Interfaz de Streamlit
+st.set_page_config(layout="wide") # ancho completo de la página
 
 st.title('Variación de Precios de Cristales y Mano de obra por Marca y Zona')
 st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_")
 st.markdown("---")
 
-# Obtener las opciones únicas para el Dropdown de Zona
+# Dropdown de Zona (barra lateral)
 available_zones = sorted(df_long['zona'].unique().tolist())
 
 with st.sidebar:
@@ -44,9 +44,9 @@ with st.sidebar:
     selected_zone = st.selectbox(
         "Zona",
         options=available_zones,
-        index=0 # Selecciona la primera zona por defecto
+        index=0 # primera zona por defecto
     )
-    st.markdown("---") # Separador visual en la barra lateral
+    st.markdown("---") # linea separadora
 
 def create_filtered_plot(df_source, y_col, y_label):
     # Filtrar el DataFrame según la zona seleccionada
@@ -71,7 +71,7 @@ def create_filtered_plot(df_source, y_col, y_label):
         color='marca', # Un color para cada marca
         line_group='marca',
         facet_col='tipo_cristal', # Subplots por tipo de cristal
-        #title='',
+        #title='', agrego titulo con subheader
         labels={'fecha': '', y_col: y_label, 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
     )
 
