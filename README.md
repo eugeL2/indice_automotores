@@ -32,7 +32,7 @@ La aplicación está desplegada en la nube a través de **Streamlit Community Cl
 
 **Enlace para acceder a la app:** 
 
-### [<ins>**indice_automotores_app**</ins>](https://indiceautomotores.streamlit.app/)
+### [<ins>**indiceautomotores.streamlit.app**</ins>](https://indiceautomotores.streamlit.app/)
 
 ---
 
