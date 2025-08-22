@@ -4,6 +4,9 @@
 
 Se contruyó una app interactiva, desarrollada con **Streamlit** y **Plotly**, para **visualizar la variación de precios de Repuestos y Mano de Obra en el sector automotriz**. 
 
+<img width="1903" height="969" alt="image" src="https://github.com/user-attachments/assets/ca11b2ca-5c36-4d13-8891-1949e2d15f3d" />
+
+
 ---
 
 ## Fuentes de Datos
