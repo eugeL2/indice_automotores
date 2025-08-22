@@ -16,7 +16,7 @@ La aplicación se alimenta de **cuatro archivos CSV** con los datos necesarios p
 
 ## Características
 
-La aplicación permite explorar las tendencias de costos a través de cuatro gráficos interactivos principales, con filtros centralizados:
+La aplicación permite visualizar la evolución de costos en el tiempo a través de cuatro gráficos interactivos con diversos filtros:
 * **Precios de Material Históricos:** Evolución de los precios de los repuestos.
 * **Costo de Instalación Histórico:** Evolución de los costos de mano de obra.
 * **Precios de Material (Ajustados por IPC):** Variación de precios de repuestos considerando la inflación.
@@ -32,7 +32,7 @@ La aplicación está desplegada en la nube a través de **Streamlit Community Cl
 
 **Enlace para acceder a la app:** 
 
-### [<ins>**Índice Automotores App**</ins>](https://indiceautomotores.streamlit.app/)
+### [<ins>**indice_automotores_app**</ins>](https://indiceautomotores.streamlit.app/)
 
 ---
 
@@ -40,6 +40,7 @@ La aplicación está desplegada en la nube a través de **Streamlit Community Cl
 1. Descargar el repositorio clickeando en ``<> Code`` -> Download ZIP.
 2. Abrir el repositorio en el editor de código (por ej. VS Code) 
 3. Instalar las dependencias -> ejecutar `pip install -r requirements.txt` en la terminal
-4. En la terminal correr: python -m streamlit run app_streamlit.py
+4. En la terminal correr: `streamlit run app_streamlit.py`
+* si devuelve puerto ocupado o PermissionError -> probar con otros puertos, por ej. *streamlit run app_streamlit.py **--server.port 8502***
 
 Se abrirá la app localmente en su navegador.
