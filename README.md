@@ -38,9 +38,12 @@ La aplicación está desplegada en la nube a través de **Streamlit Community Cl
 
 ## Para Ejecución Local:
 1. Descargar el repositorio clickeando en ``<> Code`` -> Download ZIP.
-2. Abrir el repositorio en el editor de código (por ej. VS Code) 
+2. Extraer los archivos y abrir el repositorio en el editor de código (por ej. VS Code) 
 3. Instalar las dependencias -> ejecutar `pip install -r requirements.txt` en la terminal
 4. En la terminal correr: `streamlit run app_streamlit.py`
-* si devuelve puerto ocupado o PermissionError -> probar con otros puertos, por ej. *streamlit run app_streamlit.py **--server.port 8502***
+* si devuelve puerto ocupado o PermissionError
+  
+  -> probar con otros puertos, por ej.:
+  `streamlit run app_streamlit.py --server.port 8502`
 
 Se abrirá la app localmente en su navegador.
