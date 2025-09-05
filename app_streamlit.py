@@ -26,6 +26,12 @@ try:
     df_cm_mo_ipc_cleas = pd.read_csv('df_cm_mo_ipc_cleas.csv')
     df_cm_mo_usd_cleas = pd.read_csv('df_cm_mo_usd_cleas.csv')
 
+    # dfs marcas
+    df_marcas_autos = pd.read_csv('dfs/evol_todas_marcas_autos.csv')
+    df_rtos_marca_mes = pd.read_csv('dfs/df_rtos_marca_mes.csv')
+    df_marcas_camiones = pd.read_csv('dfs/camion_marcas.csv')
+    df_rtos_marca_mes_cam = pd.read_csv('dfs/df_rtos_marca_mes_camiones.csv')
+
 except FileNotFoundError:
     st.error("Error: No se encuentran los archivos CSV.")
     # la app se detiene si no encuentra los archivos
@@ -54,6 +60,12 @@ selected_analysis = st.selectbox(
     label_visibility ='collapsed'
 )
 st.markdown("---")
+
+if 'show_pie_chart' not in st.session_state:
+    st.session_state.show_pie_chart = False
+
+if 'show_pie_chart_2' not in st.session_state:
+    st.session_state.show_pie_chart_2 = False
 
 if selected_analysis == "PILKINGTON":
     st.title("Variación de Precios de Cristales y Mano de obra por Marca y Zona")
@@ -166,7 +178,7 @@ elif selected_analysis == "ORION/CESVI":
             x='año_mes',
             y=y_col,
             color=color,
-            color_discrete_sequence=px.colors.qualitative.G10,
+            color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
             facet_col=facet_col,
             # line_group='marca',
             # facet_col='tipo_cristal', # Subplots por tipo de cristal
@@ -183,8 +195,33 @@ elif selected_analysis == "ORION/CESVI":
         
         return fig
     
+    # grafico de torta de df_marcas_autos
+    def create_pie_chart(df):
+        fig = px.pie(
+        df,
+        values='cant_ocompra',
+        names='marca_agrupada',
+        hover_data=['cant_ocompra'],
+        color_discrete_sequence=px.colors.qualitative.G10,
+        labels={'cant_ocompra': 'Cant. Órdenes', 'marca_agrupada': 'Marca'},
+        hole=0.3 # Agrega un agujero al centro para un estilo de "donut chart"
+        )
+
+        fig.update_traces(
+            # textposition='inside',
+            textinfo='percent+label',
+            insidetextfont=dict(size=12, color='black', family='Arial')
+        )
+        fig.update_layout(
+            font=dict(family="Arial", size=12, color="black"),
+            showlegend=True
+        )
+
+        return fig   
+    
     # gráficos históricos
     if st.session_state['selected_variation_type'] == "Histórico":
+
         st.subheader('1. Costo de piezas prom. histórico por TVA')
         fig5 = create_plot_orion(df_rep_tv, 'costo_pieza_prom_hist', 'tva', None,'Costo Promedio')
         st.plotly_chart(fig5, use_container_width=True)
@@ -195,38 +232,104 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig6, use_container_width=True)
         st.markdown("---")
 
-        st.subheader('3. Costo de mano de obra prom. histórico por Tipo de M.O y TVA')
+        if st.button("Mostrar/Ocultar Distribución de Marcas Autos"):
+            st.session_state.show_pie_chart = not st.session_state.show_pie_chart
+        
+        if st.session_state.show_pie_chart:
+            st.subheader('Distribución de Órdenes de Compra por Marca')
+            fig_pie = create_pie_chart(df_marcas_autos)
+            st.plotly_chart(fig_pie, use_container_width=True)
+            st.markdown('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
+            st.markdown('Total marcas: 44' )
+            st.markdown("---")
+
+        st.subheader('3. Costo de piezas prom. histórico por Marca (autos)')
+        fig17 = create_plot_orion(df_rtos_marca_mes, 'costo_pieza_prom_hist', 'marca', None, 'Costo Promedio')
+        st.plotly_chart(fig17, use_container_width=True)
+        st.markdown("---")
+
+        if st.button("Mostrar/Ocultar Distribución de Marcas Camiones"):
+            st.session_state.show_pie_chart_2 = not st.session_state.show_pie_chart_2
+        
+        if st.session_state.show_pie_chart_2:
+            st.subheader('Distribución de Órdenes de Compra por Marca')
+            fig_pie = create_pie_chart(df_marcas_camiones)
+            st.plotly_chart(fig_pie, use_container_width=True)
+            st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
+            st.text('Total marcas: 26')
+            st.markdown("---")
+
+        st.subheader('4. Costo de piezas prom. histórico por Marca (camiones)')
+        fig20 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_pieza_prom_hist', 'marca', None, 'Costo Promedio')
+        st.plotly_chart(fig20, use_container_width=True)
+        st.markdown("---")      
+
+        st.subheader('5. Costo de mano de obra prom. histórico por Tipo de M.O y TVA')
         fig11 = create_plot_orion(df_cm_mo_hist, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio')
         st.plotly_chart(fig11, use_container_width=True)
         st.markdown("---")
 
-        st.subheader('4. Comparativa variación M.O - CLEAS SI vs CLEAS NO')
+        st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO')
         fig14 = create_plot_orion(df_cm_mo_hist_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio')
         st.plotly_chart(fig14, use_container_width=True)
         
     # gráficos ajustados por IPC
     elif st.session_state['selected_variation_type'] == "IPC":
-        st.subheader('1. Evolución del costo prom. por TVA - Ajustado por IPC')
-        fig7 = create_plot_orion(df_rep_tv, 'costo_prom_ipc', 'tva', None, 'Costo Promedio ajust. por IPC')
+
+        st.subheader('1. Evolución del costo prom. por TVA - Ajust. por IPC')
+        fig7 = create_plot_orion(df_rep_tv, 'costo_prom_ipc', 'tva', None, 'Costo Promedio Ajust. por IPC')
         st.plotly_chart(fig7, use_container_width=True)
         st.markdown("---")
     
-        st.subheader('2. Evolución del costo prom. por Tipo Repuesto - Ajustado por IPC')
+        st.subheader('2. Evolución del costo prom. por Tipo Repuesto - Ajust. por IPC')
         fig8 = create_plot_orion(df_tipo_rep, 'costo_prom_ipc', 'tipo_repuesto', None,'Costo Promedio ajust. por IPC')
         st.plotly_chart(fig8, use_container_width=True)
         st.markdown("---")
 
-        st.subheader('3. Evolución del costo de mano de obra prom. por Tipo de M.O y TVA - Ajustado por IPC')
+        if st.button("Mostrar/Ocultar Distribución de Marcas Autos"):
+            st.session_state.show_pie_chart = not st.session_state.show_pie_chart
+        
+        if st.session_state.show_pie_chart:
+            st.subheader('Distribución de Órdenes de Compra por Marca')
+            fig_pie = create_pie_chart(df_marcas_autos)
+            st.plotly_chart(fig_pie, use_container_width=True)
+            st.text('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
+            st.text('Total marcas: 44' )
+            st.markdown("---")
+
+        st.subheader('3. Costo de piezas prom. por Marca (autos) - Ajust. por IPC')
+        fig18 = create_plot_orion(df_rtos_marca_mes, 'costo_prom_ipc', 'marca', None, 'Costo Promedio')
+        st.plotly_chart(fig18, use_container_width=True)
+        st.markdown("---")
+
+        if st.button("Mostrar/Ocultar Distribución de Marcas Camiones"):
+            st.session_state.show_pie_chart_2 = not st.session_state.show_pie_chart_2
+        
+        if st.session_state.show_pie_chart_2:
+            st.subheader('Distribución de Órdenes de Compra por Marca')
+            fig_pie = create_pie_chart(df_marcas_camiones)
+            st.plotly_chart(fig_pie, use_container_width=True)
+            st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
+            st.text('Total marcas: 26')
+            st.markdown("---")
+
+        st.subheader('4. Costo de piezas prom. por Marca (camiones) - Ajust. por IPC')
+        fig21 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_prom_ipc', 'marca', None, 'Costo Promedio')
+        st.plotly_chart(fig21, use_container_width=True)
+        st.markdown("---")    
+
+        st.subheader('5. Evolución del costo de mano de obra prom. por Tipo de M.O y TVA - Ajust. por IPC')
         fig12 = create_plot_orion(df_cm_mo_ipc, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio ajust. por IPC')
         st.plotly_chart(fig12, use_container_width=True)
         st.markdown("---")
 
-        st.subheader('4. Comparativa variación M.O - CLEAS SI vs CLEAS NO - Ajustado por IPC')
+        st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO - Ajust. por IPC')
         fig15 = create_plot_orion(df_cm_mo_ipc_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio ajust. por IPC')
         st.plotly_chart(fig15, use_container_width=True)
 
     # gráficos en USD
     elif st.session_state['selected_variation_type'] == "USD":
+
         st.subheader('1. Evolución del costo prom. por TVA en USD')
         fig9 = create_plot_orion(df_rep_tv, 'costo_prom_usd', 'tva', None, 'Costo Promedio (USD)')
         st.plotly_chart(fig9, use_container_width=True)
@@ -237,11 +340,43 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig10, use_container_width=True)
         st.markdown("---")
 
-        st.subheader('3. Evolución del costo de Mano de Obra prom. por Tipo de M.O y TVA en USD')
+        if st.button("Mostrar/Ocultar Distribución de Marcas Autos"):
+            st.session_state.show_pie_chart = not st.session_state.show_pie_chart
+        
+        if st.session_state.show_pie_chart:
+            st.subheader('Distribución de Órdenes de Compra por Marca')
+            fig_pie = create_pie_chart(df_marcas_autos)
+            st.plotly_chart(fig_pie, use_container_width=True)
+            st.text('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
+            st.text('Total marcas: 44' )
+            st.markdown("---")
+
+        st.subheader('3. Costo de piezas prom. histórico por Marca (autos) en USD')
+        fig19 = create_plot_orion(df_rtos_marca_mes, 'costo_prom_usd', 'marca', None, 'Costo Promedio (USD)')
+        st.plotly_chart(fig19, use_container_width=True)
+        st.markdown("---")
+
+        if st.button("Mostrar/Ocultar Distribución de Marcas Camiones"):
+            st.session_state.show_pie_chart_2 = not st.session_state.show_pie_chart_2
+        
+        if st.session_state.show_pie_chart_2:
+            st.subheader('Distribución de Órdenes de Compra por Marca')
+            fig_pie = create_pie_chart(df_marcas_camiones)
+            st.plotly_chart(fig_pie, use_container_width=True)
+            st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
+            st.text('Total marcas: 26')
+            st.markdown("---")
+
+        st.subheader('4. Costo de piezas prom. por Marca (camiones) en USD')
+        fig22 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_prom_usd', 'marca', None, 'Costo Promedio (USD)')
+        st.plotly_chart(fig22, use_container_width=True)
+        st.markdown("---") 
+
+        st.subheader('5. Evolución del costo de Mano de Obra prom. por Tipo de M.O y TVA en USD')
         fig13 = create_plot_orion(df_cm_mo_usd, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio (USD)')
         st.plotly_chart(fig13, use_container_width=True)
         st.markdown("---")
 
-        st.subheader('4. Comparativa variación M.O en USD - CLEAS SI vs CLEAS NO')
+        st.subheader('6. Comparativa variación M.O en USD - CLEAS SI vs CLEAS NO')
         fig16 = create_plot_orion(df_cm_mo_usd_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio (USD)')
         st.plotly_chart(fig16, use_container_width=True)
