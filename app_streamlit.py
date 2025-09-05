@@ -160,7 +160,7 @@ elif selected_analysis == "ORION/CESVI":
             label_visibility='collapsed'
         )
         st.markdown("---")
-        # guardo la selección en session_state para que la funcion pueda usarla
+        # Guardo la selección en session_state para que la funcion pueda usarla
         st.session_state['selected_variation_type'] = selected_variation_type
     
     def create_plot_orion(df, y_col, color, facet_col, y_label):       
