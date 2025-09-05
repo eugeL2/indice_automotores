@@ -8,23 +8,23 @@ st.set_page_config(layout="wide") # Ancho completo de la página
 
 try:
     # dfs de cristales pilkington
-    df_mo_long_ipc = pd.read_csv('df_mo_long_ipc.csv')
-    df_mo_long = pd.read_csv('df_mo_long.csv')
-    df_long_ipc = pd.read_csv('df_long_ipc.csv')
-    df_long = pd.read_csv('df_long.csv')
+    df_mo_long_ipc = pd.read_csv('data/df_mo_long_ipc.csv')
+    df_mo_long = pd.read_csv('data/df_mo_long.csv')
+    df_long_ipc = pd.read_csv('data/df_long_ipc.csv')
+    df_long = pd.read_csv('data/df_long.csv')
 
     # dfs de repuestos orion/cesvi
-    df_tipo_rep = pd.read_csv('df_tipo_rep.csv')
-    df_rep_tv = pd.read_csv('df_rep_tv.csv')
+    df_tipo_rep = pd.read_csv('data/df_tipo_rep.csv')
+    df_rep_tv = pd.read_csv('data/df_rep_tv.csv')
 
     # dfs de mano de obra orion/cesvi
-    df_cm_mo_hist = pd.read_csv('df_cm_mo_hist.csv')
-    df_cm_mo_ipc = pd.read_csv('df_cm_mo_ipc.csv')
-    df_cm_mo_usd = pd.read_csv('df_cm_mo_usd.csv')
+    df_cm_mo_hist = pd.read_csv('data/df_cm_mo_hist.csv')
+    df_cm_mo_ipc = pd.read_csv('data/df_cm_mo_ipc.csv')
+    df_cm_mo_usd = pd.read_csv('data/df_cm_mo_usd.csv')
     # dfs mano de obra cleas si/cleas no
-    df_cm_mo_hist_cleas = pd.read_csv('df_cm_mo_hist_cleas.csv')
-    df_cm_mo_ipc_cleas = pd.read_csv('df_cm_mo_ipc_cleas.csv')
-    df_cm_mo_usd_cleas = pd.read_csv('df_cm_mo_usd_cleas.csv')
+    df_cm_mo_hist_cleas = pd.read_csv('data/df_cm_mo_hist_cleas.csv')
+    df_cm_mo_ipc_cleas = pd.read_csv('data/df_cm_mo_ipc_cleas.csv')
+    df_cm_mo_usd_cleas = pd.read_csv('data/df_cm_mo_usd_cleas.csv')
 
     # dfs marcas
     df_marcas_autos = pd.read_csv('data/evol_todas_marcas_autos.csv')
@@ -160,7 +160,7 @@ elif selected_analysis == "ORION/CESVI":
             label_visibility='collapsed'
         )
         st.markdown("---")
-        # guardo la selección en session_state para que la funcion pueda usarla
+        # Guardo la selección en session_state para que la funcion pueda usarla
         st.session_state['selected_variation_type'] = selected_variation_type
     
     def create_plot_orion(df, y_col, color, facet_col, y_label):       
