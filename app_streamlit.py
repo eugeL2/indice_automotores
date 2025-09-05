@@ -8,10 +8,10 @@ st.set_page_config(layout="wide") # Ancho completo de la página
 
 try:
     # dfs de cristales pilkington
-    df_mo_long_ipc = pd.read_csv('data/df_mo_long_ipc.csv')
-    df_mo_long = pd.read_csv('data/df_mo_long.csv')
-    df_long_ipc = pd.read_csv('data/df_long_ipc.csv')
-    df_long = pd.read_csv('data/df_long.csv')
+    df_mo_long_ipc = pd.read_csv('df_mo_long_ipc.csv')
+    df_mo_long = pd.read_csv('df_mo_long.csv')
+    df_long_ipc = pd.read_csv('df_long_ipc.csv')
+    df_long = pd.read_csv('df_long.csv')
 
     # dfs de repuestos orion/cesvi
     df_tipo_rep = pd.read_csv('data/df_tipo_rep.csv')
