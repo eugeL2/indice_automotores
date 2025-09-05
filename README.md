@@ -28,10 +28,10 @@ Para repuestos de fuente **PILKINGTON**:
 * **Costo de Instalación (Ajustados por IPC)**
 
 Para repuestos de fuente **ORION/CESVI**:
-* Costo de piezas prom. por TVA (Auto/Camión)
-* Costo de piezas prom. por Tipo Repuesto
-* Costo de mano de obra prom. histórico por Tipo de M.O y TVA
-* Comparativa variación costos M.O - CLEAS SI vs CLEAS NO
+* **Costo de piezas prom. por TVA (Auto/Camión)**
+* **Costo de piezas prom. por Tipo Repuesto**
+* **Costo de mano de obra prom. histórico por Tipo de M.O y TVA**
+* **Comparativa variación costos M.O - CLEAS SI vs CLEAS NO**
 
 Estas cuatro variaciones se analizan por valores ***históricos, ajustados por IPC y a valor dólar***.
 
