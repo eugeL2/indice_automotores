@@ -51,6 +51,12 @@ for df_temp in [df_long, df_mo_long, df_long_ipc, df_mo_long_ipc, df_tipo_rep]:
     if 'tipo_repuesto' in df_temp.columns:
         df_temp['tipo_repuesto'] = df_temp['tipo_repuesto'].astype(str).str.replace('_', ' ').str.title()
 
+df_rep_tv.fillna(0, inplace=True)
+df_rep_tv['var_cant_piezas'] = (df_rep_tv['var_cant_piezas'] * 100).round(1).astype(str) + '%'
+df_rep_tv['var_costo_prom'] = (df_rep_tv['var_costo_prom'] * 100).round(1).astype(str) + '%'
+df_rep_tv['var_costo_prom_ipc'] = (df_rep_tv['var_costo_prom_ipc'] * 100).round(1).astype(str) + '%'
+df_rep_tv['var_costo_prom_usd'] = (df_rep_tv['var_costo_prom_usd'] * 100).round(1).astype(str) + '%'
+
 st.markdown("### Seleccionar Fuente de Análisis")
 selected_analysis = st.selectbox(
     'Seleccionar Análisis:',
@@ -223,6 +229,13 @@ elif selected_analysis == "ORION/CESVI":
     if st.session_state['selected_variation_type'] == "Histórico":
 
         st.subheader('1. Costo de piezas prom. histórico por TVA')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_rep_tv[['tva','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
+                                    'cant_piezas_prom','costo_pieza_prom_hist','var_costo_prom','monto_total_compras']], hide_index=True,)
+
         fig5 = create_plot_orion(df_rep_tv, 'costo_pieza_prom_hist', 'tva', None,'Costo Promedio')
         st.plotly_chart(fig5, use_container_width=True)
         st.markdown("---")
@@ -277,6 +290,13 @@ elif selected_analysis == "ORION/CESVI":
     elif st.session_state['selected_variation_type'] == "IPC":
 
         st.subheader('1. Evolución del costo prom. por TVA - Ajust. por IPC')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_rep_tv[['tva','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
+                                    'cant_piezas_prom','monto_total_compras','ipc','monto_ipc','costo_prom_ipc','var_costo_prom_ipc']], hide_index=True,)
+
         fig7 = create_plot_orion(df_rep_tv, 'costo_prom_ipc', 'tva', None, 'Costo Promedio Ajust. por IPC')
         st.plotly_chart(fig7, use_container_width=True)
         st.markdown("---")
@@ -331,6 +351,13 @@ elif selected_analysis == "ORION/CESVI":
     elif st.session_state['selected_variation_type'] == "USD":
 
         st.subheader('1. Evolución del costo prom. por TVA en USD')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_rep_tv[['tva','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
+                                    'cant_piezas_prom','monto_total_compras','usd_blue','monto_usd','costo_prom_usd','var_costo_prom_usd']], hide_index=True,)
+
         fig9 = create_plot_orion(df_rep_tv, 'costo_prom_usd', 'tva', None, 'Costo Promedio (USD)')
         st.plotly_chart(fig9, use_container_width=True)
         st.markdown("---")
