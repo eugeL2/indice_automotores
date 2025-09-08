@@ -2,10 +2,11 @@
 
 ## Visión General de la Aplicación
 
-Se contruyó una app interactiva, desarrollada con **Streamlit** y **Plotly**, que permite emular un tablero para **visualizar la variación de precios de Repuestos y Mano de Obra en el sector automotriz**. 
+Se contruyó una app interactiva que permite emular un tablero para **visualizar la variación de precios de Repuestos y Mano de Obra en el sector automotriz**, 
+
+Fue desarrollada en Python a partir de librerías como **Streamlit** para el desarrollo de la app y **Plotly** para la construcción de los gráficos. 
 
 <img width="1908" height="996" alt="image" src="https://github.com/user-attachments/assets/1f87c64a-bd40-475e-b9c7-b5f4a4197271" />
-
 
 ---
 
