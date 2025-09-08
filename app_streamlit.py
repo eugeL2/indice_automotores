@@ -32,6 +32,11 @@ try:
     df_marcas_camiones = pd.read_csv('data/camion_marcas.csv')
     df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_camiones.csv')
 
+    # dfs p/mostrar tablas
+    df_tipo_rep_hist = pd.read_csv('data/df_tipo_rep_hist.csv')
+    df_tipo_rep_ipc = pd.read_csv('data/df_tipo_rep_ipc.csv')
+    df_tipo_rep_usd = pd.read_csv('data/df_tipo_rep_usd.csv')
+
 except FileNotFoundError:
     st.error("Error: No se encuentran los archivos CSV.")
     # la app se detiene si no encuentra los archivos
@@ -241,6 +246,12 @@ elif selected_analysis == "ORION/CESVI":
         st.markdown("---")
 
         st.subheader('2. Costo de piezas prom. histórico por Tipo Repuesto')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_tipo_rep_hist, hide_index=True)
+
         fig6 = create_plot_orion(df_tipo_rep, 'costo_pieza_prom', 'tipo_repuesto', None,'Costo Promedio')
         st.plotly_chart(fig6, use_container_width=True)
         st.markdown("---")
@@ -302,6 +313,12 @@ elif selected_analysis == "ORION/CESVI":
         st.markdown("---")
     
         st.subheader('2. Evolución del costo prom. por Tipo Repuesto - Ajust. por IPC')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_tipo_rep_ipc, hide_index=True)
+
         fig8 = create_plot_orion(df_tipo_rep, 'costo_prom_ipc', 'tipo_repuesto', None,'Costo Promedio ajust. por IPC')
         st.plotly_chart(fig8, use_container_width=True)
         st.markdown("---")
@@ -363,6 +380,12 @@ elif selected_analysis == "ORION/CESVI":
         st.markdown("---")
 
         st.subheader('2. Evolución del costo prom. por Tipo Repuesto en USD')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_tipo_rep_usd, hide_index=True)
+
         fig10 = create_plot_orion(df_tipo_rep, 'costo_prom_usd', 'tipo_repuesto', None, 'Costo Promedio (USD)')
         st.plotly_chart(fig10, use_container_width=True)
         st.markdown("---")
