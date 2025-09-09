@@ -36,6 +36,10 @@ try:
     df_tipo_rep_hist = pd.read_csv('data/df_tipo_rep_hist.csv')
     df_tipo_rep_ipc = pd.read_csv('data/df_tipo_rep_ipc.csv')
     df_tipo_rep_usd = pd.read_csv('data/df_tipo_rep_usd.csv')
+    df_rtos_marca_mes_resumen = pd.read_csv('data/df_rtos_marca_mes_resumen.csv')
+    df_rtos_marca_mes_camion_resumen = pd.read_csv('data/df_rtos_marca_mes_camiones_resumen.csv')
+    df_cm_mo_resumen = pd.read_csv('data/df_cm_mo_resumen.csv')
+    df_cm_mo_cleas_resumen = pd.read_csv('data/df_cm_mo_cleas_resumen.csv')
 
 except FileNotFoundError:
     st.error("Error: No se encuentran los archivos CSV.")
@@ -55,12 +59,6 @@ for df_temp in [df_long, df_mo_long, df_long_ipc, df_mo_long_ipc, df_tipo_rep]:
         df_temp['zona'] = df_temp['zona'].astype(str)
     if 'tipo_repuesto' in df_temp.columns:
         df_temp['tipo_repuesto'] = df_temp['tipo_repuesto'].astype(str).str.replace('_', ' ').str.title()
-
-df_rep_tv.fillna(0, inplace=True)
-df_rep_tv['var_cant_piezas'] = (df_rep_tv['var_cant_piezas'] * 100).round(1).astype(str) + '%'
-df_rep_tv['var_costo_prom'] = (df_rep_tv['var_costo_prom'] * 100).round(1).astype(str) + '%'
-df_rep_tv['var_costo_prom_ipc'] = (df_rep_tv['var_costo_prom_ipc'] * 100).round(1).astype(str) + '%'
-df_rep_tv['var_costo_prom_usd'] = (df_rep_tv['var_costo_prom_usd'] * 100).round(1).astype(str) + '%'
 
 st.markdown("### Seleccionar Fuente de Análisis")
 selected_analysis = st.selectbox(
@@ -230,7 +228,7 @@ elif selected_analysis == "ORION/CESVI":
 
         return fig   
     
-    # gráficos históricos
+    # ----- GRAFICOS HISTORICOS -----
     if st.session_state['selected_variation_type'] == "Histórico":
 
         st.subheader('1. Costo de piezas prom. histórico por TVA')
@@ -249,7 +247,6 @@ elif selected_analysis == "ORION/CESVI":
 
         # muestro el dataset
         with st.expander("Ver tabla de datos (resumen)",):
-            # st.subheader("Tabla de Datos de Ejemplo")
             st.dataframe(df_tipo_rep_hist, hide_index=True)
 
         fig6 = create_plot_orion(df_tipo_rep, 'costo_pieza_prom', 'tipo_repuesto', None,'Costo Promedio')
@@ -268,6 +265,12 @@ elif selected_analysis == "ORION/CESVI":
             st.markdown("---")
 
         st.subheader('3. Costo de piezas prom. histórico por Marca (autos)')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            st.dataframe(df_rtos_marca_mes_resumen[['marca','año','cant_ocompra','cant_piezas_total',
+                                    'costo_pieza_prom_hist','var_costo_prom_hist','monto_total_compras']], hide_index=True,)
+
         fig17 = create_plot_orion(df_rtos_marca_mes, 'costo_pieza_prom_hist', 'marca', None, 'Costo Promedio')
         st.plotly_chart(fig17, use_container_width=True)
         st.markdown("---")
@@ -284,20 +287,40 @@ elif selected_analysis == "ORION/CESVI":
             st.markdown("---")
 
         st.subheader('4. Costo de piezas prom. histórico por Marca (camiones)')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            st.dataframe(df_rtos_marca_mes_camion_resumen[['marca','año','cant_ocompra','cant_piezas_total',
+                                    'costo_pieza_prom_hist','var_costo_prom_hist','monto_total_compras']], hide_index=True,)
+
         fig20 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_pieza_prom_hist', 'marca', None, 'Costo Promedio')
         st.plotly_chart(fig20, use_container_width=True)
         st.markdown("---")      
 
         st.subheader('5. Costo de mano de obra prom. histórico por Tipo de M.O y TVA')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            st.dataframe(df_cm_mo_resumen[['tva','año','cant_perit',
+                                    'cm_hs_chapa','var_cm_hs_chapa','cm_hs_elect', 'var_cm_hs_elect',
+                                    'cm_hs_mec', 'var_cm_hs_mec', 'cm_hs_pint', 'var_cm_hs_pint', 'cm_hs_total', 'var_cm_hs_total']], hide_index=True,)
+
         fig11 = create_plot_orion(df_cm_mo_hist, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio')
         st.plotly_chart(fig11, use_container_width=True)
         st.markdown("---")
 
         st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            st.dataframe(df_cm_mo_cleas_resumen[['tva','año','cant_perit',
+                                    'cm_hs_chapa','var_cm_hs_chapa','cm_hs_elect', 'var_cm_hs_elect',
+                                    'cm_hs_mec', 'var_cm_hs_mec', 'cm_hs_pint', 'var_cm_hs_pint', 'cm_hs_total', 'var_cm_hs_total']], hide_index=True,)
+
         fig14 = create_plot_orion(df_cm_mo_hist_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio')
         st.plotly_chart(fig14, use_container_width=True)
         
-    # gráficos ajustados por IPC
+    # ----- GRAFICOS AJUSTADOS POR IPC -----
     elif st.session_state['selected_variation_type'] == "IPC":
 
         st.subheader('1. Evolución del costo prom. por TVA - Ajust. por IPC')
@@ -335,6 +358,12 @@ elif selected_analysis == "ORION/CESVI":
             st.markdown("---")
 
         st.subheader('3. Costo de piezas prom. por Marca (autos) - Ajust. por IPC')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            st.dataframe(df_rtos_marca_mes_resumen[['marca','año','cant_ocompra','cant_piezas_total',
+                                    'costo_prom_ipc','var_costo_prom_ipc','monto_total_compras']], hide_index=True,)
+
         fig18 = create_plot_orion(df_rtos_marca_mes, 'costo_prom_ipc', 'marca', None, 'Costo Promedio')
         st.plotly_chart(fig18, use_container_width=True)
         st.markdown("---")
@@ -351,20 +380,40 @@ elif selected_analysis == "ORION/CESVI":
             st.markdown("---")
 
         st.subheader('4. Costo de piezas prom. por Marca (camiones) - Ajust. por IPC')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            st.dataframe(df_rtos_marca_mes_camion_resumen[['marca','año','cant_ocompra','cant_piezas_total',
+                                    'costo_prom_ipc','var_costo_prom_ipc','monto_total_compras']], hide_index=True,)
+
         fig21 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_prom_ipc', 'marca', None, 'Costo Promedio')
         st.plotly_chart(fig21, use_container_width=True)
         st.markdown("---")    
 
         st.subheader('5. Evolución del costo de mano de obra prom. por Tipo de M.O y TVA - Ajust. por IPC')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            st.dataframe(df_cm_mo_resumen[['tva','año','cant_perit',
+                                    'cm_hs_chapa_ipc','var_cm_hs_chapa_ipc','cm_hs_elect_ipc', 'var_cm_hs_elect_ipc',
+                                    'cm_hs_mec_ipc', 'var_cm_hs_mec_ipc', 'cm_hs_pint_ipc', 'var_cm_hs_pint_ipc', 'cm_hs_total_ipc', 'var_cm_hs_total_ipc']], hide_index=True,)
+
         fig12 = create_plot_orion(df_cm_mo_ipc, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio ajust. por IPC')
         st.plotly_chart(fig12, use_container_width=True)
         st.markdown("---")
 
         st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO - Ajust. por IPC')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            st.dataframe(df_cm_mo_cleas_resumen[['tva','año','cant_perit',
+                                    'cm_hs_chapa_ipc','var_cm_hs_chapa_ipc','cm_hs_elect_ipc', 'var_cm_hs_elect_ipc',
+                                    'cm_hs_mec_ipc', 'var_cm_hs_mec_ipc', 'cm_hs_pint_ipc', 'var_cm_hs_pint_ipc', 'cm_hs_total_ipc', 'var_cm_hs_total_ipc']], hide_index=True,)
+
         fig15 = create_plot_orion(df_cm_mo_ipc_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio ajust. por IPC')
         st.plotly_chart(fig15, use_container_width=True)
 
-    # gráficos en USD
+    # ----- GRAFICOS EN USD -----
     elif st.session_state['selected_variation_type'] == "USD":
 
         st.subheader('1. Evolución del costo prom. por TVA en USD')
@@ -382,7 +431,7 @@ elif selected_analysis == "ORION/CESVI":
         st.subheader('2. Evolución del costo prom. por Tipo Repuesto en USD')
 
         # muestro el dataset
-        with st.expander("Ver tabla de datos (resumen)",):
+        with st.expander("Ver tabla de datos (resumen)"):
             # st.subheader("Tabla de Datos de Ejemplo")
             st.dataframe(df_tipo_rep_usd, hide_index=True)
 
@@ -402,6 +451,12 @@ elif selected_analysis == "ORION/CESVI":
             st.markdown("---")
 
         st.subheader('3. Costo de piezas prom. histórico por Marca (autos) en USD')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)"):
+            st.dataframe(df_rtos_marca_mes_resumen[['marca','año','cant_ocompra','cant_piezas_total',
+                                    'costo_prom_usd','var_costo_prom_usd','monto_total_compras']], hide_index=True,)
+
         fig19 = create_plot_orion(df_rtos_marca_mes, 'costo_prom_usd', 'marca', None, 'Costo Promedio (USD)')
         st.plotly_chart(fig19, use_container_width=True)
         st.markdown("---")
@@ -418,15 +473,35 @@ elif selected_analysis == "ORION/CESVI":
             st.markdown("---")
 
         st.subheader('4. Costo de piezas prom. por Marca (camiones) en USD')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)"):
+            st.dataframe(df_rtos_marca_mes_camion_resumen[['marca','año','cant_ocompra','cant_piezas_total',
+                                    'costo_prom_usd','var_costo_prom_usd','monto_total_compras']], hide_index=True,)
+
         fig22 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_prom_usd', 'marca', None, 'Costo Promedio (USD)')
         st.plotly_chart(fig22, use_container_width=True)
         st.markdown("---") 
 
         st.subheader('5. Evolución del costo de Mano de Obra prom. por Tipo de M.O y TVA en USD')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            st.dataframe(df_cm_mo_resumen[['tva','año','cant_perit',
+                                    'cm_hs_chapa_usd','var_cm_hs_chapa_usd','cm_hs_elect_usd', 'var_cm_hs_elect_usd',
+                                    'cm_hs_mec_usd', 'var_cm_hs_mec_usd', 'cm_hs_pint_usd', 'var_cm_hs_pint_usd', 'cm_hs_total_usd', 'var_cm_hs_total_usd']], hide_index=True,)
+
         fig13 = create_plot_orion(df_cm_mo_usd, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio (USD)')
         st.plotly_chart(fig13, use_container_width=True)
         st.markdown("---")
 
         st.subheader('6. Comparativa variación M.O en USD - CLEAS SI vs CLEAS NO')
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos (resumen)",):
+            st.dataframe(df_cm_mo_cleas_resumen[['tva','año','cant_perit',
+                                    'cm_hs_chapa_usd','var_cm_hs_chapa_usd','cm_hs_elect_usd', 'var_cm_hs_elect_usd',
+                                    'cm_hs_mec_usd', 'var_cm_hs_mec_usd', 'cm_hs_pint_usd', 'var_cm_hs_pint_usd', 'cm_hs_total_usd', 'var_cm_hs_total_usd']], hide_index=True,)
+
         fig16 = create_plot_orion(df_cm_mo_usd_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio (USD)')
         st.plotly_chart(fig16, use_container_width=True)
