@@ -6,6 +6,9 @@ import plotly.graph_objects as go # Necesario para go.Figure en caso de datos va
 
 st.set_page_config(layout="wide") # Ancho completo de la página
 
+import os
+os.getcwd()
+os.listdir('data')
 try:
     df_cristal_hist = pd.read_csv('data/df_cristal_hist.csv')
     df_cristal_ipc = pd.read_csv('data/df_cristal_ipc.csv')
@@ -39,10 +42,10 @@ try:
     df_cm_mo_resumen = pd.read_csv('data/df_cm_mo_resumen.csv')
     df_cm_mo_cleas_resumen = pd.read_csv('data/df_cm_mo_cleas_resumen.csv')
 
-except FileNotFoundError:
-    st.error("Error: No se encuentran los archivos CSV.")
-    # la app se detiene si no encuentra los archivos
-    st.stop() 
+except FileNotFoundError as e:
+    st.error(f"Error: No se encuentra el archivo CSV. Detalles: {e}")
+    # La app se detiene si no encuentra los archivos
+    st.stop()
 
 for df_temp in [df_cristal_hist, df_cristal_ipc, df_tipo_rep]:
     if 'fecha' in df_temp.columns:
