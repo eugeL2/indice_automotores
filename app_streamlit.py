@@ -12,6 +12,7 @@ os.listdir('data')
 try:
     df_cristal_hist = pd.read_csv('data/df_cristal_hist.csv')
     df_cristal_ipc = pd.read_csv('data/df_cristal_ipc.csv')
+    df_cristal_usd = pd.read_csv('data/df_cristal_usd.csv')
 
     # dfs de repuestos orion/cesvi
     df_tipo_rep = pd.read_csv('data/df_tipo_rep.csv')
@@ -190,6 +191,14 @@ if selected_analysis == "PILKINGTON":
     st.subheader('4. Costo de Instalación (Ajustados por IPC)')
     fig4 = create_plot_pkt(df_cristal_ipc, 'instalacion_ipc', 'Costo de Instalación (IPC)')
     st.plotly_chart(fig4, use_container_width=True)
+
+    st.subheader('5. Precios de Material (USD)')
+    fig5 = create_plot_pkt(df_cristal_usd, 'precio_usd', 'Precio (USD)')
+    st.plotly_chart(fig5, use_container_width=True)
+
+    st.subheader('6. Costo de Instalación (USD)')
+    fig6 = create_plot_pkt(df_cristal_usd, 'instalacion_usd', 'Costo de Instalación (USD)')
+    st.plotly_chart(fig6, use_container_width=True)        
 
 elif selected_analysis == "ORION/CESVI":
     st.title('Variación de Precios de Repuestos y Mano de obra')
