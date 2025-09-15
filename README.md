@@ -6,7 +6,8 @@ Se contruyó una app interactiva que permite emular un tablero para **visualizar
 
 Fue desarrollada en Python a partir de librerías como **Streamlit** para el desarrollo de la app y **Plotly** para la construcción de los gráficos. 
 
-<img width="1908" height="996" alt="image" src="https://github.com/user-attachments/assets/1f87c64a-bd40-475e-b9c7-b5f4a4197271" />
+<img width="1916" height="1012" alt="image" src="https://github.com/user-attachments/assets/70b12d2c-79a7-4c74-8dba-39a83ac08f3f" />
+
 
 ---
 
