@@ -4,15 +4,14 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go # Necesario para go.Figure en caso de datos vacíos
 
+# -----------------------------------
+
 st.set_page_config(layout="wide") # Ancho completo de la página
 
-import os
-os.getcwd()
-os.listdir('data')
+# ---- Cargo las bases de datos ----
 try:
-    df_cristal_hist = pd.read_csv('data/df_cristal_hist.csv')
-    df_cristal_ipc = pd.read_csv('data/df_cristal_ipc.csv')
-    df_cristal_usd = pd.read_csv('data/df_cristal_usd.csv')
+    # df PKT (cristales)
+    df_cristal = pd.read_csv('data/base_pkt_app.csv')
 
     # dfs de repuestos orion/cesvi
     df_tipo_rep = pd.read_csv('data/df_tipo_rep.csv')
@@ -48,13 +47,14 @@ except FileNotFoundError as e:
     # La app se detiene si no encuentra los archivos
     st.stop()
 
-for df_temp in [df_cristal_hist, df_cristal_ipc, df_tipo_rep]:
+# ---- Formateo de datos ----
+for df_temp in [df_cristal, df_tipo_rep]:
     if 'fecha' in df_temp.columns:
         df_temp['fecha'] = pd.to_datetime(df_temp['fecha'])
     if 'año_mes' in df_temp.columns:
         df_temp['año_mes'] = pd.to_datetime(df_temp['año_mes'])
-    if 'tipo_cristal' in df_temp.columns:
-        df_temp['tipo_cristal'] = df_temp['tipo_cristal'].astype(str).str.replace('_', ' ').str.title()
+    if 'cristal' in df_temp.columns:
+        df_temp['cristal'] = df_temp['cristal'].astype(str).str.replace('_', ' ').str.title()
     if 'marca' in df_temp.columns:
         df_temp['marca'] = df_temp['marca'].astype(str)
     if 'zona' in df_temp.columns:
@@ -62,7 +62,7 @@ for df_temp in [df_cristal_hist, df_cristal_ipc, df_tipo_rep]:
     if 'tipo_repuesto' in df_temp.columns:
         df_temp['tipo_repuesto'] = df_temp['tipo_repuesto'].astype(str).str.replace('_', ' ').str.title()
 
-# grafico de torta de df_marcas_autos
+# ---- Función construir graficos de torta ---- 
 def create_pie_chart(df, value):
     fig = px.pie(
     df,
@@ -86,7 +86,7 @@ def create_pie_chart(df, value):
 
     return fig 
 
-
+# ---- Slider selección de análisis ----
 st.markdown("### Seleccionar Fuente de Análisis")
 selected_analysis = st.selectbox(
     'Seleccionar Análisis:',
@@ -97,6 +97,7 @@ selected_analysis = st.selectbox(
 )
 st.markdown("---")
 
+# ---- Variables de sesión para mostrar/ocultar gráficos ----
 if 'show_pie_chart' not in st.session_state:
     st.session_state.show_pie_chart = False
 
@@ -106,13 +107,14 @@ if 'show_pie_chart_2' not in st.session_state:
 if 'show_pie_chart_3' not in st.session_state:
     st.session_state.show_pie_chart_3 = False
 
+# ---- Análisis PILKINGTON ----
 if selected_analysis == "PILKINGTON":
     st.title("Variación de Precios de Cristales y Mano de obra por Marca y Zona")
     st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_")
     st.markdown("---")
 
     # Dropdown de Zona (barra lateral)
-    available_zones = sorted(df_cristal_hist['zona'].unique().tolist())
+    available_zones = sorted(df_cristal['zona'].unique().tolist())
     with st.sidebar:
         # st.header("Filtros") # Título para la barra lateral
         st.markdown("---")
@@ -148,8 +150,8 @@ if selected_analysis == "PILKINGTON":
             y=y_col,
             color='marca', # Un color para cada marca
             line_group='marca',
-            facet_col='tipo_cristal', # Subplots por tipo de cristal
-            labels={'fecha': '', y_col: y_label, 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
+            facet_col='cristal', # Subplots por tipo de cristal
+            labels={'fecha': '', y_col: y_label, 'marca': 'Marca', 'cristal': 'Tipo de Cristal'}
         )
 
         # Ajustes del gráfico
@@ -176,30 +178,32 @@ if selected_analysis == "PILKINGTON":
         st.markdown('Total marcas: 49' )
         st.markdown("---")
 
+    # ----- GRAFICOS HISTORICOS, IPC y USD -----
     st.subheader('1. Precios de Material históricos (Sin IVA)')
-    fig1 = create_plot_pkt(df_cristal_hist, 'precio', 'Precio Sin IVA')
+    fig1 = create_plot_pkt(df_cristal, 'precio', 'Precio Sin IVA')
     st.plotly_chart(fig1, use_container_width=True)
 
     st.subheader('2. Costo de Instalación histórico (Sin IVA)')
-    fig2 = create_plot_pkt(df_cristal_hist, 'instalacion', 'Costo de Instalación')
+    fig2 = create_plot_pkt(df_cristal, 'instalacion', 'Costo de Instalación')
     st.plotly_chart(fig2, use_container_width=True)
 
     st.subheader('3. Precios de Material (Ajustados por IPC)')
-    fig3 = create_plot_pkt(df_cristal_ipc, 'precio_ipc', 'Precio (IPC)')
+    fig3 = create_plot_pkt(df_cristal, 'precio_ipc', 'Precio (IPC)')
     st.plotly_chart(fig3, use_container_width=True)
 
     st.subheader('4. Costo de Instalación (Ajustados por IPC)')
-    fig4 = create_plot_pkt(df_cristal_ipc, 'instalacion_ipc', 'Costo de Instalación (IPC)')
+    fig4 = create_plot_pkt(df_cristal, 'instalacion_ipc', 'Costo de Instalación (IPC)')
     st.plotly_chart(fig4, use_container_width=True)
 
     st.subheader('5. Precios de Material (USD)')
-    fig5 = create_plot_pkt(df_cristal_usd, 'precio_usd', 'Precio (USD)')
+    fig5 = create_plot_pkt(df_cristal, 'precio_usd', 'Precio (USD)')
     st.plotly_chart(fig5, use_container_width=True)
 
     st.subheader('6. Costo de Instalación (USD)')
-    fig6 = create_plot_pkt(df_cristal_usd, 'instalacion_usd', 'Costo de Instalación (USD)')
+    fig6 = create_plot_pkt(df_cristal, 'instalacion_usd', 'Costo de Instalación (USD)')
     st.plotly_chart(fig6, use_container_width=True)        
 
+# ---- Análisis ORION/CESVI ----
 elif selected_analysis == "ORION/CESVI":
     st.title('Variación de Precios de Repuestos y Mano de obra')
     st.markdown("#### _Fuente de datos: Orion/Cesvi_")
@@ -254,7 +258,8 @@ elif selected_analysis == "ORION/CESVI":
     
     # ----- GRAFICOS HISTORICOS -----
     if st.session_state['selected_variation_type'] == "Histórico":
-
+        
+        # gráfico 1: evolución costo repuestos por tva
         st.subheader('1. Costo de piezas prom. histórico por TVA')
 
         # muestro el dataset
@@ -267,6 +272,7 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig5, use_container_width=True)
         st.markdown("---")
 
+        # gráfico 2: evolución costo repuestos por tipo repuesto
         st.subheader('2. Costo de piezas prom. histórico por Tipo Repuesto')
         # muestro distribución MARCA AUTOS
         with st.expander("Ver tabla de datos (resumen)",):
@@ -288,6 +294,7 @@ elif selected_analysis == "ORION/CESVI":
             st.markdown('Total marcas: 44' )
             st.markdown("---")
 
+        # gráfico 3: evolución costo repuestos por marca autos
         st.subheader('3. Costo de piezas prom. histórico por Marca (autos)')
 
         # muestro el dataset 
@@ -311,6 +318,7 @@ elif selected_analysis == "ORION/CESVI":
             st.text('Total marcas: 26')
             st.markdown("---")
 
+        # gráfico 4: evolución costo repuestos por marca camiones
         st.subheader('4. Costo de piezas prom. histórico por Marca (camiones)')
         with st.expander("Ver tabla de datos (resumen)",):
             st.dataframe(df_rtos_marca_mes_camion_resumen[['marca','año','cant_ocompra','cant_piezas_total',
@@ -320,6 +328,7 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig20, use_container_width=True)
         st.markdown("---")      
 
+        # gráfico 5: evolución costo mano de obra por tva y tipo de mano de obra
         st.subheader('5. Costo de mano de obra prom. histórico por Tipo de M.O y TVA')
 
         # muestro el dataset
@@ -337,6 +346,7 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig11, use_container_width=True)
         st.markdown("---")
 
+        # gráfico 6: evolución costo mano de obra cleas si vs cleas no
         st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO')
         # muestro el dataset
         with st.expander("Ver tabla de datos (resumen)",):
@@ -352,6 +362,7 @@ elif selected_analysis == "ORION/CESVI":
     # ----- GRAFICOS AJUSTADOS POR IPC -----
     elif st.session_state['selected_variation_type'] == "IPC":
 
+        # gráfico 1: evolución costo repuestos por tva IPC
         st.subheader('1. Evolución del costo prom. por TVA - Ajust. por IPC')
 
         # muestro el dataset
@@ -364,6 +375,7 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig7, use_container_width=True)
         st.markdown("---")
     
+        # gráfico 2: evolución costo repuestos por tipo repuesto IPC
         st.subheader('2. Evolución del costo prom. por Tipo Repuesto - Ajust. por IPC')
 
         # muestro el dataset
@@ -387,6 +399,7 @@ elif selected_analysis == "ORION/CESVI":
             st.text('Total marcas: 44' )
             st.markdown("---")
 
+        # gráfico 3: evolución costo repuestos por marca autos IPC
         st.subheader('3. Costo de piezas prom. por Marca (autos) - Ajust. por IPC')
 
         # muestro el dataset
@@ -410,6 +423,7 @@ elif selected_analysis == "ORION/CESVI":
             st.text('Total marcas: 26')
             st.markdown("---")
 
+        # gráfico 4: evolución costo repuestos por marca camiones IPC
         st.subheader('4. Costo de piezas prom. por Marca (camiones) - Ajust. por IPC')
 
         # muestro el dataset 
@@ -421,6 +435,7 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig21, use_container_width=True)
         st.markdown("---")    
 
+        # gráfico 5: evolución costo mano de obra por tva y tipo de mano de obra IPC
         st.subheader('5. Evolución del costo de mano de obra prom. por Tipo de M.O y TVA - Ajust. por IPC')
 
         # muestro el dataset
@@ -437,6 +452,7 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig12, use_container_width=True)
         st.markdown("---")
 
+        # gráfico 6: evolución costo mano de obra cleas si vs cleas no IPC
         st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO - Ajust. por IPC')
 
         # muestro el dataset
@@ -453,6 +469,7 @@ elif selected_analysis == "ORION/CESVI":
     # ----- GRAFICOS EN USD -----
     elif st.session_state['selected_variation_type'] == "USD":
 
+        # gráfico 1: evolución costo repuestos por tva USD    
         st.subheader('1. Evolución del costo prom. por TVA en USD')
 
         # muestro el dataset
@@ -465,6 +482,7 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig9, use_container_width=True)
         st.markdown("---")
 
+        # gráfico 2: evolución costo repuestos por tipo repuesto USD
         st.subheader('2. Evolución del costo prom. por Tipo Repuesto en USD')
 
         # muestro el dataset
@@ -488,6 +506,7 @@ elif selected_analysis == "ORION/CESVI":
             st.text('Total marcas: 44' )
             st.markdown("---")
 
+        # gráfico 3: evolución costo repuestos por marca autos USD
         st.subheader('3. Costo de piezas prom. histórico por Marca (autos) en USD')
 
         # muestro el dataset
@@ -511,6 +530,7 @@ elif selected_analysis == "ORION/CESVI":
             st.text('Total marcas: 26')
             st.markdown("---")
 
+        # gráfico 4: evolución costo repuestos por marca camiones USD
         st.subheader('4. Costo de piezas prom. por Marca (camiones) en USD')
 
         # muestro el dataset
@@ -522,6 +542,7 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig22, use_container_width=True)
         st.markdown("---") 
 
+        # gráfico 5: evolución costo mano de obra por tva y tipo de mano de obra USD
         st.subheader('5. Evolución del costo de Mano de Obra prom. por Tipo de M.O y TVA en USD')
 
         # muestro el dataset
@@ -538,6 +559,7 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig13, use_container_width=True)
         st.markdown("---")
 
+        # gráfico 6: evolución costo mano de obra cleas si vs cleas no USD
         st.subheader('6. Comparativa variación M.O en USD - CLEAS SI vs CLEAS NO')
 
         # muestro el dataset
