@@ -6,6 +6,10 @@ import plotly.graph_objects as go # Necesario para go.Figure en caso de datos va
 
 # -----------------------------------
 
+pd.options.display.max_columns=None
+pd.set_option('display.max_rows', 500)
+pd.options.display.float_format = '{:,.2f}'.format
+
 # st.set_page_config(layout="wide") # Ancho completo de la página
 st.set_page_config(
     page_title="Indice Automotores ",
@@ -20,7 +24,6 @@ st.set_page_config(
 # ---- Cargo las bases de datos ----
 try:
     # df PKT (cristales)
-    # df_cristal = pd.read_csv('data/base_pkt_app.csv')
     df_cristal = pd.read_csv('data/base_pkt_app_2.csv')
 
     # dfs de repuestos orion/cesvi
@@ -245,7 +248,7 @@ if selected_analysis == "PILKINGTON":
         df_filtered_raw = df_cristal[
             (df_cristal['zona'] == selected_zone) &
             (df_cristal['marca'].isin(selected_marcas))
-        ]
+        ].copy()
         df_filtered_raw['fecha'] = df_filtered_raw['fecha'].dt.strftime('%Y-%m-%d')
         st.dataframe(df_filtered_raw, use_container_width=True)
 
