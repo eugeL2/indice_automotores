@@ -6,12 +6,22 @@ import plotly.graph_objects as go # Necesario para go.Figure en caso de datos va
 
 # -----------------------------------
 
-st.set_page_config(layout="wide") # Ancho completo de la página
+# st.set_page_config(layout="wide") # Ancho completo de la página
+st.set_page_config(
+    page_title="Indice Automotores ",
+    page_icon=":chart_with_upwards_trend:",
+    layout="wide",
+)
+
+"""
+# :material/query_stats: Indice Automotores
+"""
 
 # ---- Cargo las bases de datos ----
 try:
     # df PKT (cristales)
-    df_cristal = pd.read_csv('data/base_pkt_app.csv')
+    # df_cristal = pd.read_csv('data/base_pkt_app.csv')
+    df_cristal = pd.read_csv('data/base_pkt_app_2.csv')
 
     # dfs de repuestos orion/cesvi
     df_tipo_rep = pd.read_csv('data/df_tipo_rep.csv')
@@ -77,16 +87,17 @@ def create_pie_chart(df, value):
     fig.update_traces(
         # textposition='inside',
         textinfo='percent+label',
-        insidetextfont=dict(size=12, color='black', family='Arial')
+        insidetextfont=dict(size=12, color='white', family='Arial')
     )
     fig.update_layout(
-        font=dict(family="Arial", size=12, color="black"),
+        font=dict(family="Arial", size=12, color="white"),
         showlegend=True
     )
 
     return fig 
 
 # ---- Slider selección de análisis ----
+st.markdown("---")
 st.markdown("### Seleccionar Fuente de Análisis")
 selected_analysis = st.selectbox(
     'Seleccionar Análisis:',
@@ -107,6 +118,9 @@ if 'show_pie_chart_2' not in st.session_state:
 if 'show_pie_chart_3' not in st.session_state:
     st.session_state.show_pie_chart_3 = False
 
+# cols = st.columns([1, 3])
+# DEFAULT_MARCAS = ["TOYOTA", "VOLKSWAGEN", "FORD", "CHEVROLET", "PEUGEOT", "RENAULT", "FIAT"]
+
 # ---- Análisis PILKINGTON ----
 if selected_analysis == "PILKINGTON":
     st.title("Variación de Precios de Cristales y Mano de obra por Marca y Zona")
@@ -115,6 +129,9 @@ if selected_analysis == "PILKINGTON":
 
     # Dropdown de Zona (barra lateral)
     available_zones = sorted(df_cristal['zona'].unique().tolist())
+    available_marcas = sorted(df_cristal['marca'].unique().tolist())
+    DEFAULT_MARCAS = ["TOYOTA", "VOLKSWAGEN", "FORD", "CHEVROLET", "PEUGEOT", "RENAULT", "FIAT"]
+
     with st.sidebar:
         # st.header("Filtros") # Título para la barra lateral
         st.markdown("---")
@@ -127,16 +144,26 @@ if selected_analysis == "PILKINGTON":
         )
         st.markdown("---")
         st.session_state['zona'] = selected_zone
+        st.markdown("##### _Seleccionar Marcas:_")
+        selected_marcas = st.multiselect(
+            "Marcas",
+            options=available_marcas,
+            default=[m for m in DEFAULT_MARCAS if m in available_marcas],
+            label_visibility='collapsed',
+        )
+        st.markdown("---")
 
-    def create_plot_pkt(df_source, y_col, y_label):
+    def create_plot_pkt(df_source, y_col, y_label):   
+
         # Filtrar el DataFrame según la zona seleccionada
         df_filtered = df_source[
-            (df_source['zona'] == selected_zone)
+            (df_source['zona'] == selected_zone) &
+            (df_source['marca'].isin(selected_marcas))
         ]
         
         if df_filtered.empty:
             fig = go.Figure().update_layout(
-                title_text=f"No hay datos para '{selected_zone}'",
+                title_text=f"No hay datos para '{selected_zone} o marcas seleccionadas.",
                 height=400,
                 font=dict(family="Arial", size=10),
                 title_font_size=12
@@ -179,29 +206,49 @@ if selected_analysis == "PILKINGTON":
         st.markdown("---")
 
     # ----- GRAFICOS HISTORICOS, IPC y USD -----
-    st.subheader('1. Precios de Material históricos (Sin IVA)')
-    fig1 = create_plot_pkt(df_cristal, 'precio', 'Precio Sin IVA')
-    st.plotly_chart(fig1, use_container_width=True)
+    with st.container(border=True):
+        st.subheader('1. Precios de Material históricos (Sin IVA)')
+        fig1 = create_plot_pkt(df_cristal, 'precio', 'Precio Sin IVA')
+        st.plotly_chart(fig1, use_container_width=True)
 
-    st.subheader('2. Costo de Instalación histórico (Sin IVA)')
-    fig2 = create_plot_pkt(df_cristal, 'instalacion', 'Costo de Instalación')
-    st.plotly_chart(fig2, use_container_width=True)
+    with st.container(border=True):
+        st.subheader('2. Costo de Instalación histórico (Sin IVA)')
+        fig2 = create_plot_pkt(df_cristal, 'instalacion', 'Costo de Instalación')
+        st.plotly_chart(fig2, use_container_width=True)
 
-    st.subheader('3. Precios de Material (Ajustados por IPC)')
-    fig3 = create_plot_pkt(df_cristal, 'precio_ipc', 'Precio (IPC)')
-    st.plotly_chart(fig3, use_container_width=True)
+    with st.container(border=True):
+        st.subheader('3. Precios de Material (Ajustados por IPC)')
+        fig3 = create_plot_pkt(df_cristal, 'precio_ipc', 'Precio (IPC)')
+        st.plotly_chart(fig3, use_container_width=True)
 
-    st.subheader('4. Costo de Instalación (Ajustados por IPC)')
-    fig4 = create_plot_pkt(df_cristal, 'instalacion_ipc', 'Costo de Instalación (IPC)')
-    st.plotly_chart(fig4, use_container_width=True)
+    with st.container(border=True):
+        st.subheader('4. Costo de Instalación (Ajustados por IPC)')
+        fig4 = create_plot_pkt(df_cristal, 'instalacion_ipc', 'Costo de Instalación (IPC)')
+        st.plotly_chart(fig4, use_container_width=True)
 
-    st.subheader('5. Precios de Material (USD)')
-    fig5 = create_plot_pkt(df_cristal, 'precio_usd', 'Precio (USD)')
-    st.plotly_chart(fig5, use_container_width=True)
+    with st.container(border=True):
+        st.subheader('5. Precios de Material (USD)')
+        fig5 = create_plot_pkt(df_cristal, 'precio_usd', 'Precio (USD)')
+        st.plotly_chart(fig5, use_container_width=True)
 
-    st.subheader('6. Costo de Instalación (USD)')
-    fig6 = create_plot_pkt(df_cristal, 'instalacion_usd', 'Costo de Instalación (USD)')
-    st.plotly_chart(fig6, use_container_width=True)        
+    with st.container(border=True):
+        st.subheader('6. Costo de Instalación (USD)')
+        fig6 = create_plot_pkt(df_cristal, 'instalacion_usd', 'Costo de Instalación (USD)')
+        st.plotly_chart(fig6, use_container_width=True)     
+    ""
+    ""
+    st.markdown("#### Data Cruda")
+
+    if not selected_marcas:
+        st.info('No se seleccionó ninguna marca. Por favor, selecciona una o más marcas para ver los datos.')
+    else:
+        df_filtered_raw = df_cristal[
+            (df_cristal['zona'] == selected_zone) &
+            (df_cristal['marca'].isin(selected_marcas))
+        ]
+        df_filtered_raw['fecha'] = df_filtered_raw['fecha'].dt.strftime('%Y-%m-%d')
+        st.dataframe(df_filtered_raw, use_container_width=True)
+
 
 # ---- Análisis ORION/CESVI ----
 elif selected_analysis == "ORION/CESVI":
