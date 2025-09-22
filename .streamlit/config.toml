@@ -2,10 +2,10 @@
 base = "dark"
 
 # Colores generales (estas opciones siguen siendo válidas)
-textColor = "#e2e8f0"
-primaryColor = "#615fff"
-backgroundColor = "#1d293d"
-secondaryBackgroundColor = "#0f172b"
+textColor = "#f5f2ed"
+primaryColor = "#eb3131"
+backgroundColor = "#080f1a"
+secondaryBackgroundColor = "#2e3238"
 
 # Para la fuente, puedes usar 'font' con un valor válido
 # streamlit solo soporta 'sans serif', 'serif', 'monospace' o una fuente web
