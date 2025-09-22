@@ -164,14 +164,14 @@ if selected_analysis == "PILKINGTON":
             (df_source['marca'].isin(selected_marcas))
         ]
         
-        if df_filtered.empty:
-            fig = go.Figure().update_layout(
-                title_text=f"No hay datos para '{selected_zone} o marcas seleccionadas.",
-                height=400,
-                font=dict(family="Arial", size=10),
-                title_font_size=12
-            )
-            return fig
+        # if df_filtered.empty:
+        #     # fig = go.Figure().update_layout(
+        #     #     title_text=f"No hay datos para '{selected_zone} o marcas seleccionadas.",
+        #     #     height=400,
+        #     #     font=dict(family="Arial", size=10),
+        #     #     title_font_size=12
+        #     # )
+        #     return st.warning("Seleccionar una marca para ver la información.")
 
         # gráfico Plotly 
         fig = px.line(
@@ -196,55 +196,56 @@ if selected_analysis == "PILKINGTON":
         
         return fig
 
-    # muestro grafico torta MARCAS AUTOS 
-    if st.button("Mostrar/Ocultar Distribución de Marcas Autos"):
-        st.session_state.show_pie_chart_3 = not st.session_state.show_pie_chart_3
-    
-    if st.session_state.show_pie_chart_3:
-        st.subheader('Distribución de Años Riesgo por Marca')
-        fig_pie = create_pie_chart(df_distrib_marcas_cartera, 'años_riesgos_total')
-        st.plotly_chart(fig_pie, use_container_width=True)
-        st.markdown('Total AR: ' + str(df_distrib_marcas_cartera['años_riesgos_total'].sum()))
-        st.markdown('Total marcas: 49' )
-        st.markdown("---")
-
     # ----- GRAFICOS HISTORICOS, IPC y USD -----
-    with st.container(border=True):
-        st.subheader('1. Precios de Material históricos (Sin IVA)')
-        fig1 = create_plot_pkt(df_cristal, 'precio', 'Precio Sin IVA')
-        st.plotly_chart(fig1, use_container_width=True)
-
-    with st.container(border=True):
-        st.subheader('2. Costo de Instalación histórico (Sin IVA)')
-        fig2 = create_plot_pkt(df_cristal, 'instalacion', 'Costo de Instalación')
-        st.plotly_chart(fig2, use_container_width=True)
-
-    with st.container(border=True):
-        st.subheader('3. Precios de Material (Ajustados por IPC)')
-        fig3 = create_plot_pkt(df_cristal, 'precio_ipc', 'Precio (IPC)')
-        st.plotly_chart(fig3, use_container_width=True)
-
-    with st.container(border=True):
-        st.subheader('4. Costo de Instalación (Ajustados por IPC)')
-        fig4 = create_plot_pkt(df_cristal, 'instalacion_ipc', 'Costo de Instalación (IPC)')
-        st.plotly_chart(fig4, use_container_width=True)
-
-    with st.container(border=True):
-        st.subheader('5. Precios de Material (USD)')
-        fig5 = create_plot_pkt(df_cristal, 'precio_usd', 'Precio (USD)')
-        st.plotly_chart(fig5, use_container_width=True)
-
-    with st.container(border=True):
-        st.subheader('6. Costo de Instalación (USD)')
-        fig6 = create_plot_pkt(df_cristal, 'instalacion_usd', 'Costo de Instalación (USD)')
-        st.plotly_chart(fig6, use_container_width=True)     
-    ""
-    ""
-    st.markdown("#### Data Cruda")
 
     if not selected_marcas:
-        st.info('No se seleccionó ninguna marca. Por favor, selecciona una o más marcas para ver los datos.')
+        st.warning("Seleccionar una marca para ver la información.")
     else:
+        # muestro grafico torta MARCAS AUTOS 
+        if st.button("Mostrar/Ocultar Distribución de Marcas Autos"):
+            st.session_state.show_pie_chart_3 = not st.session_state.show_pie_chart_3
+        
+        if st.session_state.show_pie_chart_3:
+            st.subheader('Distribución de Años Riesgo por Marca')
+            fig_pie = create_pie_chart(df_distrib_marcas_cartera, 'años_riesgos_total')
+            st.plotly_chart(fig_pie, use_container_width=True)
+            st.markdown('Total AR: ' + str(df_distrib_marcas_cartera['años_riesgos_total'].sum()))
+            st.markdown('Total marcas: 49' )
+            st.markdown("---")
+
+        with st.container(border=True):
+            st.subheader('1. Precios de Material históricos (Sin IVA)')
+            fig1 = create_plot_pkt(df_cristal, 'precio', 'Precio Sin IVA')
+            st.plotly_chart(fig1, use_container_width=True)
+
+        with st.container(border=True):
+            st.subheader('2. Costo de Instalación histórico (Sin IVA)')
+            fig2 = create_plot_pkt(df_cristal, 'instalacion', 'Costo de Instalación')
+            st.plotly_chart(fig2, use_container_width=True)
+
+        with st.container(border=True):
+            st.subheader('3. Precios de Material (Ajustados por IPC)')
+            fig3 = create_plot_pkt(df_cristal, 'precio_ipc', 'Precio (IPC)')
+            st.plotly_chart(fig3, use_container_width=True)
+
+        with st.container(border=True):
+            st.subheader('4. Costo de Instalación (Ajustados por IPC)')
+            fig4 = create_plot_pkt(df_cristal, 'instalacion_ipc', 'Costo de Instalación (IPC)')
+            st.plotly_chart(fig4, use_container_width=True)
+
+        with st.container(border=True):
+            st.subheader('5. Precios de Material (USD)')
+            fig5 = create_plot_pkt(df_cristal, 'precio_usd', 'Precio (USD)')
+            st.plotly_chart(fig5, use_container_width=True)
+
+        with st.container(border=True):
+            st.subheader('6. Costo de Instalación (USD)')
+            fig6 = create_plot_pkt(df_cristal, 'instalacion_usd', 'Costo de Instalación (USD)')
+            st.plotly_chart(fig6, use_container_width=True)     
+        ""
+        ""
+        st.markdown("#### Data Cruda")
+
         df_filtered_raw = df_cristal[
             (df_cristal['zona'] == selected_zone) &
             (df_cristal['marca'].isin(selected_marcas))
