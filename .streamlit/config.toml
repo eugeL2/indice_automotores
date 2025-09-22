@@ -2,7 +2,7 @@
 base = "dark"
 
 # Colores generales (estas opciones siguen siendo válidas)
-textColor = "#f5f2ed"
+textColor = "#ffffff"
 primaryColor = "#eb3131"
 backgroundColor = "#080f1a"
 secondaryBackgroundColor = "#2e3238"
