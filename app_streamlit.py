@@ -3,14 +3,17 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go # Necesario para go.Figure en caso de datos vacíos
-
-# -----------------------------------
+import json
+import requests
+from io import StringIO
+import unicodedata
 
 pd.options.display.max_columns=None
 pd.set_option('display.max_rows', 500)
 pd.options.display.float_format = '{:,.2f}'.format
 
-# st.set_page_config(layout="wide") # Ancho completo de la página
+# ---------------------------------------------------
+
 st.set_page_config(
     page_title="Indice Automotores ",
     page_icon=":chart_with_upwards_trend:",
@@ -21,7 +24,7 @@ st.set_page_config(
 # :material/query_stats: Indice Automotores
 """
 
-# ---- Cargo las bases de datos ----
+# ----- Cargo las bases de datos --------------------------------------------------
 try:
     # df PKT (cristales)
     df_cristal = pd.read_csv('data/base_pkt_app_2.csv')
@@ -55,12 +58,17 @@ try:
     df_cm_mo_resumen = pd.read_csv('data/df_cm_mo_resumen.csv')
     df_cm_mo_cleas_resumen = pd.read_csv('data/df_cm_mo_cleas_resumen.csv')
 
+    # dfs var x prov
+    df_cm_prov = pd.read_csv('data/base_cm_prov.csv')
+    with open('data/prov.geojson', 'r', encoding='utf-8') as f:
+        provincias_geojson = json.load(f)
+
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. Detalles: {e}")
     # La app se detiene si no encuentra los archivos
     st.stop()
 
-# ---- Formateo de datos ----
+# ---- Formateo de datos --------------------------------------------------
 for df_temp in [df_cristal, df_tipo_rep]:
     if 'fecha' in df_temp.columns:
         df_temp['fecha'] = pd.to_datetime(df_temp['fecha'])
@@ -75,7 +83,15 @@ for df_temp in [df_cristal, df_tipo_rep]:
     if 'tipo_repuesto' in df_temp.columns:
         df_temp['tipo_repuesto'] = df_temp['tipo_repuesto'].astype(str).str.replace('_', ' ').str.title()
 
-# ---- Función construir graficos de torta ---- 
+# ---- Formateo base provincias --------------------------------------------------
+df_cm_agg = df_cm_prov.groupby(['coverable','provincia',]).agg(
+    coste_medio_prom=('coste_medio', 'mean'))
+# cambio formato de coste medio a int
+df_cm_agg['coste_medio_prom'] = df_cm_agg['coste_medio_prom'].astype(int)
+df_cm_agg = df_cm_agg.reset_index()
+
+
+# ---- Función construir graficos de torta -------------------------------------------------- 
 def create_pie_chart(df, value):
     fig = px.pie(
     df,
@@ -99,19 +115,20 @@ def create_pie_chart(df, value):
 
     return fig 
 
-# ---- Slider selección de análisis ----
+# ---- Slider selección de análisis --------------------------------------------------
 st.markdown("---")
 st.markdown("### Seleccionar Fuente de Análisis")
 selected_analysis = st.selectbox(
     'Seleccionar Análisis:',
     options=["PILKINGTON", 
-             "ORION/CESVI"],
+             "ORION/CESVI",
+             "LA SEGUNDA BI"],
     index=0,
     label_visibility ='collapsed'
 )
 st.markdown("---")
 
-# ---- Variables de sesión para mostrar/ocultar gráficos ----
+# ---- Variables de sesión para mostrar/ocultar gráficos --------------------------------------------------
 if 'show_pie_chart' not in st.session_state:
     st.session_state.show_pie_chart = False
 
@@ -124,7 +141,7 @@ if 'show_pie_chart_3' not in st.session_state:
 # cols = st.columns([1, 3])
 # DEFAULT_MARCAS = ["TOYOTA", "VOLKSWAGEN", "FORD", "CHEVROLET", "PEUGEOT", "RENAULT", "FIAT"]
 
-# ---- Análisis PILKINGTON ----
+# ---- Análisis PILKINGTON --------------------------------------------------
 if selected_analysis == "PILKINGTON":
     st.title("Variación de Precios de Cristales y Mano de obra por Marca y Zona")
     st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_")
@@ -196,7 +213,7 @@ if selected_analysis == "PILKINGTON":
         
         return fig
 
-    # ----- GRAFICOS HISTORICOS, IPC y USD -----
+    # ----- GRAFICOS HISTORICOS, IPC y USD --------------------------------------------------
 
     if not selected_marcas:
         st.warning("Seleccionar una marca para ver la información.")
@@ -254,7 +271,7 @@ if selected_analysis == "PILKINGTON":
         st.dataframe(df_filtered_raw, use_container_width=True)
 
 
-# ---- Análisis ORION/CESVI ----
+# ---- Análisis ORION/CESVI --------------------------------------------------
 elif selected_analysis == "ORION/CESVI":
     st.title('Variación de Precios de Repuestos y Mano de obra')
     st.markdown("#### _Fuente de datos: Orion/Cesvi_")
@@ -307,7 +324,7 @@ elif selected_analysis == "ORION/CESVI":
         return fig
     
     
-    # ----- GRAFICOS HISTORICOS -----
+    # ----- GRAFICOS HISTORICOS --------------------------------------------------
     if st.session_state['selected_variation_type'] == "Histórico":
         
         # gráfico 1: evolución costo repuestos por tva
@@ -410,7 +427,7 @@ elif selected_analysis == "ORION/CESVI":
         fig14 = create_plot_orion(df_cm_mo_hist_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio')
         st.plotly_chart(fig14, use_container_width=True)
         
-    # ----- GRAFICOS AJUSTADOS POR IPC -----
+    # ----- GRAFICOS AJUSTADOS POR IPC --------------------------------------------------
     elif st.session_state['selected_variation_type'] == "IPC":
 
         # gráfico 1: evolución costo repuestos por tva IPC
@@ -623,3 +640,75 @@ elif selected_analysis == "ORION/CESVI":
         df_cm_mo_usd_cleas = df_cm_mo_usd_cleas[df_cm_mo_usd_cleas['tva'] != 'camion_cleas_si']
         fig16 = create_plot_orion(df_cm_mo_usd_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio (USD)')
         st.plotly_chart(fig16, use_container_width=True)
+
+# ---- Análisis CARTERA L2 --------------------------------------------------
+elif selected_analysis == "LA SEGUNDA BI":
+    st.title('Análisis Coste Medio por Provincia')    
+    st.markdown("#### _Fuente de datos: BI La Segunda_")
+    # st.markdown("---")
+
+    def create_map_chart(df, selected_coverable):
+        df_cm_filtered = df[df['coverable'] == selected_coverable]
+        
+        fig = px.choropleth(
+        df_cm_filtered,
+        geojson=provincias_geojson,
+        locations='provincia',  
+        featureidkey="properties.nombre_normalizado", # Usamos la nueva clave normalizada
+        color='coste_medio_prom',
+        color_continuous_scale="oranges",
+        range_color=[min_cost, max_cost],
+        labels={'coste_medio_prom': 'Coste Medio Promedio'},
+        projection="mercator",
+        width=1000, 
+        height=1000  
+        )
+        # Ajustes de visualización para el mapa
+        fig.update_geos(
+            visible=False,
+            fitbounds=False,
+            showcountries=True,
+            showcoastlines=True,
+            coastlinecolor="black",
+            showland=True,
+            landcolor="lightgrey",
+            scope="south america",
+            projection_scale=1, # Ajusta el zoom del mapa
+        )
+        return fig
+
+    available_coverables = sorted(df_cm_agg['coverable'].unique().tolist())
+
+
+    # 2 cols para separar grafico y contenedor de filtros
+    col1, col2 = st.columns([1, 4], gap='large') # la segunda col es 4 veces el ancho de la primera 
+    
+    with col1:  
+        with st.container(border=True):
+            selected_coverable_map = st.selectbox(
+                "Seleccionar coverable:",
+                options=available_coverables,   
+                index=available_coverables.index('AUT'), 
+            )
+            # st.markdown("---")
+        # st.markdown(f"**Vehículo Seleccionado:** `{selected_coverable_map}`")
+
+    # costo max y min para valores de grafico según coverable
+    df_cm_cov = df_cm_agg[df_cm_agg['coverable'] == selected_coverable_map]
+    min_cost = df_cm_cov['coste_medio_prom'].min()
+    max_cost = df_cm_cov['coste_medio_prom'].max()
+    ROUNDING_UNIT = 100000
+    min_cost = np.floor(min_cost / ROUNDING_UNIT) * ROUNDING_UNIT
+
+    with col2:
+        with st.container(border=True):
+            # st.subheader(f'Análisis Coste Medio por Provincia - {selected_coverable_map}')
+            st.markdown(f"#### Coverable selecccionado: {selected_coverable_map}")
+            fig_prov = create_map_chart(df_cm_cov, selected_coverable_map)
+            st.plotly_chart(fig_prov, use_container_width=False)    
+
+    with st.container(border=True):
+        st.markdown("#### Data Cruda")
+        # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
+        df_cm_filtered_raw = df_cm_prov[df_cm_prov['coverable'] == selected_coverable_map]
+        st.dataframe(df_cm_filtered_raw, use_container_width=True)    
