@@ -59,6 +59,7 @@ try:
     df_cm_mo_cleas_resumen = pd.read_csv('data/df_cm_mo_cleas_resumen.csv')
 
     # dfs var x prov
+    df_cm_prov_orion = pd.read_csv('data/base_cm_prov_orion.csv')
     df_cm_prov = pd.read_csv('data/base_cm_prov.csv')
     with open('data/prov.geojson', 'r', encoding='utf-8') as f:
         provincias_geojson = json.load(f)
@@ -122,7 +123,7 @@ selected_analysis = st.selectbox(
     'Seleccionar Análisis:',
     options=["PILKINGTON", 
              "ORION/CESVI",
-             "LA SEGUNDA BI"],
+             "Análisis por Provincia"],
     index=0,
     label_visibility ='collapsed'
 )
@@ -641,21 +642,40 @@ elif selected_analysis == "ORION/CESVI":
         fig16 = create_plot_orion(df_cm_mo_usd_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio (USD)')
         st.plotly_chart(fig16, use_container_width=True)
 
-# ---- Análisis CARTERA L2 --------------------------------------------------
-elif selected_analysis == "LA SEGUNDA BI":
+
+# ---- Análisis por PROVINCIA --------------------------------------------------
+elif selected_analysis == "Análisis por Provincia":
     st.title('Análisis Coste Medio por Provincia')    
     st.markdown("#### _Fuente de datos: BI La Segunda_")
     # st.markdown("---")
 
-    def create_map_chart(df, selected_coverable):
+    #######################################################
+    # VER POR QUE NO APARECE EL MAPA
+    def create_map_chart(df, selected_coverable, color, selected_fecha=None):
         df_cm_filtered = df[df['coverable'] == selected_coverable]
-        
+        # if selected_fecha is not None:
+        #     df_cm_filtered = df_cm_filtered[df_cm_filtered['fecha_cierre'] == selected_fecha]
+            
+        # Agregado para el segundo caso (Orion/Cesvi) donde el   campo es 'año'
+        # Esta es una mejora para que la misma función sirva para ambos datasets
+        if selected_fecha is not None and 'año' in df.columns:
+            df_cm_filtered = df_cm_filtered[df_cm_filtered['año'] == selected_fecha]
+
+        # ... Resto de tu código para obtener min_cost y max_cost ...
+        if df_cm_filtered.empty:
+            return st.warning("No hay información.")
+
+        min_cost = df_cm_filtered[color].min()
+        max_cost = df_cm_filtered[color].max()
+        ROUNDING_UNIT = 100000
+        min_cost = np.floor(min_cost / ROUNDING_UNIT) * ROUNDING_UNIT
+
         fig = px.choropleth(
         df_cm_filtered,
         geojson=provincias_geojson,
         locations='provincia',  
         featureidkey="properties.nombre_normalizado", # Usamos la nueva clave normalizada
-        color='coste_medio_prom',
+        color=color,
         color_continuous_scale="oranges",
         range_color=[min_cost, max_cost],
         labels={'coste_medio_prom': 'Coste Medio Promedio'},
@@ -695,20 +715,66 @@ elif selected_analysis == "LA SEGUNDA BI":
 
     # costo max y min para valores de grafico según coverable
     df_cm_cov = df_cm_agg[df_cm_agg['coverable'] == selected_coverable_map]
-    min_cost = df_cm_cov['coste_medio_prom'].min()
-    max_cost = df_cm_cov['coste_medio_prom'].max()
-    ROUNDING_UNIT = 100000
-    min_cost = np.floor(min_cost / ROUNDING_UNIT) * ROUNDING_UNIT
+    # min_cost = df_cm_cov['coste_medio_prom'].min()
+    # max_cost = df_cm_cov['coste_medio_prom'].max()
+    # ROUNDING_UNIT = 100000
+    # min_cost = np.floor(min_cost / ROUNDING_UNIT) * ROUNDING_UNIT
 
     with col2:
         with st.container(border=True):
             # st.subheader(f'Análisis Coste Medio por Provincia - {selected_coverable_map}')
             st.markdown(f"#### Coverable selecccionado: {selected_coverable_map}")
-            fig_prov = create_map_chart(df_cm_cov, selected_coverable_map)
+            fig_prov = create_map_chart(df_cm_cov, selected_coverable_map, 'coste_medio_prom')
             st.plotly_chart(fig_prov, use_container_width=False)    
 
-    with st.container(border=True):
-        st.markdown("#### Data Cruda")
-        # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
-        df_cm_filtered_raw = df_cm_prov[df_cm_prov['coverable'] == selected_coverable_map]
-        st.dataframe(df_cm_filtered_raw, use_container_width=True)    
+    st.markdown("#### Data Cruda")
+    # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
+    df_cm_filtered_raw = df_cm_prov[df_cm_prov['coverable'] == selected_coverable_map]
+    st.dataframe(df_cm_filtered_raw, use_container_width=True)  
+
+    st.markdown("#### _Fuente de datos: Orion/Cesvi_")
+
+    available_coverables_orion = sorted(df_cm_prov_orion['coverable'].unique().tolist())
+    available_fechas = sorted(df_cm_prov_orion['año'].unique().tolist())
+
+    # 2 cols para separar grafico y contenedor de filtros
+    col3, col4 = st.columns([1, 4], gap='large') # la segunda col es 4 veces el ancho de la primera 
+    
+    with col3:  
+        with st.container(border=True):
+            selected_coverable_map = st.selectbox(
+                "Seleccionar coverable:",
+                options=available_coverables_orion,   
+                index=available_coverables_orion.index('AUT'), 
+            )
+        with st.container(border=True):
+            # contenedor para seleccionar fecha
+            selected_fecha = st.selectbox(
+                "Seleccionar año:",
+                options=available_fechas,   
+                # index=len(available_fechas)-1, # por defecto la ultima fecha
+            )
+            # st.markdown("---")
+        # st.markdown(f"**Vehículo Seleccionado:** `{selected_coverable_map}`")
+
+    # costo max y min para valores de grafico según coverable
+    df_cm_prov_orion_cov = df_cm_prov_orion[df_cm_prov_orion['coverable'] == selected_coverable_map]
+    # min_cost_orion = df_cm_prov_orion['coste_medio_prom'].min()
+    # max_cost_orion = df_cm_prov_orion['coste_medio_prom'].max()
+    # ROUNDING_UNIT = 100000
+    # min_cost_orion = np.floor(min_cost_orion / ROUNDING_UNIT) * ROUNDING_UNIT
+
+    with col4:
+        with st.container(border=True):
+            # st.subheader(f'Análisis Coste Medio por Provincia - {selected_coverable_map}')
+            st.markdown(f"#### Coverable selecccionado: {selected_coverable_map}")
+            st.markdown(f"#### Año: {selected_fecha}")
+            fig_prov = create_map_chart(df_cm_prov_orion, selected_coverable_map, 'costo_pieza_prom', selected_fecha)
+            st.plotly_chart(fig_prov, use_container_width=False)    
+
+    
+    st.markdown("#### Data Cruda")
+    # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
+    df_cm_prov_orion_raw = df_cm_prov_orion[(df_cm_prov_orion['coverable'] == selected_coverable_map) &
+                                                (df_cm_prov_orion['año'] == selected_fecha)]
+    st.dataframe(df_cm_prov_orion_raw, use_container_width=True)     
