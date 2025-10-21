@@ -64,6 +64,13 @@ try:
     with open('data/prov.geojson', 'r', encoding='utf-8') as f:
         provincias_geojson = json.load(f)
 
+    # dfs comparativo mano de obra
+    df_chapa_pintura = pd.read_csv('data/df_chapa_pintura.csv')
+    df_mo_repuestos_final = pd.read_csv('data/df_mo_repuestos_final.csv')
+    df_peritaciones = pd.read_csv('data/df_peritaciones.csv')
+    df_costo_hora = pd.read_csv('data/df_costo_hora.csv')
+    df_tot_reparacion = pd.read_csv('data/df_tot_reparacion.csv')
+
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. Detalles: {e}")
     # La app se detiene si no encuentra los archivos
@@ -118,12 +125,13 @@ def create_pie_chart(df, value):
 
 # ---- Slider selección de análisis --------------------------------------------------
 st.markdown("---")
-st.markdown("### Seleccionar Fuente de Análisis")
+st.markdown("### Seleccionar el análisis deseado:")
 selected_analysis = st.selectbox(
     'Seleccionar Análisis:',
     options=["PILKINGTON", 
              "ORION/CESVI",
-             "Análisis por Provincia"],
+             "Análisis por Provincia",
+             "Comparativo de Mano de Obra"],
     index=0,
     label_visibility ='collapsed'
 )
@@ -139,8 +147,8 @@ if 'show_pie_chart_2' not in st.session_state:
 if 'show_pie_chart_3' not in st.session_state:
     st.session_state.show_pie_chart_3 = False
 
-# cols = st.columns([1, 3])
-# DEFAULT_MARCAS = ["TOYOTA", "VOLKSWAGEN", "FORD", "CHEVROLET", "PEUGEOT", "RENAULT", "FIAT"]
+if 'show_mo' not in st.session_state:
+    st.session_state.show_mo = False
 
 # ---- Análisis PILKINGTON --------------------------------------------------
 if selected_analysis == "PILKINGTON":
@@ -181,15 +189,6 @@ if selected_analysis == "PILKINGTON":
             (df_source['zona'] == selected_zone) &
             (df_source['marca'].isin(selected_marcas))
         ]
-        
-        # if df_filtered.empty:
-        #     # fig = go.Figure().update_layout(
-        #     #     title_text=f"No hay datos para '{selected_zone} o marcas seleccionadas.",
-        #     #     height=400,
-        #     #     font=dict(family="Arial", size=10),
-        #     #     title_font_size=12
-        #     # )
-        #     return st.warning("Seleccionar una marca para ver la información.")
 
         # gráfico Plotly 
         fig = px.line(
@@ -778,3 +777,260 @@ elif selected_analysis == "Análisis por Provincia":
     df_cm_prov_orion_raw = df_cm_prov_orion[(df_cm_prov_orion['coverable'] == selected_coverable_map) &
                                                 (df_cm_prov_orion['año'] == selected_fecha)]
     st.dataframe(df_cm_prov_orion_raw, use_container_width=True)     
+
+
+# ---- Comparativo Mano de obra --------------------------------------------------
+elif selected_analysis == "Comparativo de Mano de Obra":
+    st.title('Comparativo Mano de obra - La Segunda vs CESVI/Sancor/San Cristobal')    
+    st.markdown("#### _Fuente de datos:_")
+    st.markdown("---")
+    
+    # sidebar por tipo de variación: histórico, ipc, usd
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown("##### _Seleccionar Tipo de Variación:_")
+        selected_variation_type_2 = st.selectbox(
+            "Tipo de Variación",
+            options=["Histórico", "IPC", "USD"],
+            index=0,
+            label_visibility='collapsed'
+        )
+        st.markdown("---")
+        # Guardo la selección en session_state para que la funcion pueda usarla
+        st.session_state['selected_variation_type_2'] = selected_variation_type_2
+    
+    def create_plot_mo(df, y_col, color, facet_col, y_label, line_width=2):       
+        if df.empty:
+            fig = go.Figure().update_layout(
+                title_text=f"No hay datos para graficar",
+                height=400,
+                font=dict(family="Arial", size=10),
+                title_font_size=12
+            )
+            return fig
+
+        fig = px.line(
+            df,
+            x='anio_mes',
+            y=y_col,
+            color=color,
+            color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+            facet_col=facet_col,
+            # line_group='marca',
+            # facet_col='tipo_cristal', # Subplots por tipo de cristal
+            #title='', agrego titulo con subheader
+            labels={'value': y_label, 'anio_mes': ''}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
+        )
+
+        fig.update_layout(
+            legend_title_text='Aseguradora',
+            height=400, # Altura del subplot individual
+            font=dict(family="Arial", size=15),
+            margin=dict(t=50, b=0, l=0, r=0),
+        )
+        fig.update_traces(line_width=line_width)
+        fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+        
+        return fig
+    
+    def create_plot_mo_area(df, y_col, color, facet_col, y_label):
+
+        if df.empty:
+            fig = go.Figure().update_layout(
+                title_text=f"No hay datos para graficar",
+                height=400,
+                font=dict(family="Arial", size=10),
+                title_font_size=12
+            )
+            return fig
+
+        # --- CAMBIO CLAVE: Usamos px.bar en lugar de px.line ---
+        fig = px.area(
+            df,
+            x='anio_mes',
+            y=y_col,
+            color=color,
+            color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+            facet_col=facet_col,
+            labels={'value': y_label, 'anio_mes': ''}
+        )
+
+        fig.update_layout(
+            legend_title_text='Aseguradora',
+            height=400, # Altura del subplot individual
+            font=dict(family="Arial", size=15),
+            margin=dict(t=50, b=0, l=0, r=0),
+        )
+        
+        # Eliminamos fig.update_traces(line_width=...)
+        fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+        
+        return fig
+    
+    # ----- GRAFICOS HISTORICOS --------------------------------------------------
+    if st.session_state['selected_variation_type_2'] == "Histórico":
+        y_cols_hist = ['grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal', 'sancor']
+        
+        st.subheader('Evolución monto de Repuestos y Mano de Obra (MO)')
+        # mostrar evolutivo MO (Chapa/Pintura)
+        if st.button("Mostrar/Ocultar Evolutivo M.O (chapa y pintura)"):
+            st.session_state.show_mo = not st.session_state.show_mo
+        
+        if st.session_state.show_mo:
+            st.markdown('#### Evolutivo chapa y pintura')
+            fig_mo = create_plot_mo_area(df_chapa_pintura, 'monto_historico', 'aseguradora', 'tipo', 'Monto')
+            st.plotly_chart(fig_mo, use_container_width=True)
+            with st.expander("Ver tabla de datos",):
+                # st.subheader("Tabla de Datos de Ejemplo")
+                st.dataframe(df_chapa_pintura[['anio_mes','aseguradora','monto_historico','tipo']], hide_index=True, width=1500,)
+
+        fig_1 = create_plot_mo(df_mo_repuestos_final, 'monto_historico', 'aseguradora', 'tipo', 'Monto')
+        st.plotly_chart(fig_1, use_container_width=True)
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_mo_repuestos_final[['anio_mes','aseguradora','monto_historico','tipo']], hide_index=True, width=1000,)
+
+
+        st.subheader('Evolución monto de reparaciones (Repuestos + MO)')
+
+        fig_3 = create_plot_mo(df_tot_reparacion, y_cols_hist, None, None, 'Monto MO')
+        st.plotly_chart(fig_3, use_container_width=True)
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_tot_reparacion, hide_index=True,)
+
+        st.subheader('Evolución Costo Hora de Mano de Obra')
+        fig_5 = create_plot_mo(df_costo_hora, y_cols_hist, None, None, 'Costo hora')
+        st.plotly_chart(fig_5, use_container_width=True)
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_costo_hora, hide_index=True,)
+
+        st.subheader('Peritaciones')
+        st.markdown('---')
+
+        st.markdown('##### Evolución cantidad de Peritaciones')
+        fig_4 = create_plot_mo(df_peritaciones, y_cols_hist, None, None, 'Cantidad de Peritaciones')
+        st.plotly_chart(fig_4, use_container_width=True)
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_peritaciones[['anio_mes', 'grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal', 'sancor']], hide_index=True, width=1000,)
+
+        st.markdown('##### % Variación mensual de cantidad de Peritaciones')
+        y_var=['var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor']
+        fig_5 = create_plot_mo(df_peritaciones, y_var, None, None, '% variación')
+        st.plotly_chart(fig_5, use_container_width=True)
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_peritaciones[['anio_mes', 'part_grupo_sls_vs_cesvi', 'part_la_segunda_vs_cesvi', 'part_san_cristobal_vs_cesvi', 'part_sancor_vs_cesvi']], 
+                         hide_index=True, width=1000,)
+
+        st.markdown('##### % Participacion respecto a Grupo Cesvi')
+        y_cols_part=['part_grupo_sls_vs_cesvi', 'part_la_segunda_vs_cesvi', 'part_san_cristobal_vs_cesvi', 'part_sancor_vs_cesvi']
+        fig_6 = create_plot_mo(df_peritaciones, y_cols_part, None, None, '% participacion')
+        st.plotly_chart(fig_6, use_container_width=True)
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_peritaciones[['anio_mes', 'var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor']], 
+                         hide_index=True, width=1000,)
+
+# ----- GRAFICOS IPC --------------------------------------------------
+    if st.session_state['selected_variation_type_2'] == "IPC":
+        y_cols_ipc = ['grupo_cesvi_ipc', 'grupo_sls_ipc', 'la_segunda_ipc', 'san_cristobal_ipc', 'sancor_ipc']
+        
+        st.subheader('Evolución monto de Repuestos y Mano de Obra (MO) - ajust. por IPC')
+        # mostrar evolutivo MO (Chapa/Pintura)
+        if st.button("Mostrar/Ocultar Evolutivo M.O (chapa y pintura)"):
+            st.session_state.show_mo = not st.session_state.show_mo
+        
+        if st.session_state.show_mo:
+            st.markdown('#### Evolutivo chapa y pintura IPC')
+            fig_mo = create_plot_mo_area(df_chapa_pintura, 'monto_ipc', 'aseguradora', 'tipo', 'Monto')
+            st.plotly_chart(fig_mo, use_container_width=True)
+            with st.expander("Ver tabla de datos",):
+                # st.subheader("Tabla de Datos de Ejemplo")
+                st.dataframe(df_chapa_pintura[['anio_mes','aseguradora','monto_ipc','tipo']], hide_index=True, width=1500,)
+
+        fig_1 = create_plot_mo(df_mo_repuestos_final, 'monto_ipc', 'aseguradora', 'tipo', 'Monto')
+        st.plotly_chart(fig_1, use_container_width=True)
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_mo_repuestos_final[['anio_mes','aseguradora','monto_ipc','tipo']], hide_index=True, width=1500,)
+
+
+        st.subheader('Evolución monto de reparaciones (Repuestos + MO) - ajust. por IPC')
+
+        fig_3 = create_plot_mo(df_tot_reparacion, y_cols_ipc, None, None, 'Monto MO')
+        st.plotly_chart(fig_3, use_container_width=True)
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_tot_reparacion[['anio_mes','ipc','grupo_cesvi_ipc', 'grupo_sls_ipc', 'la_segunda_ipc', 'san_cristobal_ipc', 'sancor_ipc']], 
+                         hide_index=True, width=1000,)
+
+        st.subheader('Evolución Costo Hora de Mano de Obra - ajust. por IPC')
+        fig_5 = create_plot_mo(df_costo_hora, y_cols_ipc, None, None, 'Costo hora')
+        st.plotly_chart(fig_5, use_container_width=True)
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_costo_hora[['anio_mes','ipc','grupo_cesvi_ipc', 'grupo_sls_ipc', 'la_segunda_ipc', 'san_cristobal_ipc', 'sancor_ipc']], hide_index=True,)
+
+# ----- GRAFICOS USD --------------------------------------------------
+    if st.session_state['selected_variation_type_2'] == "USD":
+        y_cols_usd = ['grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd', 'san_cristobal_usd', 'sancor_usd']
+        
+        st.subheader('Evolución monto de Repuestos y Mano de Obra (MO) - en USD')
+        # mostrar evolutivo MO (Chapa/Pintura)
+        if st.button("Mostrar/Ocultar Evolutivo M.O (chapa y pintura)"):
+            st.session_state.show_mo = not st.session_state.show_mo
+        
+        if st.session_state.show_mo:
+            st.markdown('#### Evolutivo chapa y pintura en USD')
+            fig_mo = create_plot_mo_area(df_chapa_pintura, 'monto_usd', 'aseguradora', 'tipo', 'Monto')
+            st.plotly_chart(fig_mo, use_container_width=True)
+            with st.expander("Ver tabla de datos",):
+                # st.subheader("Tabla de Datos de Ejemplo")
+                st.dataframe(df_chapa_pintura[['anio_mes','aseguradora','monto_usd','tipo']], hide_index=True, width=1500,)
+
+        fig_1 = create_plot_mo(df_mo_repuestos_final, 'monto_usd', 'aseguradora', 'tipo', 'Monto')
+        st.plotly_chart(fig_1, use_container_width=True)
+
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_mo_repuestos_final[['anio_mes','aseguradora','monto_usd','tipo']], hide_index=True, width=1500,)
+
+
+        st.subheader('Evolución monto de reparaciones (Repuestos + MO) - en USD')
+
+        fig_3 = create_plot_mo(df_tot_reparacion, y_cols_usd, None, None, 'Monto MO')
+        st.plotly_chart(fig_3, use_container_width=True)
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_tot_reparacion[['anio_mes','usd_blue','grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd', 'san_cristobal_usd', 'sancor_usd']], 
+                         hide_index=True, width=1000,)
+
+        st.subheader('Evolución Costo Hora de Mano de Obra - en USD')
+        fig_5 = create_plot_mo(df_costo_hora, y_cols_usd, None, None, 'Costo hora')
+        st.plotly_chart(fig_5, use_container_width=True)
+        # muestro el dataset
+        with st.expander("Ver tabla de datos",):
+            # st.subheader("Tabla de Datos de Ejemplo")
+            st.dataframe(df_costo_hora[['anio_mes','usd_blue','grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd', 'san_cristobal_usd', 'sancor_usd']], 
+                         hide_index=True, width=1000,)
+
