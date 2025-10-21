@@ -902,7 +902,7 @@ elif selected_analysis == "Comparativo de Mano de Obra":
             # st.subheader("Tabla de Datos de Ejemplo")
             st.dataframe(df_tot_reparacion, hide_index=True,)
 
-        st.subheader('Evolución Costo Hora de Mano de Obra')
+        st.subheader('Evolución costo hora de Mano de Obra')
         fig_5 = create_plot_mo(df_costo_hora, y_cols_hist, None, None, 'Costo hora')
         st.plotly_chart(fig_5, use_container_width=True)
         # muestro el dataset
@@ -910,10 +910,9 @@ elif selected_analysis == "Comparativo de Mano de Obra":
             # st.subheader("Tabla de Datos de Ejemplo")
             st.dataframe(df_costo_hora, hide_index=True,)
 
-        st.subheader('Peritaciones')
-        st.markdown('---')
+        st.subheader('Peritaciones', divider='grey')
 
-        st.markdown('##### Evolución cantidad de Peritaciones')
+        st.subheader('- Evolución cantidad de Peritaciones')
         fig_4 = create_plot_mo(df_peritaciones, y_cols_hist, None, None, 'Cantidad de Peritaciones')
         st.plotly_chart(fig_4, use_container_width=True)
 
@@ -922,7 +921,7 @@ elif selected_analysis == "Comparativo de Mano de Obra":
             # st.subheader("Tabla de Datos de Ejemplo")
             st.dataframe(df_peritaciones[['anio_mes', 'grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal', 'sancor']], hide_index=True, width=1000,)
 
-        st.markdown('##### % Variación mensual de cantidad de Peritaciones')
+        st.subheader('- % Variación mensual de cantidad de Peritaciones')
         y_var=['var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor']
         fig_5 = create_plot_mo(df_peritaciones, y_var, None, None, '% variación')
         st.plotly_chart(fig_5, use_container_width=True)
@@ -932,8 +931,8 @@ elif selected_analysis == "Comparativo de Mano de Obra":
             # st.subheader("Tabla de Datos de Ejemplo")
             st.dataframe(df_peritaciones[['anio_mes', 'part_grupo_sls_vs_cesvi', 'part_la_segunda_vs_cesvi', 'part_san_cristobal_vs_cesvi', 'part_sancor_vs_cesvi']], 
                          hide_index=True, width=1000,)
-
-        st.markdown('##### % Participacion respecto a Grupo Cesvi')
+            
+        st.subheader('- % Participacion respecto a Grupo Cesvi')
         y_cols_part=['part_grupo_sls_vs_cesvi', 'part_la_segunda_vs_cesvi', 'part_san_cristobal_vs_cesvi', 'part_sancor_vs_cesvi']
         fig_6 = create_plot_mo(df_peritaciones, y_cols_part, None, None, '% participacion')
         st.plotly_chart(fig_6, use_container_width=True)
