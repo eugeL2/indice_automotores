@@ -75,19 +75,19 @@ except FileNotFoundError as e:
     st.stop()
 
 # ---- Formateo de datos --------------------------------------------------
-# for df_temp in [df_cristal, df_tipo_rep]:
-#     if 'fecha' in df_temp.columns:
-#         df_temp['fecha'] = pd.to_datetime(df_temp['fecha'])
-#     if 'año_mes' in df_temp.columns:
-#         df_temp['año_mes'] = pd.to_datetime(df_temp['año_mes'], format='%Y-%m-%d')
-#     if 'cristal' in df_temp.columns:
-#         df_temp['cristal'] = df_temp['cristal'].astype(str).str.replace('_', ' ').str.title()
-#     if 'marca' in df_temp.columns:
-#         df_temp['marca'] = df_temp['marca'].astype(str)
-#     if 'zona' in df_temp.columns:
-#         df_temp['zona'] = df_temp['zona'].astype(str)
-#     if 'tipo_repuesto' in df_temp.columns:
-#         df_temp['tipo_repuesto'] = df_temp['tipo_repuesto'].astype(str).str.replace('_', ' ').str.title()
+for df_temp in [df_cristal:
+    if 'fecha' in df_temp.columns:
+        df_temp['fecha'] = pd.to_datetime(df_temp['fecha'])
+    if 'año_mes' in df_temp.columns:
+        df_temp['año_mes'] = pd.to_datetime(df_temp['año_mes'], format='%Y-%m-%d')
+    if 'cristal' in df_temp.columns:
+        df_temp['cristal'] = df_temp['cristal'].astype(str).str.replace('_', ' ').str.title()
+    if 'marca' in df_temp.columns:
+        df_temp['marca'] = df_temp['marca'].astype(str)
+    if 'zona' in df_temp.columns:
+        df_temp['zona'] = df_temp['zona'].astype(str)
+    if 'tipo_repuesto' in df_temp.columns:
+        df_temp['tipo_repuesto'] = df_temp['tipo_repuesto'].astype(str).str.replace('_', ' ').str.title()
 
 # ---- Formateo base provincias --------------------------------------------------
 df_cm_agg = df_cm_prov.groupby(['coverable','año','provincia',]).agg(
@@ -1039,4 +1039,5 @@ elif selected_analysis == "Comparativo de Mano de Obra":
             # st.subheader("Tabla de Datos de Ejemplo")
             st.dataframe(df_costo_hora[['anio_mes','usd_blue','grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd', 'san_cristobal_usd', 'sancor_usd']], 
                          hide_index=True, width=1000,)
+
 
