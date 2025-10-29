@@ -50,6 +50,8 @@ try:
     df_distrib_marcas_cartera = pd.read_csv('data/distrib_ar_marca_cartera.csv')
 
     # dfs p/mostrar tablas
+    df_rtos_marca_mes_camion_resumen = pd.read_csv('data/df_rtos_marca_mes_camiones_resumen.csv')
+    df_rtos_marca_mes_resumen = pd.read_csv('data/df_rtos_marca_mes_resumen.csv')
     df_cm_mo_resumen = pd.read_csv('data/df_cm_mo_resumen.csv')
     df_cm_mo_cleas_resumen = pd.read_csv('data/df_cm_mo_cleas_resumen.csv')
 
