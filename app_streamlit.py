@@ -46,11 +46,10 @@ try:
     df_marcas_autos = pd.read_csv('data/evol_todas_marcas_autos.csv')
     df_rtos_marca_mes = pd.read_csv('data/df_rtos_marca_mes_sept.csv')
     df_marcas_camiones = pd.read_csv('data/camion_marcas.csv')
-    df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_camiones.csv')
+    df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_cam_sept.csv')
     df_distrib_marcas_cartera = pd.read_csv('data/distrib_ar_marca_cartera.csv')
 
     # dfs p/mostrar tablas
-    df_rtos_marca_mes_camion_resumen = pd.read_csv('data/df_rtos_marca_mes_camiones_resumen.csv')
     df_cm_mo_resumen = pd.read_csv('data/df_cm_mo_resumen.csv')
     df_cm_mo_cleas_resumen = pd.read_csv('data/df_cm_mo_cleas_resumen.csv')
 
@@ -126,10 +125,10 @@ st.markdown("---")
 st.markdown("### Seleccionar el análisis deseado:")
 selected_analysis = st.selectbox(
     'Seleccionar Análisis:',
-    options=["PILKINGTON", 
-             "ORION/CESVI",
+    options=["Evolutivo precios Pilkington", 
+             "Evolutivo precios ORION/CESVI",
              "Análisis por Provincia",
-             "Comparativo de Mano de Obra"],
+             "Comparativo de Mano de Obra (L2/Cesvi)"],
     index=0,
     label_visibility ='collapsed'
 )
@@ -149,7 +148,7 @@ if 'show_mo' not in st.session_state:
     st.session_state.show_mo = False
 
 # ---- Análisis PILKINGTON --------------------------------------------------
-if selected_analysis == "PILKINGTON":
+if selected_analysis == "Evolutivo precios Pilkington":
     st.title("Variación de Precios de Cristales y Mano de obra por Marca y Zona")
     st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_")
     st.markdown("---")
@@ -270,7 +269,7 @@ if selected_analysis == "PILKINGTON":
 
 
 # ---- Análisis ORION/CESVI --------------------------------------------------
-elif selected_analysis == "ORION/CESVI":
+elif selected_analysis == "Evolutivo precios ORION/CESVI":
     st.title('Variación de Precios de Repuestos y Mano de obra')
     st.markdown("#### _Fuente de datos: Orion/Cesvi_")
     st.markdown("---")
@@ -289,7 +288,7 @@ elif selected_analysis == "ORION/CESVI":
         # Guardo la selección en session_state para que la funcion pueda usarla
         st.session_state['selected_variation_type'] = selected_variation_type
     
-    def create_plot_orion(df, y_col, color, facet_col, y_label):       
+    def create_plot_orion(df, y_col, color, facet_col, y_label, x_tickangle=None):       
         if df.empty:
             fig = go.Figure().update_layout(
                 title_text=f"No hay datos para graficar",
@@ -315,7 +314,8 @@ elif selected_analysis == "ORION/CESVI":
         fig.update_layout(
             height=400, # Altura del subplot individual
             font=dict(family="Arial", size=15),
-            margin=dict(t=50, b=0, l=0, r=0)
+            margin=dict(t=50, b=0, l=0, r=0),
+            xaxis_tickangle=x_tickangle
         )
         fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
         
@@ -338,7 +338,7 @@ elif selected_analysis == "ORION/CESVI":
         st.plotly_chart(fig5, use_container_width=True)
         st.markdown("---")
 
-        # gráfico 2: evolución costo repuestos por tipo repuesto
+        # GRAFICO 2: evolución costo repuestos por tipo repuesto
         st.subheader('2. Costo de piezas prom. histórico por Tipo Repuesto')
         # muestro distribución MARCA AUTOS
         with st.expander("Ver tabla de datos",):
@@ -362,7 +362,7 @@ elif selected_analysis == "ORION/CESVI":
             st.markdown('Total marcas: 44' )
             st.markdown("---")
 
-        # gráfico 3: evolución costo repuestos por marca autos
+        # GRAFICO 3: evolución costo repuestos por marca autos
         st.subheader('3. Costo de piezas prom. histórico por Marca (autos)')
 
         # muestro el dataset 
@@ -386,17 +386,17 @@ elif selected_analysis == "ORION/CESVI":
             st.text('Total marcas: 26')
             st.markdown("---")
 
-        # gráfico 4: evolución costo repuestos por marca camiones
+        # GRAFICO 4: evolución costo repuestos por marca camiones
         st.subheader('4. Costo de piezas prom. histórico por Marca (camiones)')
         with st.expander("Ver tabla de datos",):
-            st.dataframe(df_rtos_marca_mes_camion_resumen[['marca','año','cant_ocompra','cant_piezas_total',
-                                    'costo_pieza_prom_hist','var_costo_prom_hist','monto_total_compras']], hide_index=True,)
+            st.dataframe(df_rtos_marca_mes_cam[['marca','año_mes','cant_ocompra','cant_piezas_total',
+                                    'costo_pieza_prom_hist','var_costo_pieza_prom','monto_total_compras']], hide_index=True,)
 
         fig20 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_pieza_prom_hist', 'marca', None, 'Costo Promedio')
         st.plotly_chart(fig20, use_container_width=True)
         st.markdown("---")      
 
-        # gráfico 5: evolución costo mano de obra por tva y tipo de mano de obra
+        # GRAFICO 5: evolución costo mano de obra por tva y tipo de mano de obra
         st.subheader('5. Costo de mano de obra prom. histórico por Tipo de M.O y TVA')
 
         # muestro el dataset
@@ -410,7 +410,7 @@ elif selected_analysis == "ORION/CESVI":
             (df_cm_mo_hist['tva'] == 'moto') & (df_cm_mo_hist['tipo_costo'] != 'cm_hs_elect') |
             (df_cm_mo_hist['tva'] != 'moto')
         ]
-        fig11 = create_plot_orion(df_cm_mo_hist, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio')
+        fig11 = create_plot_orion(df_cm_mo_hist, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio', 45)
         st.plotly_chart(fig11, use_container_width=True)
         st.markdown("---")
 
@@ -424,7 +424,7 @@ elif selected_analysis == "ORION/CESVI":
                 
         # quito camion_cleas_si del df resumen por poca cantidad de datos
         df_cm_mo_hist_cleas = df_cm_mo_hist_cleas[df_cm_mo_hist_cleas['tva'] != 'camion_cleas_si']
-        fig14 = create_plot_orion(df_cm_mo_hist_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio')
+        fig14 = create_plot_orion(df_cm_mo_hist_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio', 45)
         st.plotly_chart(fig14, use_container_width=True)
         
     # ----- GRAFICOS AJUSTADOS POR IPC --------------------------------------------------
@@ -497,9 +497,9 @@ elif selected_analysis == "ORION/CESVI":
         st.subheader('4. Costo de piezas prom. por Marca (camiones) - Ajust. por IPC')
 
         # muestro el dataset 
-        with st.expander("Ver tabla de datos (resumen)",):
-            st.dataframe(df_rtos_marca_mes_camion_resumen[['marca','año','cant_ocompra','cant_piezas_total',
-                                    'costo_prom_ipc','var_costo_prom_ipc','monto_total_compras']], hide_index=True,)
+        with st.expander("Ver tabla de datos",):
+            st.dataframe(df_rtos_marca_mes_cam[['marca','año_mes','cant_ocompra','cant_piezas_total',
+                                    'costo_prom_ipc','var_costo_prom_ipc','monto_ipc']], hide_index=True,)
 
         fig21 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_prom_ipc', 'marca', None, 'Costo Promedio')
         st.plotly_chart(fig21, use_container_width=True)
@@ -606,9 +606,9 @@ elif selected_analysis == "ORION/CESVI":
         st.subheader('4. Costo de piezas prom. por Marca (camiones) en USD')
 
         # muestro el dataset
-        with st.expander("Ver tabla de datos (resumen)"):
-            st.dataframe(df_rtos_marca_mes_camion_resumen[['marca','año','cant_ocompra','cant_piezas_total',
-                                    'costo_prom_usd','var_costo_prom_usd','monto_total_compras']], hide_index=True,)
+        with st.expander("Ver tabla de datos"):
+            st.dataframe(df_rtos_marca_mes_cam[['marca','año_mes','cant_ocompra','cant_piezas_total', 'usd_blue',
+                                    'costo_prom_usd','var_costo_prom_usd','monto_usd']], hide_index=True,)
 
         fig22 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_prom_usd', 'marca', None, 'Costo Promedio (USD)')
         st.plotly_chart(fig22, use_container_width=True)
@@ -648,9 +648,11 @@ elif selected_analysis == "ORION/CESVI":
 
 # ---- Análisis por PROVINCIA --------------------------------------------------
 elif selected_analysis == "Análisis por Provincia":
-    st.title('Análisis Coste Medio por Provincia')    
-    st.markdown("#### _Fuente de datos: BI La Segunda_")
-    # st.markdown("---")
+    st.title('Análisis Coste Medio por Provincia')     
+    st.markdown("---")   
+    st.header('Coste Medio de repuestos por provincia')
+    st.markdown("#### _Fuente de datos: Orion/Cesvi_")
+    
 
     def create_map_chart(df, selected_coverable, color, selected_fecha):
         df_cm_filtered = df[(df['coverable'] == selected_coverable) &
@@ -697,6 +699,52 @@ elif selected_analysis == "Análisis por Provincia":
         )
         return fig
 
+    # ----- Comparativo Orion/Cesvi por provincia --------------------------------------------------
+    available_coverables_orion = sorted(df_cm_prov_orion['coverable'].unique().tolist())
+    available_fechas = sorted(df_cm_prov_orion['año'].unique().tolist())
+
+    # 2 cols para separar grafico y contenedor de filtros
+    col3, col4 = st.columns([1, 4], gap='large') # la segunda col es 4 veces el ancho de la primera 
+    
+    with col3:  
+        with st.container(border=True):
+            selected_coverable_map = st.selectbox(
+                "Seleccionar coverable:",
+                options=available_coverables_orion,   
+                index=available_coverables_orion.index('AUT'), 
+            )
+        with st.container(border=True):
+            # contenedor para seleccionar fecha
+            selected_fecha = st.selectbox(
+                "Seleccionar año:",
+                options=available_fechas,  
+                index=len(available_fechas)-1 
+            )
+
+    df_cm_prov_orion_cov = df_cm_prov_orion[df_cm_prov_orion['coverable'] == selected_coverable_map]
+
+    with col4:
+        with st.container(border=True):            
+            st.markdown(f"#### Coverable selecccionado: {selected_coverable_map}")
+            st.markdown(f"#### Año: {selected_fecha}")
+            fig_prov = create_map_chart(df_cm_prov_orion, selected_coverable_map, 'costo_pieza_prom', selected_fecha)
+            st.plotly_chart(fig_prov, use_container_width=False)    
+    
+    st.markdown("#### Tabla comparativa: Coste Medio por provincia - Orion/Cesvi")  
+    comparativo_orion_prov_raw = comparativo_orion_prov[(comparativo_orion_prov['coverable'] == selected_coverable_map)]
+    st.dataframe(comparativo_orion_prov_raw, use_container_width=True)    
+    
+    with st.expander("Ver data cruda",):
+        st.markdown("#### Data Cruda")
+        # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
+        df_cm_prov_orion_raw = df_cm_prov_orion[(df_cm_prov_orion['coverable'] == selected_coverable_map) &
+                                                    (df_cm_prov_orion['año'] == selected_fecha)]
+        st.dataframe(df_cm_prov_orion_raw, use_container_width=True)
+
+    # ----- Comparativo BI La Segunda por provincia --------------------------------------------------
+    st.header('Coste Medio siniestral por provincia')
+    st.markdown("#### _Fuente de datos: BI La Segunda_")
+
     available_coverables = sorted(df_cm_agg['coverable'].unique().tolist())
     available_fechas = sorted(df_cm_agg['año'].unique().tolist())
 
@@ -740,55 +788,11 @@ elif selected_analysis == "Análisis por Provincia":
         # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
         df_cm_filtered_raw = df_cm_prov[(df_cm_prov['coverable'] == selected_coverable_map) &
                                                         (df_cm_prov['año'] == selected_fecha)]
-        st.dataframe(df_cm_filtered_raw, use_container_width=True)  
-
-    # ----- Comparativo Orion/Cesvi por provincia --------------------------------------------------
-    st.markdown("#### _Fuente de datos: Orion/Cesvi_")
-
-    available_coverables_orion = sorted(df_cm_prov_orion['coverable'].unique().tolist())
-    available_fechas = sorted(df_cm_prov_orion['año'].unique().tolist())
-
-    # 2 cols para separar grafico y contenedor de filtros
-    col3, col4 = st.columns([1, 4], gap='large') # la segunda col es 4 veces el ancho de la primera 
-    
-    with col3:  
-        with st.container(border=True):
-            selected_coverable_map = st.selectbox(
-                "Seleccionar coverable:",
-                options=available_coverables_orion,   
-                index=available_coverables_orion.index('AUT'), 
-            )
-        with st.container(border=True):
-            # contenedor para seleccionar fecha
-            selected_fecha = st.selectbox(
-                "Seleccionar año:",
-                options=available_fechas,  
-                index=len(available_fechas)-1 
-            )
-
-    df_cm_prov_orion_cov = df_cm_prov_orion[df_cm_prov_orion['coverable'] == selected_coverable_map]
-
-    with col4:
-        with st.container(border=True):            
-            st.markdown(f"#### Coverable selecccionado: {selected_coverable_map}")
-            st.markdown(f"#### Año: {selected_fecha}")
-            fig_prov = create_map_chart(df_cm_prov_orion, selected_coverable_map, 'costo_pieza_prom', selected_fecha)
-            st.plotly_chart(fig_prov, use_container_width=False)    
-    
-    st.markdown("#### Tabla comparativa: Coste Medio por provincia - Orion/Cesvi")  
-    comparativo_orion_prov_raw = comparativo_orion_prov[(comparativo_orion_prov['coverable'] == selected_coverable_map)]
-    st.dataframe(comparativo_orion_prov_raw, use_container_width=True)    
-    
-    with st.expander("Ver data cruda",):
-        st.markdown("#### Data Cruda")
-        # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
-        df_cm_prov_orion_raw = df_cm_prov_orion[(df_cm_prov_orion['coverable'] == selected_coverable_map) &
-                                                    (df_cm_prov_orion['año'] == selected_fecha)]
-        st.dataframe(df_cm_prov_orion_raw, use_container_width=True)     
+        st.dataframe(df_cm_filtered_raw, use_container_width=True)   
 
 
 # ----- Comparativo Mano de obra --------------------------------------------------
-elif selected_analysis == "Comparativo de Mano de Obra":
+elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
     st.title('Comparativo Mano de obra - La Segunda vs CESVI/Sancor/San Cristobal')    
     st.markdown("---")
     
