@@ -50,8 +50,8 @@ try:
     df_distrib_marcas_cartera = pd.read_csv('data/distrib_ar_marca_cartera.csv')
 
     # dfs p/mostrar tablas
-    df_rtos_marca_mes_camion_resumen = pd.read_csv('data/df_rtos_marca_mes_camiones_resumen.csv')
-    df_rtos_marca_mes_resumen = pd.read_csv('data/df_rtos_marca_mes_resumen.csv')
+    # df_rtos_marca_mes_camion_resumen = pd.read_csv('data/df_rtos_marca_mes_camiones_resumen.csv')
+    # df_rtos_marca_mes_resumen = pd.read_csv('data/df_rtos_marca_mes_resumen.csv')
     df_cm_mo_resumen = pd.read_csv('data/df_cm_mo_resumen.csv')
     df_cm_mo_cleas_resumen = pd.read_csv('data/df_cm_mo_cleas_resumen.csv')
 
@@ -125,6 +125,8 @@ def create_pie_chart(df, value):
 # ---- Slider selección de análisis --------------------------------------------------
 st.markdown("---")
 st.markdown("### Seleccionar el análisis deseado:")
+
+# ---- Seleccionador de análisis --------------------------------------------------
 selected_analysis = st.selectbox(
     'Seleccionar Análisis:',
     options=["Evolutivo precios Pilkington", 
@@ -149,7 +151,9 @@ if 'show_pie_chart_3' not in st.session_state:
 if 'show_mo' not in st.session_state:
     st.session_state.show_mo = False
 
+# ==========================================================================
 # ---- Análisis PILKINGTON --------------------------------------------------
+# ==========================================================================
 if selected_analysis == "Evolutivo precios Pilkington":
     st.title("Variación de Precios de Cristales y Mano de obra por Marca y Zona")
     st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_")
@@ -181,7 +185,7 @@ if selected_analysis == "Evolutivo precios Pilkington":
         )
         st.markdown("---")
 
-    def create_plot_pkt(df_source, y_col, y_label):   
+    def create_plot_pkt(df_source, y_col, y_label, x_tickangle=45):   
 
         # Filtrar el DataFrame según la zona seleccionada
         df_filtered = df_source[
@@ -205,7 +209,13 @@ if selected_analysis == "Evolutivo precios Pilkington":
             height=400, # Altura del subplot individual
             legend_title_text='Marca',
             font=dict(family="Arial", size=15),
-            margin=dict(t=50, b=0, l=0, r=0)
+            margin=dict(t=50, b=0, l=0, r=0),
+        )
+        fig.for_each_xaxis(
+        lambda xaxis: xaxis.update(
+            tickangle=x_tickangle, # Aplicar el ángulo deseado
+            showticklabels=True     # Asegurarse de que las etiquetas sean visibles (si fuera necesario)
+            )
         )
         # Ajustar el título de las facetas para que sean más legibles
         fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
@@ -269,8 +279,9 @@ if selected_analysis == "Evolutivo precios Pilkington":
         df_filtered_raw['fecha'] = df_filtered_raw['fecha'].dt.strftime('%Y-%m-%d')
         st.dataframe(df_filtered_raw, use_container_width=True)
 
-
-# ---- Análisis ORION/CESVI --------------------------------------------------
+# ==========================================================================
+# ---- Análisis ORION/CESVI ------------------------------------------------
+# ==========================================================================
 elif selected_analysis == "Evolutivo precios ORION/CESVI":
     st.title('Variación de Precios de Repuestos y Mano de obra')
     st.markdown("#### _Fuente de datos: Orion/Cesvi_")
@@ -308,7 +319,6 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
             color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
             facet_col=facet_col,
             # line_group='marca',
-            # facet_col='tipo_cristal', # Subplots por tipo de cristal
             #title='', agrego titulo con subheader
             labels={'año_mes': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
         )
@@ -317,7 +327,12 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
             height=400, # Altura del subplot individual
             font=dict(family="Arial", size=15),
             margin=dict(t=50, b=0, l=0, r=0),
-            xaxis_tickangle=x_tickangle
+        )
+        fig.for_each_xaxis(
+        lambda xaxis: xaxis.update(
+            tickangle=x_tickangle, # Aplicar el ángulo deseado
+            showticklabels=True     # Asegurarse de que las etiquetas sean visibles (si fuera necesario)
+            )
         )
         fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
         
@@ -507,7 +522,7 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
         st.plotly_chart(fig21, use_container_width=True)
         st.markdown("---")    
 
-        # gráfico 5: evolución costo mano de obra por tva y tipo de mano de obra IPC
+        # GRAFICO 5: evolución costo mano de obra por tva y tipo de mano de obra IPC
         st.subheader('5. Evolución del costo de mano de obra prom. por Tipo de M.O y TVA - Ajust. por IPC')
 
         # muestro el dataset
@@ -524,7 +539,7 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
         st.plotly_chart(fig12, use_container_width=True)
         st.markdown("---")
 
-        # gráfico 6: evolución costo mano de obra cleas si vs cleas no IPC
+        # GRAFICO 6: evolución costo mano de obra cleas si vs cleas no IPC
         st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO - Ajust. por IPC')
 
         # muestro el dataset
@@ -647,8 +662,9 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
         fig16 = create_plot_orion(df_cm_mo_usd_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio (USD)')
         st.plotly_chart(fig16, use_container_width=True)
 
-
-# ---- Análisis por PROVINCIA --------------------------------------------------
+# ==========================================================================
+# ---- Análisis por PROVINCIA ----------------------------------------------
+# ==========================================================================
 elif selected_analysis == "Análisis por Provincia":
     st.title('Análisis Coste Medio por Provincia')     
     st.markdown("---")   
@@ -792,8 +808,9 @@ elif selected_analysis == "Análisis por Provincia":
                                                         (df_cm_prov['año'] == selected_fecha)]
         st.dataframe(df_cm_filtered_raw, use_container_width=True)   
 
-
-# ----- Comparativo Mano de obra --------------------------------------------------
+# ==========================================================================
+# ----- Comparativo Mano de obra -------------------------------------------
+# ==========================================================================
 elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
     st.title('Comparativo Mano de obra - La Segunda vs CESVI/Sancor/San Cristobal')    
     st.markdown("---")
