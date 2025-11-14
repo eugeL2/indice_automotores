@@ -1061,7 +1061,9 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
         # muestro el dataset
         with st.expander("Ver tabla de datos",):
             # st.subheader("Tabla de Datos de Ejemplo")
-            st.dataframe(df_tot_reparacion, hide_index=True,)
+            st.dataframe(df_tot_reparacion[['anio_mes', 'grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal',
+                                    'sancor', 'ipc','var_ipc', 'var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda',
+                                    'var_%_san_cristobal', 'var_%_sancor']], hide_index=True,)
 
         if st.button("**Variación monto reparaciones vs IPC**",type="primary", icon=":material/query_stats:"):
             st.session_state.show_ipc_6 = not st.session_state.show_ipc_6
@@ -1087,7 +1089,9 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
         # muestro el dataset
         with st.expander("Ver tabla de datos",):
             # st.subheader("Tabla de Datos de Ejemplo")
-            st.dataframe(df_costo_hora, hide_index=True,)
+            st.dataframe(df_costo_hora[['anio_mes', 'grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal',
+                                    'sancor', 'ipc','var_ipc', 'var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda',
+                                    'var_%_san_cristobal', 'var_%_sancor']], hide_index=True,)
 
         if st.button("**Variación costo hora M.O vs IPC**",type="primary", icon=":material/query_stats:"):
             st.session_state.show_ipc_6 = not st.session_state.show_ipc_6
@@ -1258,4 +1262,5 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
 # Este código asume que tienes un DataFrame df_variaciones 
 # (que puedes crear con df_rtos_mes.groupby('año_mes')[['var_costo_prom', 'ipc']].mean().pct_change() * 100) 
 # listo para el análisis.
+
 
