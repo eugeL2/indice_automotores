@@ -30,8 +30,8 @@ try:
     df_cristal = pd.read_csv('data/base_pkt_app_2.csv')
 
     # dfs de repuestos orion/cesvi
-    df_tipo_rep = pd.read_csv('data/df_tipo_rep_sept.csv')
-    df_rep_tv = pd.read_csv('data/df_rep_tv_sept.csv')
+    df_tipo_rep = pd.read_csv('data/df_tipo_rep_sept_ok.csv')
+    df_rep_tv = pd.read_csv('data/df_rep_tv_sept_ok.csv')
 
     # dfs de mano de obra orion/cesvi
     df_cm_mo_hist = pd.read_csv('data/df_cm_mo_hist.csv')
@@ -44,14 +44,11 @@ try:
 
     # dfs marcas
     df_marcas_autos = pd.read_csv('data/evol_todas_marcas_autos.csv')
-    df_rtos_marca_mes = pd.read_csv('data/df_rtos_marca_mes_sept.csv')
+    df_rtos_marca_mes = pd.read_csv('data/df_rtos_marca_mes_sept_ok.csv')
     df_marcas_camiones = pd.read_csv('data/camion_marcas.csv')
-    df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_cam_sept.csv')
+    df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_cam_sept_ok.csv')
     df_distrib_marcas_cartera = pd.read_csv('data/distrib_ar_marca_cartera.csv')
 
-    # dfs p/mostrar tablas
-    # df_rtos_marca_mes_camion_resumen = pd.read_csv('data/df_rtos_marca_mes_camiones_resumen.csv')
-    # df_rtos_marca_mes_resumen = pd.read_csv('data/df_rtos_marca_mes_resumen.csv')
     df_cm_mo_resumen = pd.read_csv('data/df_cm_mo_resumen.csv')
     df_cm_mo_cleas_resumen = pd.read_csv('data/df_cm_mo_cleas_resumen.csv')
 
@@ -65,30 +62,32 @@ try:
 
     # dfs comparativo mano de obra
     df_chapa_pintura = pd.read_csv('data/df_chapa_pintura.csv')
-    df_mo_repuestos_final = pd.read_csv('data/df_mo_repuestos_final.csv')
+    df_mo_repuestos_final = pd.read_csv('data/df_mo_repuestos_final_ok.csv')
     df_peritaciones = pd.read_csv('data/df_peritaciones.csv')
-    df_costo_hora = pd.read_csv('data/df_costo_hora.csv')
-    df_tot_reparacion = pd.read_csv('data/df_tot_reparacion.csv')
+    df_costo_hora = pd.read_csv('data/df_costo_hora_ok.csv')
+    df_tot_reparacion = pd.read_csv('data/df_tot_reparacion_ok.csv')
 
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. Detalles: {e}")
     # La app se detiene si no encuentra los archivos
     st.stop()
 
-# ---- Formateo de datos --------------------------------------------------
-for df_temp in [df_cristal]:
-    if 'fecha' in df_temp.columns:
-        df_temp['fecha'] = pd.to_datetime(df_temp['fecha'])
-    if 'año_mes' in df_temp.columns:
-        df_temp['año_mes'] = pd.to_datetime(df_temp['año_mes'], format='%Y-%m-%d')
-    if 'cristal' in df_temp.columns:
-        df_temp['cristal'] = df_temp['cristal'].astype(str).str.replace('_', ' ').str.title()
-    if 'marca' in df_temp.columns:
-        df_temp['marca'] = df_temp['marca'].astype(str)
-    if 'zona' in df_temp.columns:
-        df_temp['zona'] = df_temp['zona'].astype(str)
-    if 'tipo_repuesto' in df_temp.columns:
-        df_temp['tipo_repuesto'] = df_temp['tipo_repuesto'].astype(str).str.replace('_', ' ').str.title()
+# ==========================================================================
+# ---- FORMATEO de datos ---------------------------------------------------
+# ==========================================================================
+
+# ---- Formateo base cristales --------------------------------------------------
+if 'fecha' in df_cristal.columns:
+    df_cristal['fecha'] = pd.to_datetime(df_cristal['fecha'])
+if 'año_mes' in df_cristal.columns:
+    df_cristal['año_mes'] = pd.to_datetime(df_cristal['año_mes'], format='%Y-%m-%d')
+if 'cristal' in df_cristal.columns:
+    df_cristal['cristal'] = df_cristal['cristal'].astype(str).str.replace('_', ' ').str.title()
+df_cristal['marca'] = df_cristal['marca'].astype(str)
+if 'zona' in df_cristal.columns:
+    df_cristal['zona'] = df_cristal['zona'].astype(str)
+if 'tipo_repuesto' in df_cristal.columns:
+    df_cristal['tipo_repuesto'] = df_cristal['tipo_repuesto'].astype(str).str.replace('_', ' ').str.title()
 
 # ---- Formateo base provincias --------------------------------------------------
 df_cm_agg = df_cm_prov.groupby(['coverable','año','provincia',]).agg(
@@ -96,6 +95,14 @@ df_cm_agg = df_cm_prov.groupby(['coverable','año','provincia',]).agg(
 df_cm_agg = df_cm_agg.reset_index()
 # cambio formato de coste medio a int
 df_cm_agg['coste_medio_prom'] = df_cm_agg['coste_medio_prom'].astype(int)
+
+# ---- Formateo df_rep_tv (agrego var ipc en %) --------------------------------------------------
+df_rep_tv['var_ipc_%'] = df_rep_tv['var_ipc']*100
+df_rep_tv['var_ipc_%'] = df_rep_tv['var_ipc_%'].round(2)
+df_rep_tv['var_ipc_%'] = df_rep_tv['var_ipc_%'].astype(str) + '%'
+df_rep_tv['var_ipc_%'] = df_rep_tv['var_ipc_%'].replace('nan%', '-')
+
+# ==========================================================================
 
 
 # ---- Función construir graficos de torta -------------------------------------------------- 
@@ -151,8 +158,26 @@ if 'show_pie_chart_3' not in st.session_state:
 if 'show_mo' not in st.session_state:
     st.session_state.show_mo = False
 
+if 'show_ipc_1' not in st.session_state:
+    st.session_state.show_ipc_1 = False    
+
+if 'show_ipc_2' not in st.session_state:
+    st.session_state.show_ipc_2 = False   
+
+if 'show_ipc_3' not in st.session_state:
+    st.session_state.show_ipc_3 = False   
+
+if 'show_ipc_4' not in st.session_state:
+    st.session_state.show_ipc_4 = False   
+if 'show_ipc_5' not in st.session_state:
+    st.session_state.show_ipc_5 = False
+if 'show_ipc_6' not in st.session_state:
+    st.session_state.show_ipc_6 = False
+if 'show_ipc_7' not in st.session_state:
+    st.session_state.show_ipc_7 = False
+
 # ==========================================================================
-# ---- Análisis PILKINGTON --------------------------------------------------
+# ---- Análisis PILKINGTON -------------------------------------------------
 # ==========================================================================
 if selected_analysis == "Evolutivo precios Pilkington":
     st.title("Variación de Precios de Cristales y Mano de obra por Marca y Zona")
@@ -175,7 +200,7 @@ if selected_analysis == "Evolutivo precios Pilkington":
             label_visibility ='collapsed'
         )
         st.markdown("---")
-        st.session_state['zona'] = selected_zone
+        
         st.markdown("##### _Seleccionar Marcas:_")
         selected_marcas = st.multiselect(
             "Marcas",
@@ -349,22 +374,58 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
         with st.expander("Ver tabla de datos",):
             # st.subheader("Tabla de Datos de Ejemplo")
             st.dataframe(df_rep_tv[['tva','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
-                                    'cant_piezas_prom','costo_pieza_prom_hist','var_costo_prom','monto_total_compras']], hide_index=True,)
+                                    'cant_piezas_prom','costo_pieza_prom_hist','var_costo_prom_%','ipc','var_ipc_%','monto_total_compras']], 
+                                    hide_index=True,)
 
         fig5 = create_plot_orion(df_rep_tv, 'costo_pieza_prom_hist', 'tva', None,'Costo Promedio')
         st.plotly_chart(fig5, use_container_width=True)
-        st.markdown("---")
+        # st.markdown("---")
+    
+        # 2. Preparar los datos del IPC (evitando duplicados por mes)
+        df_ipc_data = df_rep_tv[['año_mes', 'var_ipc']].drop_duplicates().sort_values('año_mes')
+        if st.button("**Variación CM vs IPC**",type="primary", icon=":material/query_stats:"):
+            st.session_state.show_ipc_1 = not st.session_state.show_ipc_1
+
+        if st.session_state.show_ipc_1:
+            fig5_ipc = create_plot_orion(df_rep_tv, 'var_costo_prom', 'tva', None,'Variación (base 1)')
+            # 3. Agregar la línea (trace) del IPC al gráfico existente (fig5)
+            fig5_ipc.add_trace(go.Scatter(
+                x=df_ipc_data['año_mes'],
+                y=df_ipc_data['var_ipc'],
+                name='IPC',        # Nombre que aparecerá en la leyenda
+                mode='lines',
+                line=dict(color='white', dash='dot')
+            ))
+            fig5_ipc.update_layout(legend_title_text='Variación')
+            st.plotly_chart(fig5_ipc, use_container_width=True)
 
         # GRAFICO 2: evolución costo repuestos por tipo repuesto
         st.subheader('2. Costo de piezas prom. histórico por Tipo Repuesto')
         # muestro distribución MARCA AUTOS
         with st.expander("Ver tabla de datos",):
-            st.dataframe(df_tipo_rep[['tipo_repuesto','año_mes', 'cant_ocompra', 'cant_piezas_total',
-                        'cant_piezas_prom', 'costo_pieza_prom_hist', 'var_costo_prom',
-                        'monto_total_compras']], hide_index=True)
+            st.dataframe(df_tipo_rep[['tipo_repuesto','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
+                                    'cant_piezas_prom','costo_pieza_prom_hist','var_costo_prom_%','ipc','var_ipc_%','monto_total_compras']], 
+                                    hide_index=True)
 
         fig6 = create_plot_orion(df_tipo_rep, 'costo_pieza_prom_hist', 'tipo_repuesto', None,'Costo Promedio')
         st.plotly_chart(fig6, use_container_width=True)
+
+        # Boton para variacion del CM vs variacion IPC
+        if st.button("**Variación CM vs IPC x tipo de repuesto**",type="primary", icon=":material/query_stats:"):
+            st.session_state.show_ipc_2 = not st.session_state.show_ipc_2
+
+        if st.session_state.show_ipc_2:
+            fig6_ipc = create_plot_orion(df_tipo_rep, 'var_costo_prom', 'tipo_repuesto', None,'Variación (base 1)')
+            fig6_ipc.add_trace(go.Scatter(
+                x=df_ipc_data['año_mes'],
+                y=df_ipc_data['var_ipc'],
+                name='IPC',        # Nombre que aparecerá en la leyenda
+                mode='lines',
+                line=dict(color='white', dash='dot')
+            ))
+            fig6_ipc.update_layout(legend_title_text='Variación')
+            st.plotly_chart(fig6_ipc, use_container_width=True)
+
         st.markdown("---")
 
         # muestro grafico torta MARCAS AUTOS 
@@ -384,11 +445,29 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
 
         # muestro el dataset 
         with st.expander("Ver tabla de datos",):
-            st.dataframe(df_rtos_marca_mes[['marca','año_mes','cant_ocompra','cant_piezas_total',
-                                    'costo_pieza_prom_hist','var_costo_pieza_prom','monto_total_compras']], hide_index=True,)
+            st.dataframe(df_rtos_marca_mes[['marca','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
+                                    'cant_piezas_prom','costo_pieza_prom_hist','var_costo_prom_%','ipc','var_ipc_%','monto_total_compras']], 
+                                    hide_index=True,)
 
         fig17 = create_plot_orion(df_rtos_marca_mes, 'costo_pieza_prom_hist', 'marca', None, 'Costo Promedio')
         st.plotly_chart(fig17, use_container_width=True)
+
+        if st.button("**Variación CM vs IPC x marca (AUT)**",type="primary", icon=":material/query_stats:"):
+            st.session_state.show_ipc_3 = not st.session_state.show_ipc_3
+
+        if st.session_state.show_ipc_3:
+            fig7_ipc = create_plot_orion(df_rtos_marca_mes, 'var_costo_prom', 'marca', None,'Variación (base 1)')
+            fig7_ipc.add_trace(go.Scatter(
+                x=df_ipc_data['año_mes'],
+                y=df_ipc_data['var_ipc'],
+                name='IPC',        # Nombre que aparecerá en la leyenda
+                mode='lines',
+                line=dict(color='white', dash='dot')
+            ))
+            fig7_ipc.update_layout(legend_title_text='Variación')
+            st.plotly_chart(fig7_ipc, use_container_width=True)
+
+
         st.markdown("---")
 
         # muestro el grafico torta MARCA CAMIONES
@@ -406,11 +485,29 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
         # GRAFICO 4: evolución costo repuestos por marca camiones
         st.subheader('4. Costo de piezas prom. histórico por Marca (camiones)')
         with st.expander("Ver tabla de datos",):
-            st.dataframe(df_rtos_marca_mes_cam[['marca','año_mes','cant_ocompra','cant_piezas_total',
-                                    'costo_pieza_prom_hist','var_costo_pieza_prom','monto_total_compras']], hide_index=True,)
+            st.dataframe(df_rtos_marca_mes_cam[['marca','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
+                                    'cant_piezas_prom','costo_pieza_prom_hist','var_costo_prom_%','ipc','var_ipc_%','monto_total_compras']],
+                                    hide_index=True,)
 
         fig20 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_pieza_prom_hist', 'marca', None, 'Costo Promedio')
         st.plotly_chart(fig20, use_container_width=True)
+
+        if st.button("**Variación CM vs IPC x marca (CAM)**",type="primary", icon=":material/query_stats:"):
+            st.session_state.show_ipc_4 = not st.session_state.show_ipc_4
+
+        if st.session_state.show_ipc_4:
+            fig20_ipc = create_plot_orion(df_rtos_marca_mes_cam, 'var_costo_prom', 'marca', None,'Variación (base 1)')
+            fig20_ipc.add_trace(go.Scatter(
+                x=df_ipc_data['año_mes'],
+                y=df_ipc_data['var_ipc'],
+                name='IPC',        # Nombre que aparecerá en la leyenda
+                mode='lines',
+                line=dict(color='white', dash='dot')
+            ))
+            fig20_ipc.update_layout(legend_title_text='Variación')
+            st.plotly_chart(fig20_ipc, use_container_width=True)
+
+
         st.markdown("---")      
 
         # GRAFICO 5: evolución costo mano de obra por tva y tipo de mano de obra
@@ -829,7 +926,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
         # Guardo la selección en session_state para que la funcion pueda usarla
         st.session_state['selected_variation_type_2'] = selected_variation_type_2
     
-    def create_plot_mo(df, y_col, color, facet_col, y_label, line_width=2):       
+    def create_plot_mo(df, y_col, color, facet_col, y_label, x_tickangle=None, line_width=2):       
         if df.empty:
             fig = go.Figure().update_layout(
                 title_text=f"No hay datos para graficar",
@@ -846,10 +943,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
             color=color,
             color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
             facet_col=facet_col,
-            # line_group='marca',
-            # facet_col='tipo_cristal', # Subplots por tipo de cristal
-            #title='', agrego titulo con subheader
-            labels={'value': y_label, 'anio_mes': ''}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
+            labels={'value': y_label, 'anio_mes': ''}
         )
 
         fig.update_layout(
@@ -857,6 +951,12 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
             height=400, # Altura del subplot individual
             font=dict(family="Arial", size=15),
             margin=dict(t=50, b=0, l=0, r=0),
+        )
+        fig.for_each_xaxis(
+            lambda xaxis: xaxis.update(
+                tickangle=x_tickangle, # Aplicar el ángulo deseado
+                showticklabels=True     # Asegurarse de que las etiquetas sean visibles (si fuera necesario)
+            )
         )
         fig.update_traces(line_width=line_width)
         fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
@@ -914,14 +1014,45 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
                 # st.subheader("Tabla de Datos de Ejemplo")
                 st.dataframe(df_chapa_pintura[['anio_mes','aseguradora','monto_historico','tipo']], hide_index=True, width=1500,)
 
-        fig_1 = create_plot_mo(df_mo_repuestos_final, 'monto_historico', 'aseguradora', 'tipo', 'Monto')
+        fig_1 = create_plot_mo(df_mo_repuestos_final, 'monto_historico', 'aseguradora', 'tipo', 'Monto',45)
         st.plotly_chart(fig_1, use_container_width=True)
 
         # muestro el dataset
         with st.expander("Ver tabla de datos",):
             # st.subheader("Tabla de Datos de Ejemplo")
-            st.dataframe(df_mo_repuestos_final[['anio_mes','aseguradora','monto_historico','tipo']], hide_index=True, width=1000,)
+            st.dataframe(df_mo_repuestos_final[['anio_mes','aseguradora','tipo','monto_historico','ipc','var_monto_prom_%','var_ipc_%',]],
+                          hide_index=True, width=1000,)
 
+        if st.button("**Variación M.O vs IPC**",type="primary", icon=":material/query_stats:"):
+            st.session_state.show_ipc_5 = not st.session_state.show_ipc_5
+
+        df_ipc_data_mo = df_mo_repuestos_final[['anio_mes', 'var_ipc']].drop_duplicates().sort_values('anio_mes')
+        if st.session_state.show_ipc_5:
+            fig_1_ipc = create_plot_mo(df_mo_repuestos_final, 'var_monto_prom', 'aseguradora', 'tipo','Variación (base 1)',45)
+            fig_1_ipc.add_trace(go.Scatter(
+                x=df_ipc_data_mo['anio_mes'],
+                y=df_ipc_data_mo['var_ipc'],
+                name='IPC', 
+                mode='lines',
+                line=dict(color='white', dash='dot'), # Cambié a negro para asegurar visibilidad
+                showlegend=True,     
+            ),
+            row=1, col=1)
+
+            fig_1_ipc.add_trace(go.Scatter(
+                x=df_ipc_data_mo['anio_mes'],
+                y=df_ipc_data_mo['var_ipc'],
+                name='IPC',        # Nombre que aparecerá en la leyenda
+                mode='lines',
+                line=dict(color='white', dash='dot'),
+                showlegend=False, # Importante: Ocultar esta traza de la leyenda 
+            ),
+            row=1, col=2)
+            fig_1_ipc.update_layout(legend_title_text='Variación')
+            st.plotly_chart(fig_1_ipc, use_container_width=True)
+
+
+        st.markdown("---") 
 
         st.subheader('Evolución monto de reparaciones (Repuestos + MO)')
 
@@ -932,6 +1063,24 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
             # st.subheader("Tabla de Datos de Ejemplo")
             st.dataframe(df_tot_reparacion, hide_index=True,)
 
+        if st.button("**Variación monto reparaciones vs IPC**",type="primary", icon=":material/query_stats:"):
+            st.session_state.show_ipc_6 = not st.session_state.show_ipc_6
+
+        y_cols_var = ['var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor']
+        if st.session_state.show_ipc_6:
+            fig_3_ipc = create_plot_mo(df_tot_reparacion, y_cols_var, None, None, 'Variación (base 1)')
+            fig_3_ipc.add_trace(go.Scatter(
+                x=df_tot_reparacion['anio_mes'],
+                y=df_tot_reparacion['var_ipc'],
+                name='var_ipc', 
+                mode='lines',
+                line=dict(color='white', dash='dot'),
+            ))
+            fig_3_ipc.update_layout(legend_title_text='')
+            st.plotly_chart(fig_3_ipc, use_container_width=True)
+
+        st.markdown("---") 
+
         st.subheader('Evolución costo hora de Mano de Obra')
         fig_5 = create_plot_mo(df_costo_hora, y_cols_hist, None, None, 'Costo hora')
         st.plotly_chart(fig_5, use_container_width=True)
@@ -939,6 +1088,24 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
         with st.expander("Ver tabla de datos",):
             # st.subheader("Tabla de Datos de Ejemplo")
             st.dataframe(df_costo_hora, hide_index=True,)
+
+        if st.button("**Variación costo hora M.O vs IPC**",type="primary", icon=":material/query_stats:"):
+            st.session_state.show_ipc_6 = not st.session_state.show_ipc_6
+
+        if st.session_state.show_ipc_6:
+            fig_5_ipc = create_plot_mo(df_costo_hora, y_cols_var, None, None, 'Variación (base 1)')
+            fig_5_ipc.add_trace(go.Scatter(
+                x=df_costo_hora['anio_mes'],
+                y=df_costo_hora['var_ipc'],
+                name='var_ipc', 
+                mode='lines',
+                line=dict(color='white', dash='dot'),
+            ))
+            fig_5_ipc.update_layout(legend_title_text='')
+            st.plotly_chart(fig_5_ipc, use_container_width=True)
+
+        st.markdown("---") 
+
 
         st.subheader('Peritaciones', divider='grey')
 
@@ -1043,7 +1210,6 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
             # st.subheader("Tabla de Datos de Ejemplo")
             st.dataframe(df_mo_repuestos_final[['anio_mes','aseguradora','monto_usd','tipo']], hide_index=True, width=1500,)
 
-
         st.subheader('Evolución monto de reparaciones (Repuestos + MO) - en USD')
 
         fig_3 = create_plot_mo(df_tot_reparacion, y_cols_usd, None, None, 'Monto MO')
@@ -1064,4 +1230,32 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
                          hide_index=True, width=1000,)
 
 
+# El análisis más valioso para los seguros es comparar la variación de tus costos vs. la variación de la inflación. 
+# Esto se hace en un gráfico separado de Variación Porcentual.
+
+# Gráfico Separado: Variación Mensual (%)
+# Lo que necesitas: Un nuevo gráfico de líneas donde:
+
+# Eje Y: Muestre el Porcentaje de Variación Mensual (el resultado de pct_change() * 100).
+
+# Líneas: Haya una línea para:
+
+# var_costo_prom (Variación histórica del costo promedio).
+
+# var_costo_prom_ipc (Variación del IPC).
+
+# Valor: Esto te permite ver si tus costos están subiendo más rápido que el IPC (lo que indica que el costo real está aumentando) o 
+# si lo están haciendo más lentamente (lo que indica que estás ganando eficiencia o que los precios están rezagados).
+
+# Conclusión: Continúa con tus tres gráficos originales de evolución (Histórico, IPC, USD), pero agrega un cuarto gráfico de 
+# "Comparación de Inflación" donde pones el var_costo_prom y el var_costo_prom_ipc (la variación porcentual del IPC) en el mismo eje Y.
+
+# -------------------------
+# Implementación: Añadir la Línea del IPC al Gráfico de Variación
+# Para seguir la metodología que ya tienes en tu app (consolidar datos y graficar con px.line), 
+# el código para el nuevo gráfico de comparación de variaciones sería el siguiente.
+
+# Este código asume que tienes un DataFrame df_variaciones 
+# (que puedes crear con df_rtos_mes.groupby('año_mes')[['var_costo_prom', 'ipc']].mean().pct_change() * 100) 
+# listo para el análisis.
 
