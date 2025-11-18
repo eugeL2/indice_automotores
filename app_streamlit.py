@@ -27,7 +27,7 @@ st.set_page_config(
 # ----- Cargo las bases de datos --------------------------------------------------
 try:
     # df PKT (cristales)
-    df_cristal = pd.read_csv('data/base_pkt_app_2.csv')
+    df_cristal = pd.read_csv('data/base_pkt_ok.csv')
 
     # dfs de repuestos orion/cesvi
     df_tipo_rep = pd.read_csv('data/df_tipo_rep_sept_ok.csv')
@@ -129,11 +129,11 @@ def create_pie_chart(df, value):
 
     return fig 
 
+
 # ---- Slider selección de análisis --------------------------------------------------
 st.markdown("---")
 st.markdown("### Seleccionar el análisis deseado:")
 
-# ---- Seleccionador de análisis --------------------------------------------------
 selected_analysis = st.selectbox(
     'Seleccionar Análisis:',
     options=["Evolutivo precios Pilkington", 
@@ -160,13 +160,10 @@ if 'show_mo' not in st.session_state:
 
 if 'show_ipc_1' not in st.session_state:
     st.session_state.show_ipc_1 = False    
-
 if 'show_ipc_2' not in st.session_state:
     st.session_state.show_ipc_2 = False   
-
 if 'show_ipc_3' not in st.session_state:
     st.session_state.show_ipc_3 = False   
-
 if 'show_ipc_4' not in st.session_state:
     st.session_state.show_ipc_4 = False   
 if 'show_ipc_5' not in st.session_state:
@@ -175,6 +172,10 @@ if 'show_ipc_6' not in st.session_state:
     st.session_state.show_ipc_6 = False
 if 'show_ipc_7' not in st.session_state:
     st.session_state.show_ipc_7 = False
+if 'show_ipc_8' not in st.session_state:
+    st.session_state.show_ipc_8 = False
+if 'show_ipc_9' not in st.session_state:
+    st.session_state.show_ipc_9 = False
 
 # ==========================================================================
 # ---- Análisis PILKINGTON -------------------------------------------------
@@ -269,10 +270,71 @@ if selected_analysis == "Evolutivo precios Pilkington":
             fig1 = create_plot_pkt(df_cristal, 'precio', 'Precio Sin IVA')
             st.plotly_chart(fig1, use_container_width=True)
 
+        st.markdown('')
+
+        ipc_data = df_cristal[['fecha', 'var_ipc']].drop_duplicates().sort_values('fecha')
+        if st.button("**Variación precio material vs IPC**", type="primary", icon=":material/query_stats:"):
+            st.session_state.show_ipc_8 = not st.session_state.show_ipc_8
+
+        if st.session_state.show_ipc_8:
+            fig1_ipc_ = create_plot_pkt(df_cristal, 'var_precio_prom', 'Variación (base 1)')
+
+            NUM_COLUMNS = 5
+        
+            for col_num in range (1, NUM_COLUMNS + 1):
+
+                mostrar_leyenda = (col_num==1)
+        
+                fig1_ipc_.add_trace(go.Scatter(
+                    x=ipc_data['fecha'],
+                    y=ipc_data['var_ipc'],
+                    name='IPC', 
+                    mode='lines',
+                    line=dict(color='white', dash='dot'), # Cambié a negro para asegurar visibilidad
+                    showlegend=mostrar_leyenda,     
+                ),
+                row=1, col=col_num)
+        
+            fig1_ipc_.update_layout(legend_title_text='Variación')
+            st.plotly_chart(fig1_ipc_, use_container_width=True)
+        
+        st.subheader('', divider='grey')
+        st.markdown('')
+
         with st.container(border=True):
             st.subheader('2. Costo de Instalación histórico (Sin IVA)')
             fig2 = create_plot_pkt(df_cristal, 'instalacion', 'Costo de Instalación')
             st.plotly_chart(fig2, use_container_width=True)
+
+        st.markdown('')
+
+        if st.button("**Variación precio instalación vs IPC**", type="primary", icon=":material/query_stats:"):
+            st.session_state.show_ipc_9 = not st.session_state.show_ipc_9
+
+        if st.session_state.show_ipc_9:
+            fig2_ipc_ = create_plot_pkt(df_cristal, 'var_instal_prom', 'Variación (base 1)')
+            
+            NUM_COLUMNS = 5
+        
+            for col_num in range (1, NUM_COLUMNS + 1):
+
+                mostrar_leyenda = (col_num==1)
+        
+                fig2_ipc_.add_trace(go.Scatter(
+                    x=ipc_data['fecha'],
+                    y=ipc_data['var_ipc'],
+                    name='IPC', 
+                    mode='lines',
+                    line=dict(color='white', dash='dot'), # Cambié a negro para asegurar visibilidad
+                    showlegend=mostrar_leyenda,     
+                ),
+                row=1, col=col_num)
+        
+            fig2_ipc_.update_layout(legend_title_text='Variación')
+            st.plotly_chart(fig2_ipc_, use_container_width=True)
+        
+        st.subheader('', divider='grey')
+        st.markdown('')
 
         with st.container(border=True):
             st.subheader('3. Precios de Material (Ajustados por IPC)')
@@ -293,6 +355,7 @@ if selected_analysis == "Evolutivo precios Pilkington":
             st.subheader('6. Costo de Instalación (USD)')
             fig6 = create_plot_pkt(df_cristal, 'instalacion_usd', 'Costo de Instalación (USD)')
             st.plotly_chart(fig6, use_container_width=True)     
+
         ""
         ""
         st.markdown("#### Data Cruda")
@@ -302,7 +365,9 @@ if selected_analysis == "Evolutivo precios Pilkington":
             (df_cristal['marca'].isin(selected_marcas))
         ].copy()
         df_filtered_raw['fecha'] = df_filtered_raw['fecha'].dt.strftime('%Y-%m-%d')
-        st.dataframe(df_filtered_raw, use_container_width=True)
+        st.dataframe(df_filtered_raw.drop(columns=['var_precio_prom','var_ipc','var_instal_prom']), use_container_width=True)
+
+    
 
 # ==========================================================================
 # ---- Análisis ORION/CESVI ------------------------------------------------
@@ -399,6 +464,8 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
             fig5_ipc.update_layout(legend_title_text='Variación')
             st.plotly_chart(fig5_ipc, use_container_width=True)
 
+        st.subheader('', divider='grey')
+
         # GRAFICO 2: evolución costo repuestos por tipo repuesto
         st.subheader('2. Costo de piezas prom. histórico por Tipo Repuesto')
         # muestro distribución MARCA AUTOS
@@ -426,7 +493,8 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
             fig6_ipc.update_layout(legend_title_text='Variación')
             st.plotly_chart(fig6_ipc, use_container_width=True)
 
-        st.markdown("---")
+        st.markdown('')
+        st.subheader('', divider='grey')
 
         # muestro grafico torta MARCAS AUTOS 
         if st.button("Mostrar/Ocultar Distribución de Marcas Autos"):
@@ -468,7 +536,7 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
             st.plotly_chart(fig7_ipc, use_container_width=True)
 
 
-        st.markdown("---")
+        st.subheader('', divider='grey')
 
         # muestro el grafico torta MARCA CAMIONES
         if st.button("Mostrar/Ocultar Distribución de Marcas Camiones"):
@@ -508,7 +576,7 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
             st.plotly_chart(fig20_ipc, use_container_width=True)
 
 
-        st.markdown("---")      
+        st.subheader('', divider='grey')      
 
         # GRAFICO 5: evolución costo mano de obra por tva y tipo de mano de obra
         st.subheader('5. Costo de mano de obra prom. histórico por Tipo de M.O y TVA')
@@ -526,7 +594,8 @@ elif selected_analysis == "Evolutivo precios ORION/CESVI":
         ]
         fig11 = create_plot_orion(df_cm_mo_hist, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio', 45)
         st.plotly_chart(fig11, use_container_width=True)
-        st.markdown("---")
+        
+        st.subheader('', divider='grey')
 
         # gráfico 6: evolución costo mano de obra cleas si vs cleas no
         st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO')
@@ -926,7 +995,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
         # Guardo la selección en session_state para que la funcion pueda usarla
         st.session_state['selected_variation_type_2'] = selected_variation_type_2
     
-    def create_plot_mo(df, y_col, color, facet_col, y_label, x_tickangle=None, line_width=2):       
+    def create_plot_mo(df, y_col, color, facet_col, y_label, leg_title_text='Aseguradora', x_tickangle=None, line_width=2):       
         if df.empty:
             fig = go.Figure().update_layout(
                 title_text=f"No hay datos para graficar",
@@ -947,7 +1016,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
         )
 
         fig.update_layout(
-            legend_title_text='Aseguradora',
+            legend_title_text=leg_title_text,
             height=400, # Altura del subplot individual
             font=dict(family="Arial", size=15),
             margin=dict(t=50, b=0, l=0, r=0),
@@ -1013,8 +1082,8 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
             with st.expander("Ver tabla de datos",):
                 # st.subheader("Tabla de Datos de Ejemplo")
                 st.dataframe(df_chapa_pintura[['anio_mes','aseguradora','monto_historico','tipo']], hide_index=True, width=1500,)
-
-        fig_1 = create_plot_mo(df_mo_repuestos_final, 'monto_historico', 'aseguradora', 'tipo', 'Monto',45)
+        
+        fig_1 = create_plot_mo(df_mo_repuestos_final, 'monto_historico', 'aseguradora', 'tipo', 'Monto', x_tickangle=45)
         st.plotly_chart(fig_1, use_container_width=True)
 
         # muestro el dataset
@@ -1028,7 +1097,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
 
         df_ipc_data_mo = df_mo_repuestos_final[['anio_mes', 'var_ipc']].drop_duplicates().sort_values('anio_mes')
         if st.session_state.show_ipc_5:
-            fig_1_ipc = create_plot_mo(df_mo_repuestos_final, 'var_monto_prom', 'aseguradora', 'tipo','Variación (base 1)',45)
+            fig_1_ipc = create_plot_mo(df_mo_repuestos_final, 'var_monto_prom', 'aseguradora', 'tipo','Variación (base 1)', x_tickangle=45)
             fig_1_ipc.add_trace(go.Scatter(
                 x=df_ipc_data_mo['anio_mes'],
                 y=df_ipc_data_mo['var_ipc'],
@@ -1052,10 +1121,10 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
             st.plotly_chart(fig_1_ipc, use_container_width=True)
 
 
-        st.markdown("---") 
+        st.subheader('', divider='grey') 
 
         st.subheader('Evolución monto de reparaciones (Repuestos + MO)')
-
+        
         fig_3 = create_plot_mo(df_tot_reparacion, y_cols_hist, None, None, 'Monto MO')
         st.plotly_chart(fig_3, use_container_width=True)
         # muestro el dataset
@@ -1081,7 +1150,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
             fig_3_ipc.update_layout(legend_title_text='')
             st.plotly_chart(fig_3_ipc, use_container_width=True)
 
-        st.markdown("---") 
+        st.subheader('', divider='grey') 
 
         st.subheader('Evolución costo hora de Mano de Obra')
         fig_5 = create_plot_mo(df_costo_hora, y_cols_hist, None, None, 'Costo hora')
@@ -1108,13 +1177,11 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
             fig_5_ipc.update_layout(legend_title_text='')
             st.plotly_chart(fig_5_ipc, use_container_width=True)
 
-        st.markdown("---") 
-
-
+        st.markdown('')
         st.subheader('Peritaciones', divider='grey')
-
+         
         st.subheader('- Evolución cantidad de Peritaciones')
-        fig_4 = create_plot_mo(df_peritaciones, y_cols_hist, None, None, 'Cantidad de Peritaciones')
+        fig_4 = create_plot_mo(df_peritaciones, y_cols_hist, None, None, 'Cantidad de Peritaciones', leg_title_text='')
         st.plotly_chart(fig_4, use_container_width=True)
 
         # muestro el dataset
@@ -1124,7 +1191,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
 
         st.subheader('- % Variación mensual de cantidad de Peritaciones')
         y_var=['var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor']
-        fig_5 = create_plot_mo(df_peritaciones, y_var, None, None, '% variación')
+        fig_5 = create_plot_mo(df_peritaciones, y_var, None, None, '% variación', leg_title_text='')
         st.plotly_chart(fig_5, use_container_width=True)
 
         # muestro el dataset
@@ -1135,7 +1202,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
             
         st.subheader('- % Participacion respecto a Grupo Cesvi')
         y_cols_part=['part_grupo_sls_vs_cesvi', 'part_la_segunda_vs_cesvi', 'part_san_cristobal_vs_cesvi', 'part_sancor_vs_cesvi']
-        fig_6 = create_plot_mo(df_peritaciones, y_cols_part, None, None, '% participacion')
+        fig_6 = create_plot_mo(df_peritaciones, y_cols_part, None, None, '% participacion', leg_title_text='')
         st.plotly_chart(fig_6, use_container_width=True)
 
         # muestro el dataset
