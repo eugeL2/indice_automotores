@@ -1281,7 +1281,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
 # ==========================================================================
 
         st.subheader('▫️ % Variación mensual de cantidad de Peritaciones')
-        y_var=['var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor', 'var_%_grupo_cesvi', 'var_%_grupo_sls']
+        y_var=['var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor']
         fig_5 = create_plot_mo(df_peritaciones, y_var, None, None, '% variación', leg_title_text='')
         st.plotly_chart(fig_5, use_container_width=True)
 
@@ -1293,7 +1293,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
 # ==========================================================================
 #             
         st.subheader('▫️ % Participacion respecto a Grupo Cesvi')
-        y_cols_part=['part_la_segunda_vs_cesvi', 'part_san_cristobal_vs_cesvi', 'part_sancor_vs_cesvi', 'part_grupo_sls_vs_cesvi']
+        y_cols_part=['part_grupo_sls_vs_cesvi', 'part_sancor_vs_cesvi', 'part_la_segunda_vs_cesvi', 'part_san_cristobal_vs_cesvi', ]
         fig_6 = create_plot_mo(df_peritaciones, y_cols_part, None, None, '% participacion', leg_title_text='')
         st.plotly_chart(fig_6, use_container_width=True)
 
