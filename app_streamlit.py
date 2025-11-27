@@ -62,7 +62,7 @@ try:
     df_tot_reparacion = pd.read_csv('data/df_tot_reparacion_ok.csv')
 
 except FileNotFoundError as e:
-    st.error(f"Error: No se encuentra el archivo CSV. Detalles: {e}")
+    st.error(f"Error: No se encuentra el archivo CSV. \nDetalles: {e}")
     # La app se detiene si no encuentra los archivos
     st.stop()
 
@@ -1087,7 +1087,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
             x='anio_mes',
             y=y_col,
             color=color,
-            color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+            color_discrete_sequence=["gray", "cyan", "#FB0D0D", '#2CA02C', "blue", "magenta", "orange", ],
             facet_col=facet_col,
             labels={'value': y_label, 'anio_mes': ''}
         )
@@ -1126,7 +1126,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
             x='anio_mes',
             y=y_col,
             color=color,
-            color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+            color_discrete_sequence=["gray", "cyan", "#FB0D0D", '#2CA02C', "blue", "magenta", "orange"],
             facet_col=facet_col,
             labels={'value': y_label, 'anio_mes': ''}
         )
@@ -1145,7 +1145,7 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
     
     # ----- GRAFICOS HISTORICOS --------------------------------------------------
     if st.session_state['selected_variation_type_2'] == "Histórico":
-        y_cols_hist = ['la_segunda', 'san_cristobal', 'sancor','grupo_cesvi', 'grupo_sls',]
+        y_cols_hist = ['grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal', 'sancor']
         
         st.subheader('Evolución monto de Repuestos y Mano de Obra (MO)')
         # mostrar evolutivo MO (Chapa/Pintura)
@@ -1162,6 +1162,8 @@ elif selected_analysis == "Comparativo de Mano de Obra (L2/Cesvi)":
                 st.dataframe(df_chapa_pintura[['anio_mes','aseguradora','monto_historico','tipo']], hide_index=True, width=1500,)
 
             st.plotly_chart(fig_mo, use_container_width=True)
+            st.subheader('', divider='grey') 
+            st.markdown("")
         
         fig_1 = create_plot_mo(df_mo_repuestos_final, 'monto_historico', 'aseguradora', 'tipo', 'Monto', x_tickangle=45)
 
