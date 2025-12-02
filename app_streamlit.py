@@ -8,6 +8,8 @@ import requests
 from io import StringIO
 import unicodedata
 
+# ---------------------------------------------------
+
 pd.options.display.max_columns=None
 pd.set_option('display.max_rows', 500)
 pd.options.display.float_format = '{:,.2f}'.format
@@ -158,6 +160,7 @@ if 'show_pie_chart_3' not in st.session_state:
 if 'show_mo' not in st.session_state:
     st.session_state.show_mo = False
 
+<<<<<<< Updated upstream
 if 'show_ipc_1' not in st.session_state:
     st.session_state.show_ipc_1 = False    
 if 'show_ipc_2' not in st.session_state:
@@ -177,6 +180,8 @@ if 'show_ipc_8' not in st.session_state:
 if 'show_ipc_9' not in st.session_state:
     st.session_state.show_ipc_9 = False
 
+=======
+>>>>>>> Stashed changes
 # ==========================================================================
 # ---- Análisis PILKINGTON -------------------------------------------------
 # ==========================================================================
