@@ -10,7 +10,8 @@ from io import StringIO
 import unicodedata
 import locale
 # locale español de Argentina o similar
-locale.setlocale(locale.LC_ALL, 'es_AR.UTF-8')
+# locale.setlocale(locale.LC_ALL, 'es_AR.UTF-8')
+locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
 
 pd.options.display.max_columns=None
 pd.set_option('display.max_rows', 500)
@@ -2416,4 +2417,5 @@ else:
     elif current_analysis == opcion_6:
         st.title('Evolución de monto de pagos de Robo y Hurto de ruedas en La Segunda')    
         st.markdown("---")
+
 
