@@ -10,3 +10,9 @@ secondaryBackgroundColor = "#2e3238"
 # Para la fuente, puedes usar 'font' con un valor válido
 # streamlit solo soporta 'sans serif', 'serif', 'monospace' o una fuente web
 font = "sans serif"
+
+[global]
+# Esta configuración a veces ayuda a forzar el entorno de ejecución
+defaultLanguage = "es"
+
+[server]
