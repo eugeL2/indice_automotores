@@ -9,8 +9,6 @@ import requests
 from io import StringIO
 import unicodedata
 import locale
-# locale español de Argentina o similar
-locale.setlocale(locale.LC_ALL, 'es_AR.UTF-8')
 
 pd.options.display.max_columns=None
 pd.set_option('display.max_rows', 500)
@@ -1030,6 +1028,32 @@ else:
 
         st.write('')
 
+        def format_ars_value(number):
+            """Formatea el número con punto como separador de miles y sin decimales."""
+            # Retorna NaN o cadena vacía si el input no es numérico, para evitar errores
+            if pd.isna(number):
+                return ""
+            
+            # Convertir a entero (si es float) y usar el formato de coma (,) para miles
+            formatted_number = f"{int(round(number)):,}"
+            
+            # Reemplazar la coma (,) por el punto (.) para ajustarse al estándar argentino
+            return formatted_number.replace(',', '.')
+        def format_ars_delta(diff_number):
+            """Formatea la diferencia (delta) incluyendo signo (+/-) y punto de miles."""
+            if pd.isna(diff_number):
+                return "N/A"
+                
+            signo = '+' if diff_number > 0 else ('-' if diff_number < 0 else '')
+            
+            # Obtener el valor absoluto
+            abs_number = abs(diff_number)
+            
+            # Usar el formateador de miles (punto) creado anteriormente
+            valor_absoluto_formateado = format_ars_value(abs_number)
+            
+            # Construir la cadena final
+            return f"{signo} ${valor_absoluto_formateado}"
 
         if  not df_tabla2.empty:
             # Agrupamos por los filtros para obtener el promedio de la métrica
@@ -1041,9 +1065,9 @@ else:
             st.markdown(f"#### 💰 Pago promedio (L2)")
             col_pago_ars, col_pago_ipc, col_pago_usd = st.columns(3)
 
-            valor1 = locale.format_string("%.0f", pago_promedio_ars, grouping=True)
-            valor2 = locale.format_string("%.0f", pago_promedio_ipc, grouping=True)
-            valor3 = locale.format_string("%.0f", pago_promedio_usd, grouping=True)
+            valor1 = format_ars_value(pago_promedio_ars)
+            valor2 = format_ars_value(pago_promedio_ipc)
+            valor3 = format_ars_value(pago_promedio_usd)
 
             with col_pago_ars:
                 st.metric(label="Pago (ARS)", value=f'${valor1}', border=True)
@@ -1065,9 +1089,9 @@ else:
             st.markdown(f"#### 💰 Precio de lista promedio")
             col_p_ars, col_p_ipc, col_p_usd = st.columns(3)
 
-            valor1 = locale.format_string("%.0f", precio_promedio_ars, grouping=True)
-            valor2 = locale.format_string("%.0f", precio_promedio_ipc, grouping=True)
-            valor3 = locale.format_string("%.0f", precio_promedio_usd, grouping=True)
+            valor1 = format_ars_value(precio_promedio_ars)
+            valor2 = format_ars_value(precio_promedio_ipc)
+            valor3 = format_ars_value(precio_promedio_usd)
 
             with col_p_ars:
                 st.metric(label="Precio (ARS)", value=f'${valor1}', border=True)
@@ -1150,23 +1174,20 @@ else:
 
                 pago_ars_num = float(pago_ars.replace('$', '').replace('.', '').replace(',', '').strip())
                 precio_ars_num = float(precio_ars.replace('$', '').replace('.', '').replace(',', '').strip())
-                diff_ars = pago_ars_num - precio_ars_num
+
+                diff_ars_numerico = pago_ars_num - precio_ars_num # Asumo que esta ya la tienes calculada
                 if precio_ars_num != 0:
-                    delta_ars_percent = (diff_ars / precio_ars_num) * 100
+                    delta_ars_percent = (diff_ars_numerico / precio_ars_num) * 100
                 else:
                     # Manejo de división por cero
                     delta_ars_percent = 0
 
-                valor_delta_formateado = locale.format_string("%+.0f", diff_ars, grouping=True)
-                signo = valor_delta_formateado[0] if valor_delta_formateado[0] in ('+', '-') else ''
-                valor_absoluto = valor_delta_formateado.lstrip('+-')
-                valor_final_display = f"{signo} ${valor_absoluto}" 
+                valor_final_display = format_ars_delta(diff_ars_numerico)
 
-                st.metric(
-                    label="Diferencia en pagos ARS", 
-                    value=valor_final_display,
-                    delta=f"{delta_ars_percent:+.2f} %", # Usamos f-string para formatear con 2 decimales y signo +/-
-                    delta_color='inverse')
+                st.metric(label="Diferencia en pagos ARS", 
+                          value=valor_final_display, 
+                          delta=f"{delta_ars_percent:+.2f} %",
+                          delta_color='inverse')
                 
             # 2. Columna IPC (Ajustado por IPC)
             with col2:
@@ -1182,22 +1203,18 @@ else:
                 pago_ipc_num = float(pago_ipc.replace('$', '').replace('.', '').replace(',', '').strip())
                 precio_ipc_num = float(precio_ipc.replace('$', '').replace('.', '').replace(',', '').strip())
                 diff_ipc = pago_ipc_num - precio_ipc_num
+                
                 if precio_ipc_num != 0:
                     delta_ipc_percent = (diff_ipc / precio_ipc_num) * 100
                 else:
-                    # Manejo de división por cero
                     delta_ipc_percent = 0
 
-                valor_delta_formateado_ipc = locale.format_string("%+.0f", diff_ipc, grouping=True)
-                signo_ipc = valor_delta_formateado_ipc[0] if valor_delta_formateado_ipc[0] in ('+', '-') else ''
-                valor_absoluto_ipc = valor_delta_formateado_ipc.lstrip('+-')
-                valor_final_ipc = f"{signo_ipc} ${valor_absoluto_ipc}" 
+                valor_final_ipc = format_ars_delta(diff_ipc)
 
-                st.metric(
-                    label="Diferencia en pagos IPC", 
-                    value=valor_final_ipc,
-                    delta=f"{delta_ipc_percent:+.2f} %", # Usamos f-string para formatear con 2 decimales y signo +/-
-                    delta_color='inverse')
+                st.metric(label="Diferencia en pagos IPC", 
+                          value=valor_final_ipc, 
+                          delta=f"{delta_ipc_percent:+.2f} %",
+                          delta_color='inverse')
                 
             # 3. Columna USD
             with col3:
@@ -1219,16 +1236,12 @@ else:
                 else:
                     delta_usd_percent = 0
 
-                valor_delta_formateado_usd = locale.format_string("%+.0f", diff_usd, grouping=True)
-                signo_usd = valor_delta_formateado_usd[0] if valor_delta_formateado_usd[0] in ('+', '-') else ''
-                valor_absoluto_usd = valor_delta_formateado_usd.lstrip('+-')
-                valor_final_usd = f"{signo_usd} ${valor_absoluto_usd}" 
-                st.metric(
-                    label="Diferencia en pagos USD",
-                    value=valor_final_usd,
-                    delta=f"{delta_usd_percent:+.2f} %", # Usamos f-string para formatear con 2 decimales y signo +/-
-                    delta_color='inverse')
+                valor_final_usd = format_ars_delta(diff_usd)
 
+                st.metric(label="Diferencia en pagos USD", 
+                          value=valor_final_usd, 
+                          delta=f"{delta_usd_percent:+.2f} %",
+                          delta_color='inverse')
 
             st.subheader('', divider='grey')
             # # 4. Mostrar el DataFrame debajo para detalles (si el usuario lo requiere)
@@ -1433,7 +1446,8 @@ else:
             return fig
         
         
-        # ----- GRAFICOS HISTORICOS --------------------------------------------------
+# ----- GRAFICOS HISTORICOS --------------------------------------------------
+
         if st.session_state['selected_variation_type'] == "Histórico":
             
             # GRAFICO 1: evolución costo repuestos por tva
@@ -1471,9 +1485,9 @@ else:
                 st.plotly_chart(fig5_ipc, use_container_width=True)
 
             st.subheader('', divider='grey')
-    # ==========================================================================
+# ==========================================================================
 
-            # GRAFICO 2: evolución costo repuestos por tipo repuesto
+# ----- GRAFICO 2: evolución costo repuestos por tipo repuesto
             st.subheader('2. Costo de piezas prom. histórico por Tipo Repuesto')
             # muestro distribución MARCA AUTOS
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
@@ -1502,7 +1516,7 @@ else:
             st.subheader('', divider='grey')
             st.markdown('')
 
-    # ==============================================================================
+# ==============================================================================
 
             # muestro grafico torta MARCAS AUTOS 
             if st.button("Mostrar/Ocultar Distribución de Marcas Autos",icon='📊'):
@@ -1515,9 +1529,9 @@ else:
                 st.markdown('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
                 st.markdown('Total marcas: 44')
                 st.markdown("---")
-    # ==========================================================================
+# ==========================================================================
 
-            # GRAFICO 3: evolución costo repuestos por marca autos
+# ----- GRAFICO 3: evolución costo repuestos por marca autos
             st.subheader('3. Costo de piezas prom. histórico por Marca (autos)')
 
             # muestro el dataset 
@@ -1548,7 +1562,7 @@ else:
             st.subheader('', divider='grey')
             st.markdown('')
 
-    # ==============================================================================
+# ==============================================================================
 
             # muestro el grafico torta MARCA CAMIONES
             if st.button("Mostrar/Ocultar Distribución de Marcas Camiones", icon='📊'):
@@ -1561,9 +1575,9 @@ else:
                 st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
                 st.text('Total marcas: 26')
                 st.markdown("---")
-    # ==========================================================================
+# ==========================================================================
 
-            # GRAFICO 4: evolución costo repuestos por marca camiones
+# ----- GRAFICO 4: evolución costo repuestos por marca camiones -
             st.subheader('4. Costo de piezas prom. histórico por Marca (camiones)')
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
                 st.dataframe(df_rtos_marca_mes_cam[['marca','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
@@ -1589,7 +1603,7 @@ else:
                 st.plotly_chart(fig20_ipc, use_container_width=True)
 
             st.subheader('', divider='grey')      
-    # ==========================================================================
+# ==========================================================================
 
             # GRAFICO 5: evolución costo mano de obra por tva y tipo de mano de obra
             st.subheader('5. Costo de mano de obra prom. histórico por Tipo de M.O y TVA')
@@ -1655,7 +1669,7 @@ else:
 
             
             st.subheader('', divider='grey')
-    # ==========================================================================
+# ==========================================================================
 
             # GRAFICO 6: evolución costo mano de obra cleas si vs cleas no
             st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO')
@@ -1698,7 +1712,7 @@ else:
                 st.plotly_chart(fig14_ipc, use_container_width=True)
 
             
-        # ----- GRAFICOS AJUSTADOS POR IPC --------------------------------------------------
+# ----- GRAFICOS AJUSTADOS POR IPC --------------------------------------------------
         elif st.session_state['selected_variation_type'] == "IPC":
 
             # gráfico 1: evolución costo repuestos por tva IPC
@@ -1713,7 +1727,7 @@ else:
             fig7 = create_plot_orion(df_rep_tv, 'costo_prom_ipc', 'tva', None, 'Costo Promedio Ajust. por IPC')
             st.plotly_chart(fig7, use_container_width=True)
             st.markdown("---")
-    # ==========================================================================
+# ==========================================================================
 
             # gráfico 2: evolución costo repuestos por tipo repuesto IPC
             st.subheader('2. Evolución del costo prom. por Tipo Repuesto - Ajust. por IPC')
@@ -1740,7 +1754,7 @@ else:
                 st.text('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
                 st.text('Total marcas: 44' )
                 st.markdown("---")
-    # ==========================================================================
+# ==========================================================================
 
             # gráfico 3: evolución costo repuestos por marca autos IPC
             st.subheader('3. Costo de piezas prom. por Marca (autos) - Ajust. por IPC')
@@ -1765,7 +1779,7 @@ else:
                 st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
                 st.text('Total marcas: 26')
                 st.markdown("---")
-    # ==========================================================================
+# ==========================================================================
 
             # gráfico 4: evolución costo repuestos por marca camiones IPC
             st.subheader('4. Costo de piezas prom. por Marca (camiones) - Ajust. por IPC')
@@ -1778,9 +1792,9 @@ else:
             fig21 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_prom_ipc', 'marca', None, 'Costo Promedio')
             st.plotly_chart(fig21, use_container_width=True)
             st.markdown("---")    
-    # ==========================================================================
+# ==========================================================================
 
-            # GRAFICO 5: evolución costo mano de obra por tva y tipo de mano de obra IPC
+# ----- GRAFICO 5: evolución costo mano de obra por tva y tipo de mano de obra IPC
             st.subheader('5. Evolución del costo de mano de obra prom. por Tipo de M.O y TVA - Ajust. por IPC')
 
             # muestro el dataset
@@ -1795,9 +1809,9 @@ else:
             fig12 = create_plot_orion(df_cm_mo, 'valor_costo_ipc', 'tva','tipo_costo', 'Costo Promedio ajust. por IPC')
             st.plotly_chart(fig12, use_container_width=True)
             st.markdown("---")
-    # ==========================================================================
+# ==========================================================================
 
-            # GRAFICO 6: evolución costo mano de obra cleas si vs cleas no IPC
+# ----- GRAFICO 6: evolución costo mano de obra cleas si vs cleas no IPC
             st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO - Ajust. por IPC')
 
             # muestro el dataset
@@ -1824,7 +1838,7 @@ else:
             fig9 = create_plot_orion(df_rep_tv, 'costo_prom_usd', 'tva', None, 'Costo Promedio (USD)')
             st.plotly_chart(fig9, use_container_width=True)
             st.markdown("---")
-    # ==========================================================================
+# ==========================================================================
 
             # gráfico 2: evolución costo repuestos por tipo repuesto USD
             st.subheader('2. Evolución del costo prom. por Tipo Repuesto en USD')
@@ -1851,7 +1865,7 @@ else:
                 st.text('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
                 st.text('Total marcas: 44' )
                 st.markdown("---")
-    # ==========================================================================
+# ==========================================================================
 
             # gráfico 3: evolución costo repuestos por marca autos USD
             st.subheader('3. Costo de piezas prom. histórico por Marca (autos) en USD')
@@ -1876,7 +1890,7 @@ else:
                 st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
                 st.text('Total marcas: 26')
                 st.markdown("---")     
-    # ==========================================================================
+# ==========================================================================
 
             # gráfico 4: evolución costo repuestos por marca camiones USD
             st.subheader('4. Costo de piezas prom. por Marca (camiones) en USD')
@@ -1889,7 +1903,7 @@ else:
             fig22 = create_plot_orion(df_rtos_marca_mes_cam, 'costo_prom_usd', 'marca', None, 'Costo Promedio (USD)')
             st.plotly_chart(fig22, use_container_width=True)
             st.markdown("---") 
-    # ==========================================================================
+# ==========================================================================
 
             # gráfico 5: evolución costo mano de obra por tva y tipo de mano de obra USD
             st.subheader('5. Evolución del costo de Mano de Obra prom. por Tipo de M.O y TVA en USD')
@@ -1906,7 +1920,7 @@ else:
             fig13 = create_plot_orion(df_cm_mo, 'valor_costo_usd', 'tva','tipo_costo', 'Costo Promedio (USD)')
             st.plotly_chart(fig13, use_container_width=True)
             st.markdown("---")
-    # ==========================================================================
+# ==========================================================================
 
             # gráfico 6: evolución costo mano de obra cleas si vs cleas no USD
             st.subheader('6. Comparativa variación M.O en USD - CLEAS SI vs CLEAS NO')
@@ -1970,7 +1984,7 @@ else:
             )
             return fig
 
-        # ----- Comparativo Orion/Cesvi por provincia --------------------------------------------------
+# ----- Comparativo Orion/Cesvi por provincia --------------------------------------------------
         available_coverables_orion = sorted(df_cm_prov_orion['coverable'].unique().tolist())
         available_fechas = sorted(df_cm_prov_orion['año'].unique().tolist())
 
@@ -2011,9 +2025,9 @@ else:
             df_cm_prov_orion_raw = df_cm_prov_orion[(df_cm_prov_orion['coverable'] == selected_coverable_map) &
                                                         (df_cm_prov_orion['año'] == selected_fecha)]
             st.dataframe(df_cm_prov_orion_raw, use_container_width=True)
-    # ==========================================================================
+# ==========================================================================
 
-        # ----- Comparativo BI La Segunda por provincia --------------------------------------------------
+# ----- Comparativo BI La Segunda por provincia --------------------------------------------------
         st.header('Coste Medio siniestral por provincia')
         st.markdown("#### _Fuente de datos: BI La Segunda_")
 
@@ -2155,7 +2169,7 @@ else:
             
             return fig
         
-        # ----- GRAFICOS HISTORICOS --------------------------------------------------
+# ----- GRAFICOS HISTORICOS --------------------------------------------------
         if st.session_state['selected_variation_type_2'] == "Histórico":
             y_cols_hist = ['grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal', 'sancor']
             
@@ -2218,7 +2232,7 @@ else:
 
 
             st.subheader('', divider='grey') 
-    # ==========================================================================
+# ==========================================================================
 
             st.subheader('Evolución monto de reparaciones (Repuestos + MO)')
             
@@ -2251,7 +2265,7 @@ else:
 
             st.subheader('', divider='grey') 
 
-    # ==========================================================================
+# ==========================================================================
             st.subheader('Evolución costo hora de Mano de Obra')
             fig_5 = create_plot_mo(df_costo_hora, y_cols_hist, None, None, 'Costo hora')
 
@@ -2278,7 +2292,7 @@ else:
             with tab2:
                 st.plotly_chart(fig_5_ipc, use_container_width=True)
 
-    # ==========================================================================
+# ==========================================================================
             st.markdown('')
             st.subheader('Peritaciones', divider='grey')
             
@@ -2290,7 +2304,7 @@ else:
             with st.expander("Ver tabla de datos",):
                 # st.subheader("Tabla de Datos de Ejemplo")
                 st.dataframe(df_peritaciones[['anio_mes', 'grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal', 'sancor']], hide_index=True, width=1000,)
-    # ==========================================================================
+# ==========================================================================
 
             st.subheader('▫️ % Variación mensual de cantidad de Peritaciones')
             y_var=['var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor']
@@ -2302,8 +2316,8 @@ else:
                 # st.subheader("Tabla de Datos de Ejemplo")
                 st.dataframe(df_peritaciones[['anio_mes', 'part_grupo_sls_vs_cesvi', 'part_la_segunda_vs_cesvi', 'part_san_cristobal_vs_cesvi', 'part_sancor_vs_cesvi']], 
                             hide_index=True, width=1000,)
-    # ==========================================================================
-    #             
+# ==========================================================================
+             
             st.subheader('▫️ % Participacion respecto a Grupo Cesvi')
             y_cols_part=['part_grupo_sls_vs_cesvi', 'part_sancor_vs_cesvi', 'part_la_segunda_vs_cesvi', 'part_san_cristobal_vs_cesvi', ]
             fig_6 = create_plot_mo(df_peritaciones, y_cols_part, None, None, '% participacion', leg_title_text='')
@@ -2315,7 +2329,7 @@ else:
                 st.dataframe(df_peritaciones[['anio_mes', 'var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor']], 
                             hide_index=True, width=1000,)
 
-    # ----- GRAFICOS IPC --------------------------------------------------
+# ----- GRAFICOS IPC --------------------------------------------------
         if st.session_state['selected_variation_type_2'] == "IPC":
             y_cols_ipc = ['grupo_cesvi_ipc', 'grupo_sls_ipc', 'la_segunda_ipc', 'san_cristobal_ipc', 'sancor_ipc']
             
@@ -2363,7 +2377,7 @@ else:
                 # st.subheader("Tabla de Datos de Ejemplo")
                 st.dataframe(df_costo_hora[['anio_mes','ipc','grupo_cesvi_ipc', 'grupo_sls_ipc', 'la_segunda_ipc', 'san_cristobal_ipc', 'sancor_ipc']], hide_index=True,)
 
-    # ----- GRAFICOS USD --------------------------------------------------
+# ----- GRAFICOS USD --------------------------------------------------
         if st.session_state['selected_variation_type_2'] == "USD":
             y_cols_usd = ['grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd', 'san_cristobal_usd', 'sancor_usd']
             
