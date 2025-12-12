@@ -712,7 +712,7 @@ else:
             st.markdown("Filtros") # Título para la barra lateral
             st.markdown("##### _Seleccionar Tipo de Cristal:_") 
             selected_cristal = st.selectbox(
-                "",
+                "Cristal",
                 options=available_cristales,
                 index=1,
                 label_visibility ='collapsed',
@@ -1070,9 +1070,9 @@ else:
             valor3 = format_ars_value(pago_promedio_usd)
 
             with col_pago_ars:
-                st.metric(label="Pago (ARS)", value=f'${valor1}', border=True)
+                st.metric(label="Pago (ARS)", value=f'$ {valor1}', border=True)
             with col_pago_ipc:
-                st.metric(label="Pago IPC (ARS)", value=f"${valor2}",border=True)
+                st.metric(label="Pago IPC (ARS)", value=f"$ {valor2}",border=True)
             with col_pago_usd:
                 st.metric(label="Pago (USD)", value=f"U$D {valor3}",border=True)
             
@@ -1094,10 +1094,10 @@ else:
             valor3 = format_ars_value(precio_promedio_usd)
 
             with col_p_ars:
-                st.metric(label="Precio (ARS)", value=f'${valor1}', border=True)
+                st.metric(label="Precio (ARS)", value=f'$ {valor1}', border=True)
                 # st.write(precio_promedio_ars)
             with col_p_ipc:
-                st.metric(label="Precio IPC (ARS)", value=f"${valor2}",border=True)
+                st.metric(label="Precio IPC (ARS)", value=f"$ {valor2}",border=True)
             with col_p_usd:
                 st.metric(label="Precio (USD)", value=f"U$D {valor3}",border=True)
             
@@ -1146,17 +1146,17 @@ else:
         columnas_numericas_ars = [col for col in df_comparacion_final.columns if 'ARS' in col]
 
         for col in columnas_numericas_ars:
-            # Usar el locale para formatear sin decimales
             df_comparacion_final[col] = df_comparacion_final[col].apply(
-                lambda x: locale.format_string("$ %.0f", x, grouping=True)
+                lambda x: format_ars_value(x)
             )
+            df_comparacion_final[col] = '$ ' + df_comparacion_final[col].astype(str)
 
         columnas_numericas_usd = [col for col in df_comparacion_final.columns if 'USD' in col]
         for col in columnas_numericas_usd:
-            # Usar el locale para formatear con el prefijo U$D
             df_comparacion_final[col] = df_comparacion_final[col].apply(
-                lambda x: locale.format_string("$ %.0f", x, grouping=True)
+                lambda x: format_ars_value(x)
             )
+            df_comparacion_final[col] = '$ ' + df_comparacion_final[col].astype(str)
 
         col1, col2, col3 = st.columns(3)
         if  not df_tabla2.empty:
@@ -2431,6 +2431,7 @@ else:
     elif current_analysis == opcion_6:
         st.title('Evolución de monto de pagos de Robo y Hurto de ruedas en La Segunda')    
         st.markdown("---")
+
 
 
 
