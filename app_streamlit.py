@@ -9,9 +9,6 @@ import requests
 from io import StringIO
 import unicodedata
 import locale
-# locale español de Argentina o similar
-# locale.setlocale(locale.LC_ALL, 'es_AR.UTF-8')
-locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
 
 pd.options.display.max_columns=None
 pd.set_option('display.max_rows', 500)
@@ -1031,7 +1028,33 @@ else:
 
         st.write('')
 
-
+        def format_ars_value(number):
+            """Formatea el número con punto como separador de miles y sin decimales."""
+            # Retorna NaN o cadena vacía si el input no es numérico, para evitar errores
+            if pd.isna(number):
+                return ""
+            
+            # Convertir a entero (si es float) y usar el formato de coma (,) para miles
+            formatted_number = f"{int(round(number)):,}"
+            
+            # Reemplazar la coma (,) por el punto (.) para ajustarse al estándar argentino
+            return formatted_number.replace(',', '.')
+        def format_ars_delta(diff_number):
+            """Formatea la diferencia (delta) incluyendo signo (+/-) y punto de miles."""
+            if pd.isna(diff_number):
+                return "N/A"
+                
+            signo = '+' if diff_number > 0 else ('-' if diff_number < 0 else '')
+            
+            # Obtener el valor absoluto
+            abs_number = abs(diff_number)
+            
+            # Usar el formateador de miles (punto) creado anteriormente
+            valor_absoluto_formateado = format_ars_value(abs_number)
+            
+            # Construir la cadena final
+            return f"{signo} ${valor_absoluto_formateado}"
+        
         if  not df_tabla2.empty:
             # Agrupamos por los filtros para obtener el promedio de la métrica
             pago_promedio_ars = df_tabla2['monto_transaccion'].values[0]
@@ -1042,9 +1065,9 @@ else:
             st.markdown(f"#### 💰 Pago promedio (L2)")
             col_pago_ars, col_pago_ipc, col_pago_usd = st.columns(3)
 
-            valor1 = locale.format_string("%.0f", pago_promedio_ars, grouping=True)
-            valor2 = locale.format_string("%.0f", pago_promedio_ipc, grouping=True)
-            valor3 = locale.format_string("%.0f", pago_promedio_usd, grouping=True)
+            valor1 = format_ars_value(pago_promedio_ars)
+            valor2 = format_ars_value(pago_promedio_ipc)
+            valor3 = format_ars_value(pago_promedio_usd)
 
             with col_pago_ars:
                 st.metric(label="Pago (ARS)", value=f'${valor1}', border=True)
@@ -1066,9 +1089,9 @@ else:
             st.markdown(f"#### 💰 Precio de lista promedio")
             col_p_ars, col_p_ipc, col_p_usd = st.columns(3)
 
-            valor1 = locale.format_string("%.0f", precio_promedio_ars, grouping=True)
-            valor2 = locale.format_string("%.0f", precio_promedio_ipc, grouping=True)
-            valor3 = locale.format_string("%.0f", precio_promedio_usd, grouping=True)
+            valor1 = format_ars_value(precio_promedio_ars)
+            valor2 = format_ars_value(precio_promedio_ipc)
+            valor3 = format_ars_value(precio_promedio_usd)
 
             with col_p_ars:
                 st.metric(label="Precio (ARS)", value=f'${valor1}', border=True)
@@ -1151,23 +1174,21 @@ else:
 
                 pago_ars_num = float(pago_ars.replace('$', '').replace('.', '').replace(',', '').strip())
                 precio_ars_num = float(precio_ars.replace('$', '').replace('.', '').replace(',', '').strip())
-                diff_ars = pago_ars_num - precio_ars_num
+                
+                diff_ars_numerico = pago_ars_num - precio_ars_num 
                 if precio_ars_num != 0:
-                    delta_ars_percent = (diff_ars / precio_ars_num) * 100
+                    delta_ars_percent = (diff_ars_numerico / precio_ars_num) * 100
                 else:
                     # Manejo de división por cero
                     delta_ars_percent = 0
 
-                valor_delta_formateado = locale.format_string("%+.0f", diff_ars, grouping=True)
-                signo = valor_delta_formateado[0] if valor_delta_formateado[0] in ('+', '-') else ''
-                valor_absoluto = valor_delta_formateado.lstrip('+-')
-                valor_final_display = f"{signo} ${valor_absoluto}" 
+                valor_final_display = format_ars_delta(diff_ars_numerico)
 
-                st.metric(
-                    label="Diferencia en pagos ARS", 
-                    value=valor_final_display,
-                    delta=f"{delta_ars_percent:+.2f} %", # Usamos f-string para formatear con 2 decimales y signo +/-
-                    delta_color='inverse')
+                st.metric(label="Diferencia en pagos ARS", 
+                          value=valor_final_display, 
+                          delta=f"{delta_ars_percent:+.2f} %",
+                          delta_color='inverse')
+
                 
             # 2. Columna IPC (Ajustado por IPC)
             with col2:
@@ -1189,16 +1210,12 @@ else:
                     # Manejo de división por cero
                     delta_ipc_percent = 0
 
-                valor_delta_formateado_ipc = locale.format_string("%+.0f", diff_ipc, grouping=True)
-                signo_ipc = valor_delta_formateado_ipc[0] if valor_delta_formateado_ipc[0] in ('+', '-') else ''
-                valor_absoluto_ipc = valor_delta_formateado_ipc.lstrip('+-')
-                valor_final_ipc = f"{signo_ipc} ${valor_absoluto_ipc}" 
+                valor_final_ipc = format_ars_delta(diff_ipc)
 
-                st.metric(
-                    label="Diferencia en pagos IPC", 
-                    value=valor_final_ipc,
-                    delta=f"{delta_ipc_percent:+.2f} %", # Usamos f-string para formatear con 2 decimales y signo +/-
-                    delta_color='inverse')
+                st.metric(label="Diferencia en pagos IPC", 
+                          value=valor_final_ipc, 
+                          delta=f"{delta_ipc_percent:+.2f} %",
+                          delta_color='inverse')
                 
             # 3. Columna USD
             with col3:
@@ -1220,15 +1237,12 @@ else:
                 else:
                     delta_usd_percent = 0
 
-                valor_delta_formateado_usd = locale.format_string("%+.0f", diff_usd, grouping=True)
-                signo_usd = valor_delta_formateado_usd[0] if valor_delta_formateado_usd[0] in ('+', '-') else ''
-                valor_absoluto_usd = valor_delta_formateado_usd.lstrip('+-')
-                valor_final_usd = f"{signo_usd} ${valor_absoluto_usd}" 
-                st.metric(
-                    label="Diferencia en pagos USD",
-                    value=valor_final_usd,
-                    delta=f"{delta_usd_percent:+.2f} %", # Usamos f-string para formatear con 2 decimales y signo +/-
-                    delta_color='inverse')
+                valor_final_usd = format_ars_delta(diff_usd)
+
+                st.metric(label="Diferencia en pagos USD", 
+                          value=valor_final_usd, 
+                          delta=f"{delta_usd_percent:+.2f} %",
+                          delta_color='inverse')
 
 
             st.subheader('', divider='grey')
@@ -2417,5 +2431,6 @@ else:
     elif current_analysis == opcion_6:
         st.title('Evolución de monto de pagos de Robo y Hurto de ruedas en La Segunda')    
         st.markdown("---")
+
 
 
