@@ -30,6 +30,8 @@ try:
     # dfs de repuestos orion/cesvi
     df_tipo_rep = pd.read_csv('data/df_tipo_rep_oct.csv')
     df_rep_tv = pd.read_csv('data/df_rep_tv_oct.csv')
+    # df para graf torta
+    df_rep_torta = pd.read_csv('data/todos_los_rep_orion.csv')
 
     # dfs de mano de obra orion/cesvi
     df_cm_mo = pd.read_csv('data/df_cm_mo_oct.csv')
@@ -103,6 +105,9 @@ if 'show_pie_chart_2' not in st.session_state:
 
 if 'show_pie_chart_3' not in st.session_state:
     st.session_state.show_pie_chart_3 = False
+
+if 'show_pie_chart_4' not in st.session_state:
+    st.session_state.show_pie_chart_4 = False
 
 if 'show_mo' not in st.session_state:
     st.session_state.show_mo = False
@@ -197,32 +202,6 @@ else:
     # 2. Renderizado del Contenido del Análisis
     current_analysis = st.session_state.analysis_selected
 
-    # Renderiza la pantalla del análisis basada en la selección actual
-    # if current_analysis == opcion_1:
-    #     st.title("Variación de Precios de Cristales y Mano de obra por Marca y Zona")
-    #     st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_")
-    #     st.markdown("---")
-        
-    #     # Aquí continúa el código de tu análisis 1 (dropdowns, gráficos, etc.)
-    #     st.success("Aquí iría el análisis completo de Pilkington...")
-        
-    # elif current_analysis == opcion_2:
-    #     st.title("Evolutivo precios ORION/CESVI")
-    #     st.info("Aquí iría el contenido del Análisis 2...")
-        
-    # # ... y así sucesivamente para opcion_3, opcion_4, opcion_5
-    
-    # # Mantenemos el divisor al final del contenido del análisis
-    # st.markdown("---")
-
-
-# selected_analysis = st.selectbox(
-#     'Seleccionar Análisis:',
-#     options=OPTIONS,
-#     index=0,
-#     label_visibility ='collapsed'
-# )
-# st.markdown("---")
 
 
 # ==========================================================================
@@ -1445,7 +1424,120 @@ else:
 # ==========================================================================
 
 # ----- GRAFICO 2: evolución costo repuestos por tipo repuesto
+            def create_pie_chart_repuestos(df, value_col):
+                fig = px.pie(
+                    df,
+                    names='Repuesto',
+                    values=value_col,
+                    hover_data=[value_col, 'Cant Ord. Compra'],
+                    title='Distribución de Órdenes de Compra por Tipo de Repuesto',
+                    color_discrete_sequence=px.colors.qualitative.G10,
+                    # labels={value_col: value_col.title(), 'marca_agrupada': 'Marca'},
+                    hole=0.3
+                )
+                fig.update_traces(textposition='inside', textinfo='percent+label',
+                                  insidetextfont=dict(size=12, color='white', family='Arial'))
+                fig.update_layout(
+                    height=500,
+                    font=dict(family="Arial", size=12, color='white'),
+                    # title_font_size=16
+                    showlegend=False
+                )
+                return fig
+            
+
+                # fig = px.pie(
+                #     df,
+                #     values=value,
+                #     names='marca_agrupada',
+                #     hover_data=[value],
+                #     color_discrete_sequence=px.colors.qualitative.G10,
+                #     labels={value: value.title(), 'marca_agrupada': 'Marca'},
+                #     hole=0.3 # Agrega un agujero al centro para un estilo de "donut chart"
+                #     )
+
+                #     fig.update_traces(
+                #         # textposition='inside',
+                #         textinfo='percent+label',
+                #         insidetextfont=dict(size=12, color='white', family='Arial')
+                #     )
+                #     fig.update_layout(
+                #         font=dict(family="Arial", size=12, color="white"),
+                #         showlegend=True
+                #     )
+
+                #     return fig 
+
+
+# volver
             st.subheader('2. Costo de piezas prom. histórico por Tipo Repuesto')
+            UMBRAL_PORCENTAJE = 0.04 # 4% en formato decimal
+
+            # Asegúrate de que df_rep_torta tiene la columna 'Monto Total' en formato numérico
+            # Si 'Monto Total' no es numérico, usa:
+            # df_rep_torta['Monto Total'] = pd.to_numeric(df_rep_torta['Monto Total'], errors='coerce')
+            try:
+                df_rep_torta['Monto Total'] = (
+                    df_rep_torta['Monto Total']
+                    .astype(str) # Asegurar que es string
+                    .str.replace('.', '', regex=False) # Quitar separador de miles
+                    .str.replace(',', '.', regex=False) # Reemplazar coma decimal por punto
+                )
+                df_rep_torta['Monto Total'] = pd.to_numeric(df_rep_torta['Monto Total'], errors='coerce')
+                
+            except Exception as e:
+                # Manejar el error si el formato es diferente (ej: solo quitar el $)
+                # Si sabes que solo tiene el signo de moneda o espacios:
+                # df_rep_torta['Monto Total'] = df_rep_torta['Monto Total'].astype(str).str.replace('$', '', regex=False).str.strip()
+                # df_rep_torta['Monto Total'] = pd.to_numeric(df_rep_torta['Monto Total'], errors='coerce')
+                st.error(f"Error al limpiar la columna 'Monto Total': {e}") # Usar st.error si estás en Streamlit
+
+            # --- 1. Calcular el total y el porcentaje de participación ---
+            monto_total_general = df_rep_torta['Monto Total'].sum()
+            df_rep_torta['% Monto Total'] = df_rep_torta['Monto Total'] / monto_total_general
+
+            # --- 2. Identificar qué repuestos caen en la categoría 'OTRAS' ---
+            # Si la participación es menor que el umbral (4%), se marca como 'OTRAS'.
+            df_rep_torta['Repuesto_Agrupado'] = np.where(
+                df_rep_torta['% Monto Total'] < UMBRAL_PORCENTAJE,
+                'OTRAS',
+                df_rep_torta['Repuesto']
+            )
+
+            # --- 3. Crear el nuevo DataFrame agrupado ---
+            # Agrupamos por la nueva columna 'Repuesto_Agrupado' y sumamos los montos y cantidades
+            df_torta_final = df_rep_torta.groupby('Repuesto_Agrupado').agg(
+                {
+                    'Monto Total': 'sum',
+                    'Cant Ord. Compra': 'sum'
+                }
+            ).reset_index()
+
+            # Renombramos la columna principal de vuelta a 'Repuesto' para la función de graficación
+            df_torta_final.rename(columns={'Repuesto_Agrupado': 'Repuesto'}, inplace=True)
+
+            # muestro grafico torta MARCA AUTOS
+            if st.button("Mostrar/Ocultar Distribución de Repuestos", icon='📊'):
+                st.session_state.show_pie_chart_4 = not st.session_state.show_pie_chart_4
+            
+            if st.session_state.show_pie_chart_4:   
+                fig_pie_rep = create_pie_chart_repuestos(df_torta_final, 'Monto Total')
+                st.plotly_chart(fig_pie_rep, use_container_width=True)
+                st.text(f"Total ord. compra (ene23-jul25): {df_torta_final['Cant Ord. Compra'].sum():,.0f}")
+                # Formateo del monto total (suponiendo que es dinero)
+                st.text(f"Monto Total de Órdenes (ene23-jul25): ${df_torta_final['Monto Total'].sum():,.0f}") 
+                st.text(f"Total repuestos únicos: {df_rep_torta.Repuesto.nunique()}")
+                df_rep_torta['% Monto Total'] = df_rep_torta['% Monto Total'] * 100
+                df_rep_torta['% Monto Total'] = df_rep_torta['% Monto Total'].round(2).astype(str) + ' %'
+
+
+
+                st.dataframe(df_rep_torta.drop('Repuesto_Agrupado', axis=1), hide_index=True)
+                
+
+                st.markdown("---")
+
+
             # muestro distribución MARCA AUTOS
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
                 st.dataframe(df_tipo_rep[['tipo_repuesto','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
@@ -2382,13 +2474,14 @@ else:
                 # st.subheader("Tabla de Datos de Ejemplo")
                 st.dataframe(df_costo_hora[['anio_mes','usd_blue','grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd', 'san_cristobal_usd', 'sancor_usd']], 
                             hide_index=True, width=1000,)
+                
+# ==========================================================================
+# ---- Análisis PAGOS Robo de ruedas ---------------------------------------
 # ==========================================================================
 
     elif current_analysis == opcion_6:
         st.markdown('## Evolución de monto de pagos de Robo de ruedas (L2)')    
         st.markdown("---")
-
-
 
         def create_plot_pagos(df_source, y1, y2, y3, title, x_tickangle=45):
 
@@ -2554,16 +2647,16 @@ else:
         
         st.markdown('---')
 
+        # selectbox para tipo de vehiculo
         with st.sidebar:
             st.markdown("---")
-            st.markdown("Filtros") # Título para la barra lateral
+            st.markdown("Filtros")
             st.markdown("##### _Seleccionar Tipo de Vehículo:_") 
             selected_tv = st.selectbox(
                 "TV",
                 options=available_tv,
                 index=0,
                 label_visibility ='collapsed',
-                # placeholder= "Selecciona una opción...",
             )
             st.markdown("---")
 
@@ -2575,9 +2668,10 @@ else:
 
             default_selection = [
                 m for m in DEFAULT_MARCAS 
-                if m in available_marcas_for_tv # Filtramos las default solo si son válidas para el TV
+                if m in available_marcas_for_tv
             ]
 
+            # multiselect para diferentes marcas
             st.markdown("##### _Seleccionar Marcas:_")
             selected_marcas = st.multiselect(
                 "Marcas",
@@ -2592,9 +2686,9 @@ else:
                 final_marcas_to_filter = available_marcas_for_tv
                 st.info(f"Filtro de Marcas: **TODAS** ({len(available_marcas_for_tv)} marcas)")
             else:
-                # Si hay marcas seleccionadas, usamos esa lista
                 final_marcas_to_filter = selected_marcas
 
+# ----- PAGOS ROBO DE RUEDAS EVOLUTIVO --------------------------------------------------
         fig_pagos_ruedas = create_plot_pagos(
             df_pagos_ruedas, 
             'monto_transaccion',
@@ -2611,15 +2705,14 @@ else:
             & (df_pagos_ruedas['tv'] ==selected_tv)
         ]
         pagos_ruedas_filtered = pagos_ruedas_filtered.groupby(['año_mes_fecha_pago']).agg(
-            #{'tv':'first',
             {'monto_transaccion': 'mean',
             'pago_ipc': 'mean',           
             'pago_usd': 'mean'}).reset_index()
+        
         pagos_ruedas_filtered.monto_transaccion = pagos_ruedas_filtered.monto_transaccion.round(0).astype(int) 
         pagos_ruedas_filtered.pago_usd = pagos_ruedas_filtered.pago_usd.round(0).astype(int) 
         pagos_ruedas_filtered.pago_ipc = pagos_ruedas_filtered.pago_ipc.round(0).astype(int)
-        
-        # st.write(f'Marcas seleccionadas: {", ".join(selected_marcas)}')
+
         with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
             st.dataframe(pagos_ruedas_filtered, hide_index=True, width=900)
 
@@ -2683,11 +2776,12 @@ else:
         st.subheader('', divider='grey')
 
         
-# ----- PARTICIPACION DE MERCADO ROBO DE RUEDAS POR MARCA --------------------------------------------------
+# ----- COMPARATIVO PARTICIPACION DE MERCADO ROBO DE RUEDAS POR MARCA --------------------------
+
         column_1, column_2 = st.columns(2)
 
         with column_1:
-            st.markdown(f'#### Participación de pagos por Marca - {selected_tv}')
+            st.markdown(f'#### :white_small_square: Participación de pagos por Marca - {selected_tv}')
             df_participacion = df_pagos_ruedas.sort_values(by=['marca_vehiculo'])
             df_participacion = df_participacion[
                 (df_participacion['tv'] == selected_tv)
@@ -2700,7 +2794,7 @@ else:
                 df_participacion['monto_transaccion'] / monto_total
             ) * 100
             
-            df_participacion['% Participación'] = df_participacion['% Participación'].round(2)
+            df_participacion['% Participación'] = df_participacion['% Participación'].round(0).astype(int)
             
             df_participacion.sort_values(
                 '% Participación', 
@@ -2708,38 +2802,30 @@ else:
                 inplace=True
             )
             df_participacion['Part. Acum.'] = df_participacion['% Participación'].cumsum()
-            df_participacion['Part. Acum.'] = df_participacion['Part. Acum.'].round(2)
+            df_participacion['Part. Acum.'] = df_participacion['Part. Acum.'].round(0).astype(int)
 
 
             def format_participacion(row): 
-                
-                # 1. Calcular el valor individual formateado (SIEMPRE VISIBLE)
-                # Se formatea siempre, ya que quieres que figure en todas las filas.
+
                 participacion_individual_str = f"{row['% Participación']} %"
                 
-                # 2. Aplicar la condición de corte SOLO al valor ACUMULADO
-                
+                # corte en 90% de acumulacion de pagos
                 if row['Part. Acum.'] > 90.00:
                     # Si supera el 90%, el acumulado es vacío, pero el individual se mantiene
                     participacion_acumulada_str = ''
                 else:
                     # Si es <= 90%, formateamos el acumulado
-                    # Usamos el valor numérico de 'Part. Acum.' (ya redondeado previamente si aplica)
                     participacion_acumulada_str = f"{row['Part. Acum.']} %" 
 
-                # 3. Retornar la Serie con ambos valores
                 return pd.Series(
                     [participacion_individual_str, participacion_acumulada_str], 
                     index=['% Participación', 'Part. Acum. (%)']
                 )
 
-
-
             df_participacion[['% Participación', 'Part. Acum. (%)']] = df_participacion.apply(
                 format_participacion, 
                 axis=1 
             )
-            # df_participacion.drop(columns=['Participación Acumulada'], inplace=True)
             df_participacion.drop(columns=['Part. Acum.'], inplace=True)
 
 
@@ -2760,16 +2846,15 @@ else:
 
 # ----- PARTICIPACION POR MODELO --------------------------------------------------
         with column_2:
-            st.markdown('#### Participación de pagos por Modelo')
+            st.markdown('#### :white_small_square: Participación de pagos por Modelo')
 
             TARGET_BRAND = "TOYOTA"
-            # PLACEHOLDER_TEXT = "Seleccione una Marca..."
 
             if TARGET_BRAND in available_marcas_for_tv:
                 # Si TOYOTA existe, encontramos su índice en la lista FINAL (que tiene el placeholder en la pos 0)
                 default_index = available_marcas_for_tv.index(TARGET_BRAND)
             else:
-                # Si TOYOTA no existe para este TV, seleccionamos el placeholder (índice 0)
+
                 default_index = 0
 
             selected_brand_for_model = st.selectbox(
@@ -2779,7 +2864,6 @@ else:
                 label_visibility='visible',
                 placeholder="Seleccione una Marca...",
             )
-
 
             if selected_brand_for_model and selected_tv:
                 # filtro por modelo
@@ -2811,18 +2895,10 @@ else:
                 # Redondear y formatear el porcentaje
                 df_modelos_participacion['% Participación'] = (
                     df_modelos_participacion['% Participación']
-                    .round(0) # Redondear a 0 decimales como en tu imagen
+                    .round(0)
                     .astype(int)
                     .astype(str) + ' %'
                 )
-
-                # 2.6. Formatear la columna de Monto (Usando la función manual si la definiste)
-                # Si definiste 'format_ars_value' para evitar errores de locale:
-                # df_modelos_participacion['Suma de Pagos'] = df_modelos_participacion['Suma de Pagos'].apply(lambda x: '$ ' + format_ars_value(x))
-
-                # Si NO definiste la función, usa el formato estándar de Pandas:
-                # # df_modelos_participacion['Suma de Mont'] = df_modelos_participacion['Suma de Mont'].map('{:,.0f}'.format)
-                # NOTA: Este formato usa comas para miles. Si necesitas puntos, usa la función 'format_ars_value' que creamos antes.
 
                 st.dataframe(df_modelos_participacion, hide_index=True, width=450, height=600)
 
@@ -2844,7 +2920,7 @@ else:
         options_with_all = [PLACEHOLDER_ALL_MODELS] + available_modelos
 
 
-        st.markdown(f"###### **Seleccionar Modelo de {selected_brand_for_model} para Análisis Histórico:**")
+        st.markdown(f"###### :arrow_right: **Seleccionar modelo de {selected_brand_for_model} para análisis histórico:**")
         col1, col2 = st.columns([1, 3])
         with col1:
             if options_with_all:
@@ -2871,21 +2947,12 @@ else:
                 selected_model_list = [selected_model_raw]
                 display_title = selected_model_raw
 
-       
-            # 3.1. Filtrar el DataFrame final por Marca y Modelo
             df_historico = df_pagos_ruedas[
                 (df_pagos_ruedas['modelo_vehiculo'].isin(selected_model_list)) &
                 (df_pagos_ruedas['marca_vehiculo'] == selected_brand_for_model) &
                 (df_pagos_ruedas['tv'] == selected_tv)
             ].copy()
 
-            # if selected_model != PLACEHOLDER_ALL_MODELS:
-            #     # Si se eligió un modelo específico, aplicamos el filtro de modelo
-            #     df_historico = df_historico[df_historico['modelo_vehiculo'] == selected_model].copy()
-            #     display_title = selected_model
-            # else:
-            #     # Si se eligió "TODOS LOS MODELOS", NO se aplica el filtro de modelo.
-            #     display_title = PLACEHOLDER_ALL_MODELS
             
             st.markdown(f"#### Histórico de Pagos: **{selected_brand_for_model} - {display_title}**")
 
@@ -2950,7 +3017,7 @@ else:
             ) * 100
             diferencias_porcentuales = diferencias_porcentuales.round(1)
 
-            st.markdown("#### Resumen de promedios y comparativa")
+            st.markdown("#### :memo: Resumen de promedios y comparativa")
 
             data_resumen = {
                 'Métrica': [
