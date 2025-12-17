@@ -4187,17 +4187,17 @@ else:
                 \n:white_small_square: _La Segunda BI_")
 
             st.markdown('---')
-            st.image("data\coverables.png")
+            st.image("data/coverables.png", use_container_width=True)   
             st.markdown('')
-            st.image("data\marcas.png")
+            st.image("data/marcas.png", use_container_width=True)
             st.markdown('')
-            st.image("data\marcas_motos.png")
+            st.image("data/marcas_motos.png", use_container_width=True)
             st.markdown('')
-            st.image("data\marcas_cam.png")
+            st.image("data/marcas_cam.png", use_container_width=True)
             st.markdown('')
-            st.image("data\esp.png")
+            st.image("data/esp.png", use_container_width=True)
             st.markdown('')
-            st.image(r"data\trp.png")
+            st.image("data/trp.png", use_container_width=True)
 
 
 
