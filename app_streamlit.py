@@ -63,6 +63,10 @@ try:
 
     # df pagos ruedas
     df_pagos_ruedas = pd.read_csv('data/pagos_ruedas_ok.csv')
+    # df pagos ruedas
+    df_pagos_materiales = pd.read_csv('data/pagos_dano_mat_ok.csv')
+        # df pagos ruedas
+    df_pagos_cascos = pd.read_csv('data/pagos_cascos_ok.csv')
 
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. \nDetalles: {e}")
@@ -146,14 +150,17 @@ def create_pie_chart(df, value):
 
     return fig 
 
+opcion_0 = "Resumen cartera La Segunda"
 opcion_1 = "Evolutivo lista de precios Pilkington"
 opcion_2 = "Comparación precios vs pagos Cristales"
 opcion_3 = "Evolutivo precios ORION/CESVI"
 opcion_4 = "Análisis Coste Medio por Provincia"
 opcion_5 = "Comparativo de Mano de Obra (L2 vs Cesvi vs Colegas)"
 opcion_6 = "Evolutivo pagos Robo de Ruedas"
+opcion_7 = "Evolutivo pagos Daños Materiales"
+opcion_8 = "Evolutivo pagos Cascos"
 
-OPTIONS = [opcion_1, opcion_2, opcion_3, opcion_4, opcion_5, opcion_6]
+OPTIONS = [opcion_0, opcion_1, opcion_2, opcion_3, opcion_4, opcion_5, opcion_6, opcion_7, opcion_8]
 
 # ==========================================================================
 # PANTALLA INICIO DE LA APP
@@ -1398,7 +1405,6 @@ else:
 
             fig5 = create_plot_orion(df_rep_tv, 'costo_pieza_prom_hist', 'tva', None,'Costo Promedio')
 
-            # st.markdown("---")
         
             # 2. Preparar los datos del IPC (evitando duplicados por mes)
             df_ipc_data = df_rep_tv[['año_mes', 'var_ipc']].drop_duplicates().sort_values('año_mes')
@@ -1429,14 +1435,14 @@ else:
                     df,
                     names='Repuesto',
                     values=value_col,
-                    hover_data=[value_col, 'Cant Ord. Compra'],
-                    title='Distribución de Órdenes de Compra por Tipo de Repuesto',
+                    hover_data=[value_col],
+                    title='Distribución de montos por Tipo de Repuesto',
                     color_discrete_sequence=px.colors.qualitative.G10,
-                    # labels={value_col: value_col.title(), 'marca_agrupada': 'Marca'},
+                    labels={value_col: value_col.title()},
                     hole=0.3
                 )
-                fig.update_traces(textposition='inside', textinfo='percent+label',
-                                  insidetextfont=dict(size=12, color='white', family='Arial'))
+                fig.update_traces(textinfo='percent+label',
+                                  insidetextfont=dict(size=14, color='white', family='Arial'))
                 fig.update_layout(
                     height=500,
                     font=dict(family="Arial", size=12, color='white'),
@@ -1445,37 +1451,9 @@ else:
                 )
                 return fig
             
-
-                # fig = px.pie(
-                #     df,
-                #     values=value,
-                #     names='marca_agrupada',
-                #     hover_data=[value],
-                #     color_discrete_sequence=px.colors.qualitative.G10,
-                #     labels={value: value.title(), 'marca_agrupada': 'Marca'},
-                #     hole=0.3 # Agrega un agujero al centro para un estilo de "donut chart"
-                #     )
-
-                #     fig.update_traces(
-                #         # textposition='inside',
-                #         textinfo='percent+label',
-                #         insidetextfont=dict(size=12, color='white', family='Arial')
-                #     )
-                #     fig.update_layout(
-                #         font=dict(family="Arial", size=12, color="white"),
-                #         showlegend=True
-                #     )
-
-                #     return fig 
-
-
-# volver
             st.subheader('2. Costo de piezas prom. histórico por Tipo Repuesto')
-            UMBRAL_PORCENTAJE = 0.04 # 4% en formato decimal
+            UMBRAL_PORCENTAJE = 0.04
 
-            # Asegúrate de que df_rep_torta tiene la columna 'Monto Total' en formato numérico
-            # Si 'Monto Total' no es numérico, usa:
-            # df_rep_torta['Monto Total'] = pd.to_numeric(df_rep_torta['Monto Total'], errors='coerce')
             try:
                 df_rep_torta['Monto Total'] = (
                     df_rep_torta['Monto Total']
@@ -1486,11 +1464,7 @@ else:
                 df_rep_torta['Monto Total'] = pd.to_numeric(df_rep_torta['Monto Total'], errors='coerce')
                 
             except Exception as e:
-                # Manejar el error si el formato es diferente (ej: solo quitar el $)
-                # Si sabes que solo tiene el signo de moneda o espacios:
-                # df_rep_torta['Monto Total'] = df_rep_torta['Monto Total'].astype(str).str.replace('$', '', regex=False).str.strip()
-                # df_rep_torta['Monto Total'] = pd.to_numeric(df_rep_torta['Monto Total'], errors='coerce')
-                st.error(f"Error al limpiar la columna 'Monto Total': {e}") # Usar st.error si estás en Streamlit
+                st.error(f"Error al limpiar la columna 'Monto Total': {e}") 
 
             # --- 1. Calcular el total y el porcentaje de participación ---
             monto_total_general = df_rep_torta['Monto Total'].sum()
@@ -1504,8 +1478,6 @@ else:
                 df_rep_torta['Repuesto']
             )
 
-            # --- 3. Crear el nuevo DataFrame agrupado ---
-            # Agrupamos por la nueva columna 'Repuesto_Agrupado' y sumamos los montos y cantidades
             df_torta_final = df_rep_torta.groupby('Repuesto_Agrupado').agg(
                 {
                     'Monto Total': 'sum',
@@ -1513,7 +1485,6 @@ else:
                 }
             ).reset_index()
 
-            # Renombramos la columna principal de vuelta a 'Repuesto' para la función de graficación
             df_torta_final.rename(columns={'Repuesto_Agrupado': 'Repuesto'}, inplace=True)
 
             # muestro grafico torta MARCA AUTOS
@@ -1523,20 +1494,16 @@ else:
             if st.session_state.show_pie_chart_4:   
                 fig_pie_rep = create_pie_chart_repuestos(df_torta_final, 'Monto Total')
                 st.plotly_chart(fig_pie_rep, use_container_width=True)
-                st.text(f"Total ord. compra (ene23-jul25): {df_torta_final['Cant Ord. Compra'].sum():,.0f}")
+                st.text(f"Total ord. compra (ene23-oct25): {df_torta_final['Cant Ord. Compra'].sum():,.0f}")
                 # Formateo del monto total (suponiendo que es dinero)
-                st.text(f"Monto Total de Órdenes (ene23-jul25): ${df_torta_final['Monto Total'].sum():,.0f}") 
+                st.text(f"Monto Total de Órdenes (ene23-oct25): ${df_torta_final['Monto Total'].sum():,.0f}") 
                 st.text(f"Total repuestos únicos: {df_rep_torta.Repuesto.nunique()}")
                 df_rep_torta['% Monto Total'] = df_rep_torta['% Monto Total'] * 100
                 df_rep_torta['% Monto Total'] = df_rep_torta['% Monto Total'].round(2).astype(str) + ' %'
 
-
-
                 st.dataframe(df_rep_torta.drop('Repuesto_Agrupado', axis=1), hide_index=True)
-                
 
                 st.markdown("---")
-
 
             # muestro distribución MARCA AUTOS
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
@@ -1575,7 +1542,7 @@ else:
                 st.subheader('Distribución de Órdenes de Compra por Marca')
                 fig_pie = create_pie_chart(df_marcas_autos, 'cant_ocompra')
                 st.plotly_chart(fig_pie, use_container_width=True)
-                st.markdown('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
+                # st.markdown('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
                 st.markdown('Total marcas: 44')
                 st.markdown("---")
 # ==========================================================================
@@ -1621,7 +1588,7 @@ else:
                 st.subheader('Distribución de Órdenes de Compra por Marca')
                 fig_pie = create_pie_chart(df_marcas_camiones, 'cant_ocompra')
                 st.plotly_chart(fig_pie, use_container_width=True)
-                st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
+                # st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
                 st.text('Total marcas: 26')
                 st.markdown("---")
 # ==========================================================================
@@ -1800,7 +1767,7 @@ else:
                 st.subheader('Distribución de Órdenes de Compra por Marca')
                 fig_pie = create_pie_chart(df_marcas_autos, 'cant_ocompra')
                 st.plotly_chart(fig_pie, use_container_width=True)
-                st.text('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
+                # st.text('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
                 st.text('Total marcas: 44' )
                 st.markdown("---")
 # ==========================================================================
@@ -1825,7 +1792,7 @@ else:
                 st.subheader('Distribución de Órdenes de Compra por Marca')
                 fig_pie = create_pie_chart(df_marcas_camiones, 'cant_ocompra')
                 st.plotly_chart(fig_pie, use_container_width=True)
-                st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
+                # st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
                 st.text('Total marcas: 26')
                 st.markdown("---")
 # ==========================================================================
@@ -1892,6 +1859,11 @@ else:
             # gráfico 2: evolución costo repuestos por tipo repuesto USD
             st.subheader('2. Evolución del costo prom. por Tipo Repuesto en USD')
 
+            # AGREGAR GRAF TORTA POR VALOR USD
+
+
+
+            
             # muestro el dataset
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
                 # st.subheader("Tabla de Datos de Ejemplo")
@@ -1911,7 +1883,7 @@ else:
                 st.subheader('Distribución de Órdenes de Compra por Marca')
                 fig_pie = create_pie_chart(df_marcas_autos, 'cant_ocompra')
                 st.plotly_chart(fig_pie, use_container_width=True)
-                st.text('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
+                # st.text('Total ord. compra autos (ene23-jul25): ' + str(df_marcas_autos['cant_ocompra'].sum()))
                 st.text('Total marcas: 44' )
                 st.markdown("---")
 # ==========================================================================
@@ -1936,7 +1908,7 @@ else:
                 st.subheader('Distribución de Órdenes de Compra por Marca')
                 fig_pie = create_pie_chart(df_marcas_camiones, 'cant_ocompra')
                 st.plotly_chart(fig_pie, use_container_width=True)
-                st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
+                # st.text('Total ord. compra camiones (ene23-jul25): ' + str(df_marcas_camiones['cant_ocompra'].sum()))
                 st.text('Total marcas: 26')
                 st.markdown("---")     
 # ==========================================================================
@@ -3043,4 +3015,1189 @@ else:
                 df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
 
             st.dataframe(df_resumen, hide_index=True, use_container_width=True)
+
+
+
+    elif current_analysis == opcion_7:
+            st.markdown('## Evolución de monto de pagos de Daños Materiales (L2)')    
+            st.markdown("---")
+
+            def create_plot_pagos(df_source, y1, y2, y3, title, x_tickangle=45):
+
+                df_filtered = df_source[
+                    (df_source['marca_vehiculo'].isin(final_marcas_to_filter)) 
+                    & (df_source['tv'] ==selected_tv)
+                ].copy()
+
+                df_filtered.sort_values('año_mes_fecha_pago', inplace=True)
+                df_plot = df_filtered.groupby('año_mes_fecha_pago').agg(
+                    {
+                    y1: 'mean',
+                    y2: 'mean',           
+                    y3: 'mean'         
+                    }).reset_index()
+
+                # Columnas y etiquetas específicas para el gráfico (ajustadas al gráfico de la imagen)
+                y1_cols = [y1, y2] # Eje ARS (Primario)
+                y2_cols = [y3]                        # Eje USD (Secundario)
+                
+                y1_label = "Monto (ARS)"
+                y2_label = "Monto (USD)"
+                x_col = 'año_mes_fecha_pago'
+
+
+                line_colors = {
+                    y1: '#1f77b4', 
+                    y2: '#ff7f0e',       
+                    y3: '#2ca02c'           
+                }
+                legend_names = {
+                    y1: y1,
+                    y2: y2,
+                    y3: y3
+                }
+
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+                #  eje primario
+                for col in y1_cols:
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df_plot[x_col], 
+                            y=df_plot[col], 
+                            name=legend_names[col],
+                            line=dict(color=line_colors[col], width=3), 
+                            showlegend=True,
+                            # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} ARS<extra></extra>"
+                        ),
+                        secondary_y=False, # Eje Y Izquierdo
+                    )
+
+                # eje secundario
+                for col in y2_cols:
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df_plot[x_col], 
+                            y=df_plot[col], 
+                            name=legend_names[col],
+                            line=dict(color=line_colors[col], width=3),
+                            showlegend=True,
+                            # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} USD<extra></extra>"
+                        ),
+                        secondary_y=True, # Eje Y Derecho
+                    )
+
+
+                fig.update_yaxes(title_text=f"{y1_label}", secondary_y=False, nticks=14, showgrid=True)
+                fig.update_yaxes(title_text=f"{y2_label}", secondary_y=True, nticks=14, showgrid=False)
+
+                # Ajustes del Gráfico
+                fig.update_layout(
+                    title_text=title,
+                    height=700,
+                    legend_title_text='', # Dejar vacío ya que el nombre de la línea lo explica
+                    font=dict(family="Arial", size=15),
+                    margin=dict(t=100, b=0, l=0, r=0),
+                    title=dict(
+                        font=dict(size=20, family="Arial"),
+                    ),
+                )
+
+                # eje X
+                fig.update_xaxes(
+                    tickangle=x_tickangle, 
+                    showticklabels=True,
+                    title_text=''
+                )
+                        
+                return fig
+            
+            def create_plot_pagos_marcas(df, y_col, color, facet_col, y_label, title, x_tickangle=None):
+
+                if df.empty:
+                    fig = go.Figure().update_layout(
+                        title_text=f"No hay datos para graficar",
+                        height=400,
+                        font=dict(family="Arial", size=10),
+                        title_font_size=12
+                    )
+                    return fig
+
+                df_filtered = df[
+                    (df['tv'] == selected_tv) &
+                    (df['marca_vehiculo'].isin(final_marcas_to_filter)) 
+                    # & (df['zona'].isin(selected_zone))
+                ].copy()
+
+                df_filtered.sort_values('año_mes_fecha_pago', inplace=True)
+                df_plot = df_filtered.groupby(['año_mes_fecha_pago', 'marca_vehiculo']).agg(
+                    {
+                    'monto_transaccion': 'mean',
+                    'pago_usd': 'mean',           
+                    'pago_ipc': 'mean'         
+                    }).reset_index()
+                
+                fig = px.line(
+                    df_plot,
+                    x='año_mes_fecha_pago',
+                    y=y_col,
+                    color=color,
+                    color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+                    facet_col=facet_col,
+                    labels={'año_mes_fecha_pago': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
+                )
+
+                fig.update_layout(
+                    title_text=title,
+                    height=700, # Altura del subplot individual
+                    # width=200,
+                    legend_title_text='',
+                    font=dict(family="Arial", size=15),
+                    margin=dict(t=50, b=0, l=0, r=0),
+                    title=dict(
+                        font=dict(size=20, family="Arial")       
+                ),
+                    legend=dict(
+                    orientation="h",        # Muestra la leyenda horizontalmente
+                    yanchor="top",          # Anclamos la leyenda en la parte superior del espacio que le damos (y)
+                    y=-0.2,                 # Colocamos la leyenda debajo del gráfico (ajusta este valor si es necesario)
+                    xanchor="center",       # Anclamos la leyenda en su centro
+                    x=0.5)                   # Posicionamos el centro de la leyenda en el medio del eje X (0.5)
+                    )
+
+                fig.for_each_xaxis(
+                lambda xaxis: xaxis.update(
+                    tickangle=x_tickangle, # Aplicar el ángulo deseado
+                    showticklabels=True     # Asegurarse de que las etiquetas sean visibles (si fuera necesario)
+                    )
+                )
+                fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+                fig.update_traces(line=dict(width=2))
+                
+                return fig
+            
+            available_marcas = sorted(df_pagos_materiales['marca_vehiculo'].unique().tolist())
+            available_marcas_todas = ["TODAS (general)"] + available_marcas
+            available_tv = sorted(df_pagos_materiales['tv'].unique().tolist())
+            DEFAULT_MARCAS = ["VOLKSWAGEN", "CHEVROLET", "FORD",  "TOYOTA", "FIAT", "PEUGEOT", "RENAULT"]
+
+            st.markdown("#### _Fuente de datos:_ \
+                \n:white_small_square: _La Segunda BI (pagos)_")
+            
+            st.markdown('---')
+
+            # selectbox para tipo de vehiculo
+            with st.sidebar:
+                st.markdown("---")
+                st.markdown("Filtros")
+                st.markdown("##### _Seleccionar Tipo de Vehículo:_") 
+                selected_tv = st.selectbox(
+                    "TV",
+                    options=available_tv,
+                    index=5,
+                    label_visibility ='collapsed',
+                )
+                st.markdown("---")
+
+                if selected_tv:
+                    df_filtered_by_tv = df_pagos_materiales[df_pagos_materiales['tv'] == selected_tv]
+                    available_marcas_for_tv = sorted(df_filtered_by_tv['marca_vehiculo'].unique().tolist())
+                else:
+                    available_marcas_for_tv = sorted(df_pagos_materiales['marca_vehiculo'].unique().tolist())
+
+                default_selection = [
+                    m for m in DEFAULT_MARCAS 
+                    if m in available_marcas_for_tv
+                ]
+
+                # multiselect para diferentes marcas
+                st.markdown("##### _Seleccionar Marcas:_")
+                selected_marcas = st.multiselect(
+                    "Marcas",
+                    options=available_marcas_for_tv,
+                    default=default_selection,
+                    label_visibility='collapsed',
+                    placeholder="Seleccione una o varias Marcas..."
+                )
+                st.markdown("---")
+
+                if not selected_marcas:
+                    final_marcas_to_filter = available_marcas_for_tv
+                    st.info(f"Filtro de Marcas: **TODAS** ({len(available_marcas_for_tv)} marcas)")
+                else:
+                    final_marcas_to_filter = selected_marcas
+
+    # ----- PAGOS ROBO DE RUEDAS EVOLUTIVO --------------------------------------------------
+            agg_cols = {
+                'monto_transaccion': 'sum', # Promedio de Monto Transaccion
+                'pago_ipc': 'sum', # Promedio de Pago IPC
+                'pago_usd': 'sum', # Promedio de Pago USD
+            }
+
+            tabla = df_pagos_materiales.groupby('tv').agg(agg_cols).reset_index().sort_values(by='monto_transaccion',ascending=False).rename(columns={'tv':'cobertura'})
+
+            st.markdown("###### :memo: Resumen de pagos por TV")
+            
+            with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
+                st.dataframe(tabla, use_container_width=True, hide_index=True)
+
+            fig_pagos_mat = create_plot_pagos(
+                df_pagos_materiales, 
+                'monto_transaccion',
+                'pago_ipc',
+                'pago_usd',
+                title=f'Pagos promedio de daños materiales (L2) - {selected_tv}', 
+                x_tickangle=45
+            )
+            st.plotly_chart(fig_pagos_mat, use_container_width=True)
+            
+            df_pagos_materiales.sort_values('año_mes_fecha_pago', inplace=True)
+            pagos_mat_filtered = df_pagos_materiales[
+                (df_pagos_materiales['marca_vehiculo'].isin(final_marcas_to_filter)) 
+                & (df_pagos_materiales['tv'] ==selected_tv)
+            ]
+            pagos_mat_filtered = pagos_mat_filtered.groupby(['año_mes_fecha_pago']).agg(
+                {'monto_transaccion': 'mean',
+                'pago_ipc': 'mean',           
+                'pago_usd': 'mean'}).reset_index()
+            
+            pagos_mat_filtered.monto_transaccion = pagos_mat_filtered.monto_transaccion.round(0).astype(int) 
+            pagos_mat_filtered.pago_usd = pagos_mat_filtered.pago_usd.round(0).astype(int) 
+            pagos_mat_filtered.pago_ipc = pagos_mat_filtered.pago_ipc.round(0).astype(int)
+
+            with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
+                st.dataframe(pagos_mat_filtered, hide_index=True, width=900)
+
+            st.subheader('', divider='grey')
+
+
+    # ----- ROBO DE RUEDAS POR MARCA --------------------------------------------------
+
+            fig_pagos_mat_hist = create_plot_pagos_marcas(
+                df_pagos_materiales,
+                'monto_transaccion', 
+                'marca_vehiculo',
+                None,
+                'Monto histórico',
+                title=f'Pagos robo de ruedas históricos por marca - {selected_tv}', 
+                x_tickangle=45)
+            
+            fig_pagos_mat_ipc = create_plot_pagos_marcas(
+                df_pagos_materiales,
+                'pago_ipc', 
+                'marca_vehiculo',
+                None,
+                'Monto IPC',
+                title=f'Pagos robo de ruedas por marca ajustados por IPC - {selected_tv}', 
+                x_tickangle=45)
+            
+            fig_pagos_mat_usd = create_plot_pagos_marcas(
+                df_pagos_materiales,
+                'pago_usd', 
+                'marca_vehiculo',
+                None,
+                'Monto USD',
+                title=f'Pagos robo de ruedas por marca en valor USD - {selected_tv}', 
+                x_tickangle=45)
+
+
+            tab1, tab2, tab3 = st.tabs(["Histórico", "IPC", 'USD'])
+            with tab1:
+                st.plotly_chart(fig_pagos_mat_hist, use_container_width=True)
+            with tab2:
+                st.plotly_chart(fig_pagos_mat_ipc, use_container_width=True)
+            with tab3:
+                st.plotly_chart(fig_pagos_mat_usd, use_container_width=True)
+                        
+            df_resumen_mat = df_pagos_materiales.sort_values(by=['año_mes_fecha_pago', 'marca_vehiculo'])
+            df_resumen_mat = df_resumen_mat[(df_resumen_mat['tv'] == selected_tv)
+                    & (df_resumen_mat['marca_vehiculo'].isin(final_marcas_to_filter))
+                ]
+            df_tabla_mat = df_resumen_mat.groupby(['año_mes_fecha_pago','marca_vehiculo']).agg(
+                {'monto_transaccion': 'mean',
+                'pago_usd': 'mean',           
+                'pago_ipc': 'mean'}).reset_index()
+            
+            df_tabla_mat.monto_transaccion = df_tabla_mat.monto_transaccion.round(0).astype(int) 
+            df_tabla_mat.pago_usd = df_tabla_mat.pago_usd.round(0).astype(int) 
+            df_tabla_mat.pago_ipc = df_tabla_mat.pago_ipc.round(0).astype(int)
+
+            with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
+                st.dataframe(df_tabla_mat, hide_index=True, width=900)
+
+            st.subheader('', divider='grey')
+
+            
+    # ----- COMPARATIVO PARTICIPACION DE MERCADO ROBO DE RUEDAS POR MARCA --------------------------
+
+            column_1, column_2 = st.columns(2)
+
+            with column_1:
+                st.markdown(f'#### :white_small_square: Participación de pagos por Marca - {selected_tv}')
+                df_participacion = df_pagos_materiales.sort_values(by=['marca_vehiculo'])
+                df_participacion = df_participacion[
+                    (df_participacion['tv'] == selected_tv)
+                    ]
+                df_participacion = df_participacion.groupby(['marca_vehiculo']).agg(
+                    {'monto_transaccion': 'sum',}).reset_index()
+                
+                monto_total = df_participacion['monto_transaccion'].sum()
+                df_participacion['% Participación'] = (
+                    df_participacion['monto_transaccion'] / monto_total
+                ) * 100
+                
+                df_participacion['% Participación'] = df_participacion['% Participación'].round(0).astype(int)
+                
+                df_participacion.sort_values(
+                    '% Participación', 
+                    ascending=False, 
+                    inplace=True
+                )
+                df_participacion['Part. Acum.'] = df_participacion['% Participación'].cumsum()
+                df_participacion['Part. Acum.'] = df_participacion['Part. Acum.'].round(0).astype(int)
+
+
+                def format_participacion(row): 
+
+                    participacion_individual_str = f"{row['% Participación']} %"
+                    
+                    # corte en 90% de acumulacion de pagos
+                    if row['Part. Acum.'] > 90.00:
+                        # Si supera el 90%, el acumulado es vacío, pero el individual se mantiene
+                        participacion_acumulada_str = ''
+                    else:
+                        # Si es <= 90%, formateamos el acumulado
+                        participacion_acumulada_str = f"{row['Part. Acum.']} %" 
+
+                    return pd.Series(
+                        [participacion_individual_str, participacion_acumulada_str], 
+                        index=['% Participación', 'Part. Acum. (%)']
+                    )
+
+                df_participacion[['% Participación', 'Part. Acum. (%)']] = df_participacion.apply(
+                    format_participacion, 
+                    axis=1 
+                )
+                df_participacion.drop(columns=['Part. Acum.'], inplace=True)
+
+
+                fila_total = pd.DataFrame([{
+                    'marca_vehiculo': 'TOTAL',
+                    'monto_transaccion': monto_total,
+                    '% Participación': '',
+                    'Part. Acum. (%)': ''
+                }])
+
+                # Concatenar la fila total al final del DataFrame
+                df_participacion = pd.concat(
+                    [df_participacion, fila_total],
+                    ignore_index=True
+                )
+
+                st.dataframe(df_participacion.rename(columns={'monto_transaccion':'Suma de Pagos'}), hide_index=True, width=450, height=600)
+
+    # ----- PARTICIPACION POR MODELO --------------------------------------------------
+            with column_2:
+                st.markdown('#### :white_small_square: Participación de pagos por Modelo')
+
+                TARGET_BRAND = "TOYOTA"
+
+                if TARGET_BRAND in available_marcas_for_tv:
+                    # Si TOYOTA existe, encontramos su índice en la lista FINAL (que tiene el placeholder en la pos 0)
+                    default_index = available_marcas_for_tv.index(TARGET_BRAND)
+                else:
+
+                    default_index = 0
+
+                selected_brand_for_model = st.selectbox(
+                    "Seleccionar Marca:",
+                    options=available_marcas_for_tv,
+                    index=default_index,
+                    label_visibility='visible',
+                    placeholder="Seleccione una Marca...",
+                )
+
+                if selected_brand_for_model and selected_tv:
+                    # filtro por modelo
+                    df_modelos = df_pagos_materiales[
+                        (df_pagos_materiales['marca_vehiculo'] == selected_brand_for_model) &
+                        (df_pagos_materiales['tv'] == selected_tv)
+                    ].copy()
+                    
+                    df_modelos_participacion = df_modelos.groupby('modelo_vehiculo').agg(
+                        {'monto_transaccion': 'sum'}
+                    ).reset_index()
+                    
+                    df_modelos_participacion.rename(
+                        columns={'monto_transaccion': 'Suma de Pagos'}, 
+                        inplace=True
+                    )
+
+                    df_modelos_participacion.sort_values(
+                        'Suma de Pagos', 
+                        ascending=False, 
+                        inplace=True
+                    )
+                    monto_total_marca = df_modelos_participacion['Suma de Pagos'].sum()
+
+                    df_modelos_participacion['% Participación'] = (
+                        df_modelos_participacion['Suma de Pagos'] / monto_total_marca
+                    ) * 100
+                    
+                    # Redondear y formatear el porcentaje
+                    df_modelos_participacion['% Participación'] = (
+                        df_modelos_participacion['% Participación']
+                        .round(0)
+                        .astype(int)
+                        .astype(str) + ' %'
+                    )
+
+                    st.dataframe(df_modelos_participacion, hide_index=True, width=450, height=600)
+
+                else:
+                    st.info("Por favor, seleccione una marca de vehículo para ver la participación por modelo.")
+
+
+            if selected_brand_for_model:
+                df_filtered_by_brand = df_pagos_materiales[
+                    (df_pagos_materiales['marca_vehiculo'] == selected_brand_for_model) &
+                    (df_pagos_materiales['tv'] == selected_tv)
+                ].copy()
+                
+                # Obtenemos la lista única de modelos para esa marca
+                available_modelos = sorted(df_filtered_by_brand['modelo_vehiculo'].unique().tolist())
+            else:
+                available_modelos = []
+            PLACEHOLDER_ALL_MODELS = "TODOS LOS MODELOS"
+            options_with_all = [PLACEHOLDER_ALL_MODELS] + available_modelos
+
+
+            st.markdown(f"###### :arrow_right: **Seleccionar modelo de {selected_brand_for_model} para análisis histórico:**")
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                if options_with_all:
+                    # Usar el primer modelo disponible como default (índice 0)
+                    selected_model_raw = st.selectbox(
+                        "Modelo",
+                        options=options_with_all,
+                        index=0,
+                        label_visibility='collapsed',
+                        placeholder=PLACEHOLDER_ALL_MODELS,
+                    )
+                else:
+                    st.info("No hay modelos disponibles para la marca seleccionada.")
+                    selected_model_raw = None
+
+            if selected_model_raw:
+                if selected_model_raw == PLACEHOLDER_ALL_MODELS:
+                    # Si se selecciona "TODOS LOS MODELOS", la lista de modelos a filtrar
+                    # debe ser la lista completa de modelos disponibles para esa marca.
+                    selected_model_list = available_modelos
+                    display_title = PLACEHOLDER_ALL_MODELS
+                else:
+                    # Si se selecciona un modelo específico, la lista a filtrar es solo ese modelo.
+                    selected_model_list = [selected_model_raw]
+                    display_title = selected_model_raw
+
+                df_historico = df_pagos_materiales[
+                    (df_pagos_materiales['modelo_vehiculo'].isin(selected_model_list)) &
+                    (df_pagos_materiales['marca_vehiculo'] == selected_brand_for_model) &
+                    (df_pagos_materiales['tv'] == selected_tv)
+                ].copy()
+
+                
+                st.markdown(f"#### Histórico de Pagos: **{selected_brand_for_model} - {display_title}**")
+
+                df_historico['Fecha Agrupación'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
+                
+                # df_historico['Año mes Fecha Pago'] = df_historico['año_mes_fecha_pago'] 
+                
+                agg_cols = {
+                    'monto_transaccion': 'mean', # Promedio de Monto Transaccion
+                    'pago_ipc': 'mean', # Promedio de Pago IPC
+                    'pago_usd': 'mean', # Promedio de Pago USD
+                }
+                
+                df_tabla_final = df_historico.groupby('Fecha Agrupación').agg(agg_cols).reset_index()
+
+                # 3.3. Renombrar las columnas para visualización
+                df_tabla_final.rename(columns={
+                    'Fecha Agrupación': 'Año mes Fecha Pago',
+                    'monto_transaccion': 'Promedio de Monto Transaccion',
+                    'pago_ipc': 'Promedio de Pago IPC x Fecha de Pago',
+                    'pago_usd': 'Promedio de Pago USD x Fecha de Pago',
+                }, inplace=True)
+
+                df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
+                
+                # 3.4. Agregar la fila de "Total Resultado" (Promedio General)
+                
+                promedio_general = df_tabla_final.mean(numeric_only=True)
+                
+                fila_total = pd.DataFrame([{
+                    'Año mes Fecha Pago': 'Total Resultado',
+                    'Promedio de Monto Transaccion': promedio_general['Promedio de Monto Transaccion'],
+                    'Promedio de Pago IPC x Fecha de Pago': promedio_general['Promedio de Pago IPC x Fecha de Pago'],
+                    'Promedio de Pago USD x Fecha de Pago': promedio_general['Promedio de Pago USD x Fecha de Pago'],
+                }])
+                
+                df_tabla_final = pd.concat([df_tabla_final, fila_total], ignore_index=True)
+                
+                
+                # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
+                df_tabla_final['Promedio de Monto Transaccion'] = df_tabla_final['Promedio de Monto Transaccion'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                
+                # Formatear las columnas USD/IPC (0 decimales)
+                for col in ['Promedio de Pago IPC x Fecha de Pago', 'Promedio de Pago USD x Fecha de Pago']:
+                    df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                
+                
+                st.dataframe(df_tabla_final, use_container_width=True, hide_index=True, height=500, width=900)
+
+
+                MONTO_COLS = ['monto_transaccion', 'pago_ipc', 'pago_usd']
+
+                # Calculamos los promedios
+                promedios_globales = df_pagos_materiales[MONTO_COLS].mean().round(2)
+
+                promedios_marca = df_filtered_by_brand[MONTO_COLS].mean().round(2)
+
+                promedios_modelo = df_historico[MONTO_COLS].mean().round(2)
+
+                diferencias_porcentuales = (
+                    (promedios_modelo - promedios_marca) / promedios_marca
+                ) * 100
+                diferencias_porcentuales = diferencias_porcentuales.round(1)
+
+                st.markdown("#### :memo: Resumen de promedios y comparativa")
+
+                data_resumen = {
+                    'Métrica': [
+                        'Promedio de Pagos',
+                        'Promedio de Pagos IPC',
+                        'Promedio de Pagos USD'
+                    ],
+                    f'Todas las Marcas (General)': promedios_globales.tolist(),
+                    f'{selected_brand_for_model} (General)': promedios_marca.tolist(),
+                    f'{display_title} (Modelo)': promedios_modelo.tolist(),
+                    'Dif. vs Marca (%)': [
+                        f"{diferencias_porcentuales['monto_transaccion']:.1f} %",
+                        f"{diferencias_porcentuales['pago_ipc']:.1f} %",
+                        f"{diferencias_porcentuales['pago_usd']:.1f} %",
+                    ]
+                }
+
+                df_resumen = pd.DataFrame(data_resumen)
+
+                # Formatear las columnas de Promedio (Monetario, para mejor visualización)
+                for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
+                    # Usamos f-string para formatear con separadores de miles y 0 decimales
+                    df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
+
+                st.dataframe(df_resumen, hide_index=True, use_container_width=True)
+
+
+# --- PAGOS CASCOS -----------------------------------------------------
+
+    elif current_analysis == opcion_8:
+                st.markdown('## Evolución de monto de pagos de Cascos (L2)')    
+                st.markdown("---")
+
+                def create_plot_pagos(df_source, y1, y2, y3, title, x_tickangle=45):
+
+                    df_filtered = df_source[
+                        (df_source['marca_vehiculo'].isin(final_marcas_to_filter)) 
+                        & (df_source['cobertura_principal'] ==selected_tv)
+                    ].copy()
+
+                    df_filtered.sort_values('año_mes_fecha_pago', inplace=True)
+                    df_plot = df_filtered.groupby('año_mes_fecha_pago').agg(
+                        {
+                        y1: 'mean',
+                        y2: 'mean',           
+                        y3: 'mean'         
+                        }).reset_index()
+
+                    # Columnas y etiquetas específicas para el gráfico (ajustadas al gráfico de la imagen)
+                    y1_cols = [y1, y2] # Eje ARS (Primario)
+                    y2_cols = [y3]                        # Eje USD (Secundario)
+                    
+                    y1_label = "Monto (ARS)"
+                    y2_label = "Monto (USD)"
+                    x_col = 'año_mes_fecha_pago'
+
+
+                    line_colors = {
+                        y1: '#1f77b4', 
+                        y2: '#ff7f0e',       
+                        y3: '#2ca02c'           
+                    }
+                    legend_names = {
+                        y1: y1,
+                        y2: y2,
+                        y3: y3
+                    }
+
+                    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+                    #  eje primario
+                    for col in y1_cols:
+                        fig.add_trace(
+                            go.Scatter(
+                                x=df_plot[x_col], 
+                                y=df_plot[col], 
+                                name=legend_names[col],
+                                line=dict(color=line_colors[col], width=3), 
+                                showlegend=True,
+                                # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} ARS<extra></extra>"
+                            ),
+                            secondary_y=False, # Eje Y Izquierdo
+                        )
+
+                    # eje secundario
+                    for col in y2_cols:
+                        fig.add_trace(
+                            go.Scatter(
+                                x=df_plot[x_col], 
+                                y=df_plot[col], 
+                                name=legend_names[col],
+                                line=dict(color=line_colors[col], width=3),
+                                showlegend=True,
+                                # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} USD<extra></extra>"
+                            ),
+                            secondary_y=True, # Eje Y Derecho
+                        )
+
+
+                    fig.update_yaxes(title_text=f"{y1_label}", secondary_y=False, nticks=14, showgrid=True)
+                    fig.update_yaxes(title_text=f"{y2_label}", secondary_y=True, nticks=14, showgrid=False)
+
+                    # Ajustes del Gráfico
+                    fig.update_layout(
+                        title_text=title,
+                        height=700,
+                        legend_title_text='', # Dejar vacío ya que el nombre de la línea lo explica
+                        font=dict(family="Arial", size=15),
+                        margin=dict(t=100, b=0, l=0, r=0),
+                        title=dict(
+                            font=dict(size=20, family="Arial"),
+                        ),
+                    )
+
+                    # eje X
+                    fig.update_xaxes(
+                        tickangle=x_tickangle, 
+                        showticklabels=True,
+                        title_text=''
+                    )
+                            
+                    return fig
+                
+                def create_plot_pagos_marcas(df, y_col, color, facet_col, y_label, title, x_tickangle=None):
+
+                    if df.empty:
+                        fig = go.Figure().update_layout(
+                            title_text=f"No hay datos para graficar",
+                            height=400,
+                            font=dict(family="Arial", size=10),
+                            title_font_size=12
+                        )
+                        return fig
+
+                    df_filtered = df[
+                        (df['cobertura_principal'] == selected_tv) &
+                        (df['marca_vehiculo'].isin(final_marcas_to_filter)) 
+                        # & (df['zona'].isin(selected_zone))
+                    ].copy()
+
+                    df_filtered.sort_values('año_mes_fecha_pago', inplace=True)
+                    df_plot = df_filtered.groupby(['año_mes_fecha_pago', 'marca_vehiculo']).agg(
+                        {
+                        'monto_transaccion': 'mean',
+                        'pago_usd': 'mean',           
+                        'pago_ipc': 'mean'         
+                        }).reset_index()
+                    
+                    fig = px.line(
+                        df_plot,
+                        x='año_mes_fecha_pago',
+                        y=y_col,
+                        color=color,
+                        color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+                        facet_col=facet_col,
+                        labels={'año_mes_fecha_pago': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
+                    )
+
+                    fig.update_layout(
+                        title_text=title,
+                        height=700, # Altura del subplot individual
+                        # width=200,
+                        legend_title_text='',
+                        font=dict(family="Arial", size=15),
+                        margin=dict(t=50, b=0, l=0, r=0),
+                        title=dict(
+                            font=dict(size=20, family="Arial")       
+                    ),
+                        legend=dict(
+                        orientation="h",        # Muestra la leyenda horizontalmente
+                        yanchor="top",          # Anclamos la leyenda en la parte superior del espacio que le damos (y)
+                        y=-0.2,                 # Colocamos la leyenda debajo del gráfico (ajusta este valor si es necesario)
+                        xanchor="center",       # Anclamos la leyenda en su centro
+                        x=0.5)                   # Posicionamos el centro de la leyenda en el medio del eje X (0.5)
+                        )
+
+                    fig.for_each_xaxis(
+                    lambda xaxis: xaxis.update(
+                        tickangle=x_tickangle, # Aplicar el ángulo deseado
+                        showticklabels=True     # Asegurarse de que las etiquetas sean visibles (si fuera necesario)
+                        )
+                    )
+                    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+                    fig.update_traces(line=dict(width=2))
+                    
+                    return fig
+                
+                available_marcas = sorted(df_pagos_cascos['marca_vehiculo'].unique().tolist())
+                available_marcas_todas = ["TODAS (general)"] + available_marcas
+                available_tv = sorted(df_pagos_cascos['cobertura_principal'].unique().tolist())
+                DEFAULT_MARCAS = ["VOLKSWAGEN", "CHEVROLET", "FORD",  "TOYOTA", "FIAT", "PEUGEOT", "RENAULT"]
+
+                st.markdown("#### _Fuente de datos:_ \
+                    \n:white_small_square: _La Segunda BI (pagos)_")
+                
+                st.markdown('---')
+
+                # selectbox para tipo de vehiculo
+                with st.sidebar:
+                    st.markdown("---")
+                    st.markdown("Filtros")
+                    st.markdown("##### _Seleccionar Cobertura:_") 
+                    selected_tv = st.selectbox(
+                        "TV",
+                        options=available_tv,
+                        index=0,
+                        label_visibility ='collapsed',
+                    )
+                    st.markdown("---")
+
+                    if selected_tv:
+                        df_filtered_by_tv = df_pagos_cascos[df_pagos_cascos['cobertura_principal'] == selected_tv]
+                        available_marcas_for_tv = sorted(df_filtered_by_tv['marca_vehiculo'].unique().tolist())
+                    else:
+                        available_marcas_for_tv = sorted(df_pagos_cascos['marca_vehiculo'].unique().tolist())
+
+                    default_selection = [
+                        m for m in DEFAULT_MARCAS 
+                        if m in available_marcas_for_tv
+                    ]
+
+                    # multiselect para diferentes marcas
+                    st.markdown("##### _Seleccionar Marcas:_")
+                    selected_marcas = st.multiselect(
+                        "Marcas",
+                        options=available_marcas_for_tv,
+                        default=default_selection,
+                        label_visibility='collapsed',
+                        placeholder="Seleccione una o varias Marcas..."
+                    )
+                    st.markdown("---")
+
+                    if not selected_marcas:
+                        final_marcas_to_filter = available_marcas_for_tv
+                        st.info(f"Filtro de Marcas: **TODAS** ({len(available_marcas_for_tv)} marcas)")
+                    else:
+                        final_marcas_to_filter = selected_marcas
+
+        # ----- PAGOS ROBO DE RUEDAS EVOLUTIVO --------------------------------------------------
+                agg_cols = {
+                    'monto_transaccion': 'sum', # Promedio de Monto Transaccion
+                    'pago_ipc': 'sum', # Promedio de Pago IPC
+                    'pago_usd': 'sum', # Promedio de Pago USD
+                }
+
+                tabla = df_pagos_cascos.groupby('cobertura_principal').agg(agg_cols).reset_index().sort_values(by='monto_transaccion',ascending=False).rename(columns={'cobertura_principal':'cobertura'})
+
+                st.markdown("###### :memo: Resumen de pagos por TV")
+                
+                with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
+                    st.dataframe(tabla, use_container_width=True, hide_index=True)
+
+                fig_pagos_mat = create_plot_pagos(
+                    df_pagos_cascos, 
+                    'monto_transaccion',
+                    'pago_ipc',
+                    'pago_usd',
+                    title=f'Pagos promedio de daños materiales (L2) - {selected_tv}', 
+                    x_tickangle=45
+                )
+                st.plotly_chart(fig_pagos_mat, use_container_width=True)
+                
+                df_pagos_cascos.sort_values('año_mes_fecha_pago', inplace=True)
+                pagos_mat_filtered = df_pagos_cascos[
+                    (df_pagos_cascos['marca_vehiculo'].isin(final_marcas_to_filter)) 
+                    & (df_pagos_cascos['cobertura_principal'] ==selected_tv)
+                ]
+                pagos_mat_filtered = pagos_mat_filtered.groupby(['año_mes_fecha_pago']).agg(
+                    {'monto_transaccion': 'mean',
+                    'pago_ipc': 'mean',           
+                    'pago_usd': 'mean'}).reset_index()
+                
+                pagos_mat_filtered.monto_transaccion = pagos_mat_filtered.monto_transaccion.round(0).astype(int) 
+                pagos_mat_filtered.pago_usd = pagos_mat_filtered.pago_usd.round(0).astype(int) 
+                pagos_mat_filtered.pago_ipc = pagos_mat_filtered.pago_ipc.round(0).astype(int)
+
+                with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
+                    st.dataframe(pagos_mat_filtered, hide_index=True, width=900)
+
+                st.subheader('', divider='grey')
+
+
+        # ----- ROBO DE RUEDAS POR MARCA --------------------------------------------------
+
+                fig_pagos_mat_hist = create_plot_pagos_marcas(
+                    df_pagos_cascos,
+                    'monto_transaccion', 
+                    'marca_vehiculo',
+                    None,
+                    'Monto histórico',
+                    title=f'Pagos robo de ruedas históricos por marca - {selected_tv}', 
+                    x_tickangle=45)
+                
+                fig_pagos_mat_ipc = create_plot_pagos_marcas(
+                    df_pagos_cascos,
+                    'pago_ipc', 
+                    'marca_vehiculo',
+                    None,
+                    'Monto IPC',
+                    title=f'Pagos robo de ruedas por marca ajustados por IPC - {selected_tv}', 
+                    x_tickangle=45)
+                
+                fig_pagos_mat_usd = create_plot_pagos_marcas(
+                    df_pagos_cascos,
+                    'pago_usd', 
+                    'marca_vehiculo',
+                    None,
+                    'Monto USD',
+                    title=f'Pagos robo de ruedas por marca en valor USD - {selected_tv}', 
+                    x_tickangle=45)
+
+
+                tab1, tab2, tab3 = st.tabs(["Histórico", "IPC", 'USD'])
+                with tab1:
+                    st.plotly_chart(fig_pagos_mat_hist, use_container_width=True)
+                with tab2:
+                    st.plotly_chart(fig_pagos_mat_ipc, use_container_width=True)
+                with tab3:
+                    st.plotly_chart(fig_pagos_mat_usd, use_container_width=True)
+                            
+                df_resumen_mat = df_pagos_cascos.sort_values(by=['año_mes_fecha_pago', 'marca_vehiculo'])
+                df_resumen_mat = df_resumen_mat[(df_resumen_mat['cobertura_principal'] == selected_tv)
+                        & (df_resumen_mat['marca_vehiculo'].isin(final_marcas_to_filter))
+                    ]
+                df_tabla_mat = df_resumen_mat.groupby(['año_mes_fecha_pago','marca_vehiculo']).agg(
+                    {'monto_transaccion': 'mean',
+                    'pago_usd': 'mean',           
+                    'pago_ipc': 'mean'}).reset_index()
+                
+                df_tabla_mat.monto_transaccion = df_tabla_mat.monto_transaccion.round(0).astype(int) 
+                df_tabla_mat.pago_usd = df_tabla_mat.pago_usd.round(0).astype(int) 
+                df_tabla_mat.pago_ipc = df_tabla_mat.pago_ipc.round(0).astype(int)
+
+                with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
+                    st.dataframe(df_tabla_mat, hide_index=True, width=900)
+
+                st.subheader('', divider='grey')
+
+                
+        # ----- COMPARATIVO PARTICIPACION DE MERCADO ROBO DE RUEDAS POR MARCA --------------------------
+
+                column_1, column_2 = st.columns(2)
+
+                with column_1:
+                    st.markdown(f'#### :white_small_square: Participación de pagos por Marca - {selected_tv}')
+                    df_participacion = df_pagos_cascos.sort_values(by=['marca_vehiculo'])
+                    df_participacion = df_participacion[
+                        (df_participacion['cobertura_principal'] == selected_tv)
+                        ]
+                    df_participacion = df_participacion.groupby(['marca_vehiculo']).agg(
+                        {'monto_transaccion': 'sum',}).reset_index()
+                    
+                    monto_total = df_participacion['monto_transaccion'].sum()
+                    df_participacion['% Participación'] = (
+                        df_participacion['monto_transaccion'] / monto_total
+                    ) * 100
+                    
+                    df_participacion['% Participación'] = df_participacion['% Participación'].round(0).astype(int)
+                    
+                    df_participacion.sort_values(
+                        '% Participación', 
+                        ascending=False, 
+                        inplace=True
+                    )
+                    df_participacion['Part. Acum.'] = df_participacion['% Participación'].cumsum()
+                    df_participacion['Part. Acum.'] = df_participacion['Part. Acum.'].round(0).astype(int)
+
+
+                    def format_participacion(row): 
+
+                        participacion_individual_str = f"{row['% Participación']} %"
+                        
+                        # corte en 90% de acumulacion de pagos
+                        if row['Part. Acum.'] > 90.00:
+                            # Si supera el 90%, el acumulado es vacío, pero el individual se mantiene
+                            participacion_acumulada_str = ''
+                        else:
+                            # Si es <= 90%, formateamos el acumulado
+                            participacion_acumulada_str = f"{row['Part. Acum.']} %" 
+
+                        return pd.Series(
+                            [participacion_individual_str, participacion_acumulada_str], 
+                            index=['% Participación', 'Part. Acum. (%)']
+                        )
+
+                    df_participacion[['% Participación', 'Part. Acum. (%)']] = df_participacion.apply(
+                        format_participacion, 
+                        axis=1 
+                    )
+                    df_participacion.drop(columns=['Part. Acum.'], inplace=True)
+
+
+                    fila_total = pd.DataFrame([{
+                        'marca_vehiculo': 'TOTAL',
+                        'monto_transaccion': monto_total,
+                        '% Participación': '',
+                        'Part. Acum. (%)': ''
+                    }])
+
+                    # Concatenar la fila total al final del DataFrame
+                    df_participacion = pd.concat(
+                        [df_participacion, fila_total],
+                        ignore_index=True
+                    )
+
+                    st.dataframe(df_participacion.rename(columns={'monto_transaccion':'Suma de Pagos'}), hide_index=True, width=450, height=600)
+
+        # ----- PARTICIPACION POR MODELO --------------------------------------------------
+                with column_2:
+                    st.markdown('#### :white_small_square: Participación de pagos por Modelo')
+
+                    TARGET_BRAND = "TOYOTA"
+
+                    if TARGET_BRAND in available_marcas_for_tv:
+                        # Si TOYOTA existe, encontramos su índice en la lista FINAL (que tiene el placeholder en la pos 0)
+                        default_index = available_marcas_for_tv.index(TARGET_BRAND)
+                    else:
+
+                        default_index = 0
+
+                    selected_brand_for_model = st.selectbox(
+                        "Seleccionar Marca:",
+                        options=available_marcas_for_tv,
+                        index=default_index,
+                        label_visibility='visible',
+                        placeholder="Seleccione una Marca...",
+                    )
+
+                    if selected_brand_for_model and selected_tv:
+                        # filtro por modelo
+                        df_modelos = df_pagos_cascos[
+                            (df_pagos_cascos['marca_vehiculo'] == selected_brand_for_model) &
+                            (df_pagos_cascos['cobertura_principal'] == selected_tv)
+                        ].copy()
+                        
+                        df_modelos_participacion = df_modelos.groupby('modelo_vehiculo').agg(
+                            {'monto_transaccion': 'sum'}
+                        ).reset_index()
+                        
+                        df_modelos_participacion.rename(
+                            columns={'monto_transaccion': 'Suma de Pagos'}, 
+                            inplace=True
+                        )
+
+                        df_modelos_participacion.sort_values(
+                            'Suma de Pagos', 
+                            ascending=False, 
+                            inplace=True
+                        )
+                        monto_total_marca = df_modelos_participacion['Suma de Pagos'].sum()
+
+                        df_modelos_participacion['% Participación'] = (
+                            df_modelos_participacion['Suma de Pagos'] / monto_total_marca
+                        ) * 100
+                        
+                        # Redondear y formatear el porcentaje
+                        df_modelos_participacion['% Participación'] = (
+                            df_modelos_participacion['% Participación']
+                            .round(0)
+                            .astype(int)
+                            .astype(str) + ' %'
+                        )
+
+                        st.dataframe(df_modelos_participacion, hide_index=True, width=450, height=600)
+
+                    else:
+                        st.info("Por favor, seleccione una marca de vehículo para ver la participación por modelo.")
+
+
+                if selected_brand_for_model:
+                    df_filtered_by_brand = df_pagos_cascos[
+                        (df_pagos_cascos['marca_vehiculo'] == selected_brand_for_model) &
+                        (df_pagos_cascos['cobertura_principal'] == selected_tv)
+                    ].copy()
+                    
+                    # Obtenemos la lista única de modelos para esa marca
+                    available_modelos = sorted(df_filtered_by_brand['modelo_vehiculo'].unique().tolist())
+                else:
+                    available_modelos = []
+                PLACEHOLDER_ALL_MODELS = "TODOS LOS MODELOS"
+                options_with_all = [PLACEHOLDER_ALL_MODELS] + available_modelos
+
+
+                st.markdown(f"###### :arrow_right: **Seleccionar modelo de {selected_brand_for_model} para análisis histórico:**")
+                col1, col2 = st.columns([1, 3])
+                with col1:
+                    if options_with_all:
+                        # Usar el primer modelo disponible como default (índice 0)
+                        selected_model_raw = st.selectbox(
+                            "Modelo",
+                            options=options_with_all,
+                            index=0,
+                            label_visibility='collapsed',
+                            placeholder=PLACEHOLDER_ALL_MODELS,
+                        )
+                    else:
+                        st.info("No hay modelos disponibles para la marca seleccionada.")
+                        selected_model_raw = None
+
+                if selected_model_raw:
+                    if selected_model_raw == PLACEHOLDER_ALL_MODELS:
+                        # Si se selecciona "TODOS LOS MODELOS", la lista de modelos a filtrar
+                        # debe ser la lista completa de modelos disponibles para esa marca.
+                        selected_model_list = available_modelos
+                        display_title = PLACEHOLDER_ALL_MODELS
+                    else:
+                        # Si se selecciona un modelo específico, la lista a filtrar es solo ese modelo.
+                        selected_model_list = [selected_model_raw]
+                        display_title = selected_model_raw
+
+                    df_historico = df_pagos_cascos[
+                        (df_pagos_cascos['modelo_vehiculo'].isin(selected_model_list)) &
+                        (df_pagos_cascos['marca_vehiculo'] == selected_brand_for_model) &
+                        (df_pagos_cascos['cobertura_principal'] == selected_tv)
+                    ].copy()
+
+                    
+                    st.markdown(f"#### Histórico de Pagos: **{selected_brand_for_model} - {display_title}**")
+
+                    df_historico['Fecha Agrupación'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
+                    
+                    # df_historico['Año mes Fecha Pago'] = df_historico['año_mes_fecha_pago'] 
+                    
+                    agg_cols = {
+                        'monto_transaccion': 'mean', # Promedio de Monto Transaccion
+                        'pago_ipc': 'mean', # Promedio de Pago IPC
+                        'pago_usd': 'mean', # Promedio de Pago USD
+                    }
+                    
+                    df_tabla_final = df_historico.groupby('Fecha Agrupación').agg(agg_cols).reset_index()
+
+                    # 3.3. Renombrar las columnas para visualización
+                    df_tabla_final.rename(columns={
+                        'Fecha Agrupación': 'Año mes Fecha Pago',
+                        'monto_transaccion': 'Promedio de Monto Transaccion',
+                        'pago_ipc': 'Promedio de Pago IPC x Fecha de Pago',
+                        'pago_usd': 'Promedio de Pago USD x Fecha de Pago',
+                    }, inplace=True)
+
+                    df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
+                    
+                    # 3.4. Agregar la fila de "Total Resultado" (Promedio General)
+                    
+                    promedio_general = df_tabla_final.mean(numeric_only=True)
+                    
+                    fila_total = pd.DataFrame([{
+                        'Año mes Fecha Pago': 'Total Resultado',
+                        'Promedio de Monto Transaccion': promedio_general['Promedio de Monto Transaccion'],
+                        'Promedio de Pago IPC x Fecha de Pago': promedio_general['Promedio de Pago IPC x Fecha de Pago'],
+                        'Promedio de Pago USD x Fecha de Pago': promedio_general['Promedio de Pago USD x Fecha de Pago'],
+                    }])
+                    
+                    df_tabla_final = pd.concat([df_tabla_final, fila_total], ignore_index=True)
+                    
+                    
+                    # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
+                    df_tabla_final['Promedio de Monto Transaccion'] = df_tabla_final['Promedio de Monto Transaccion'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                    
+                    # Formatear las columnas USD/IPC (0 decimales)
+                    for col in ['Promedio de Pago IPC x Fecha de Pago', 'Promedio de Pago USD x Fecha de Pago']:
+                        df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                    
+                    
+                    st.dataframe(df_tabla_final, use_container_width=True, hide_index=True, height=500, width=900)
+
+
+                    MONTO_COLS = ['monto_transaccion', 'pago_ipc', 'pago_usd']
+
+                    # Calculamos los promedios
+                    promedios_globales = df_pagos_cascos[MONTO_COLS].mean().round(2)
+
+                    promedios_marca = df_filtered_by_brand[MONTO_COLS].mean().round(2)
+
+                    promedios_modelo = df_historico[MONTO_COLS].mean().round(2)
+
+                    diferencias_porcentuales = (
+                        (promedios_modelo - promedios_marca) / promedios_marca
+                    ) * 100
+                    diferencias_porcentuales = diferencias_porcentuales.round(1)
+
+                    st.markdown("#### :memo: Resumen de promedios y comparativa")
+
+                    data_resumen = {
+                        'Métrica': [
+                            'Promedio de Pagos',
+                            'Promedio de Pagos IPC',
+                            'Promedio de Pagos USD'
+                        ],
+                        f'Todas las Marcas (General)': promedios_globales.tolist(),
+                        f'{selected_brand_for_model} (General)': promedios_marca.tolist(),
+                        f'{display_title} (Modelo)': promedios_modelo.tolist(),
+                        'Dif. vs Marca (%)': [
+                            f"{diferencias_porcentuales['monto_transaccion']:.1f} %",
+                            f"{diferencias_porcentuales['pago_ipc']:.1f} %",
+                            f"{diferencias_porcentuales['pago_usd']:.1f} %",
+                        ]
+                    }
+
+                    df_resumen = pd.DataFrame(data_resumen)
+
+                    # Formatear las columnas de Promedio (Monetario, para mejor visualización)
+                    for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
+                        # Usamos f-string para formatear con separadores de miles y 0 decimales
+                        df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
+
+                    st.dataframe(df_resumen, hide_index=True, use_container_width=True)
+
+
+    elif current_analysis == opcion_0:
+        x,y,z = st.columns([1,4,1])
+        with y:
+            st.markdown('### Composición de la cartera - La Segunda')
+            # fuente de datos bi
+            st.markdown("#### _Fuente de datos:_ \
+                \n:white_small_square: _La Segunda BI_")
+
+            st.markdown('---')
+            st.image("data\coverables.png")
+            st.markdown('')
+            st.image("data\marcas.png")
+            st.markdown('')
+            st.image("data\marcas_motos.png")
+            st.markdown('')
+            st.image("data\marcas_cam.png")
+            st.markdown('')
+            st.image("data\esp.png")
+            st.markdown('')
+            st.image(r"data\trp.png")
+
+
 
