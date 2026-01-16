@@ -28,22 +28,22 @@ try:
     df_pagos_cristal = pd.read_csv('data/pagos_pkt_ok.csv')
 
     # dfs de repuestos orion/cesvi
-    df_tipo_rep = pd.read_csv('data/df_tipo_rep_oct.csv')
-    df_rep_tv = pd.read_csv('data/df_rep_tv_oct.csv')
+    df_tipo_rep = pd.read_csv('data/df_tipo_rep_dic.csv')
+    df_rep_tv = pd.read_csv('data/df_rep_tv_dic.csv')
     # df para graf torta
     df_rep_torta = pd.read_csv('data/todos_los_rep_orion.csv')
 
     # dfs de mano de obra orion/cesvi
-    df_cm_mo = pd.read_csv('data/df_cm_mo_oct.csv')
+    df_cm_mo = pd.read_csv('data/df_cm_mo_dic.csv')
 
     # dfs mano de obra cleas si/cleas no
-    df_cm_mo_cleas = pd.read_csv('data/df_cm_mo_cleas_oct.csv')
+    df_cm_mo_cleas = pd.read_csv('data/df_cm_mo_cleas_dic.csv')
 
     # dfs marcas
     df_marcas_autos = pd.read_csv('data/evol_todas_marcas_autos.csv')
-    df_rtos_marca_mes = pd.read_csv('data/df_rtos_marca_mes_oct.csv')
+    df_rtos_marca_mes = pd.read_csv('data/df_rtos_marca_mes_dic.csv')
     df_marcas_camiones = pd.read_csv('data/camion_marcas.csv')
-    df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_cam_oct.csv')
+    df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_cam_dic.csv')
     df_distrib_marcas_cartera = pd.read_csv('data/distrib_ar_marca_cartera.csv')
 
     # dfs var x prov
@@ -65,7 +65,7 @@ try:
     df_pagos_ruedas = pd.read_csv('data/pagos_ruedas_ok.csv')
     # df pagos ruedas
     df_pagos_materiales = pd.read_csv('data/pagos_dano_mat_ok.csv')
-        # df pagos ruedas
+    # df pagos ruedas
     df_pagos_cascos = pd.read_csv('data/pagos_cascos_ok.csv')
 
 except FileNotFoundError as e:
@@ -1612,10 +1612,10 @@ else:
             ))
             fig20_ipc.update_layout(legend_title_text='Variación')
 
-            tab1, tab2 = st.tabs(["Evolutivo CM", "Variación vs IPC"])
-            with tab1:
+            tab1b, tab2b = st.tabs(["Evolutivo CM", "Variación vs IPC"])
+            with tab1b:
                 st.plotly_chart(fig20, use_container_width=True)
-            with tab2:
+            with tab2b:
                 st.plotly_chart(fig20_ipc, use_container_width=True)
 
             st.subheader('', divider='grey')      
