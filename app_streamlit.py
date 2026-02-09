@@ -31,7 +31,7 @@ try:
     df_tipo_rep = pd.read_csv('data/df_tipo_rep_oct.csv')
     df_rep_tv = pd.read_csv('data/df_rep_tv_oct.csv')
     # df para graf torta
-    df_rep_torta = pd.read_csv('data/todos_los_rep_orion.csv')
+    df_rep_torta = pd.read_csv('data/todos_los_rep_orion_auto_ok.csv')
 
     # dfs de mano de obra orion/cesvi
     df_cm_mo = pd.read_csv('data/df_cm_mo_oct.csv')
@@ -44,7 +44,7 @@ try:
     df_rtos_marca_mes = pd.read_csv('data/df_rtos_marca_mes_oct.csv')
     df_marcas_camiones = pd.read_csv('data/camion_marcas.csv')
     df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_cam_oct.csv')
-    df_distrib_marcas_cartera = pd.read_csv('data/distrib_ar_marca_cartera.csv')
+    df_marcas_cartera = pd.read_csv(r'data\todas_las_marcas_bi.csv')
 
     # dfs var x prov
     df_cm_prov_orion = pd.read_csv('data/base_cm_prov_orion.csv')
@@ -65,8 +65,15 @@ try:
     df_pagos_ruedas = pd.read_csv('data/pagos_ruedas_ok.csv')
     # df pagos ruedas
     df_pagos_materiales = pd.read_csv('data/pagos_dano_mat_ok.csv')
-        # df pagos ruedas
+    # df pagos ruedas
     df_pagos_cascos = pd.read_csv('data/pagos_cascos_ok.csv')
+
+    # tablas aux
+
+    tabla_marcas_año = pd.read_parquet(r'data\tabla_marcas_fecha.parquet')
+    tabla_marcas_head_8 = pd.read_parquet(r'data\tabla_marcas_head.parquet')
+    tabla_marcas_head_20 = pd.read_parquet(r'data\tabla_marcas_head_20.parquet')
+    df_graf_cartera = pd.read_parquet(r'data\df_grafico_cartera.parquet')
 
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. \nDetalles: {e}")
@@ -107,8 +114,8 @@ if 'show_pie_chart' not in st.session_state:
 if 'show_pie_chart_2' not in st.session_state:
     st.session_state.show_pie_chart_2 = False
 
-if 'show_pie_chart_3' not in st.session_state:
-    st.session_state.show_pie_chart_3 = False
+# if 'show_pie_chart_3' not in st.session_state:
+#     st.session_state.show_pie_chart_3 = False
 
 if 'show_pie_chart_4' not in st.session_state:
     st.session_state.show_pie_chart_4 = False
@@ -301,19 +308,6 @@ else:
             st.stop()
 
         else:
-            # muestro grafico torta MARCAS AUTOS 
-            if st.button("Mostrar/Ocultar Distribución de Marcas Autos", icon='📊'):
-                st.session_state.show_pie_chart_3 = not st.session_state.show_pie_chart_3
-            
-            if st.session_state.show_pie_chart_3:
-                st.subheader('Distribución de Años Riesgo por Marca')
-                fig_pie = create_pie_chart(df_distrib_marcas_cartera, 'años_riesgos_total')
-                st.plotly_chart(fig_pie, use_container_width=True)
-                st.markdown('Total AR: ' + str(df_distrib_marcas_cartera['años_riesgos_total'].sum()))
-                st.markdown('Total marcas: 49' )
-                st.markdown("---")
-
-                st.markdown('')
     # ==========================================================================
 
             with st.container(border=True):
@@ -1452,36 +1446,33 @@ else:
                 return fig
             
             st.subheader('2. Costo de piezas prom. histórico por Tipo Repuesto')
-            UMBRAL_PORCENTAJE = 0.04
+            UMBRAL_PORCENTAJE = 0.03
 
             try:
-                df_rep_torta['Monto Total'] = (
-                    df_rep_torta['Monto Total']
+                df_rep_torta['Monto Total Compras'] = (
+                    df_rep_torta['Monto Total Compras']
                     .astype(str) # Asegurar que es string
                     .str.replace('.', '', regex=False) # Quitar separador de miles
                     .str.replace(',', '.', regex=False) # Reemplazar coma decimal por punto
                 )
-                df_rep_torta['Monto Total'] = pd.to_numeric(df_rep_torta['Monto Total'], errors='coerce')
+                df_rep_torta['Monto Total Compras'] = pd.to_numeric(df_rep_torta['Monto Total Compras'], errors='coerce')
                 
             except Exception as e:
                 st.error(f"Error al limpiar la columna 'Monto Total': {e}") 
 
-            # --- 1. Calcular el total y el porcentaje de participación ---
-            monto_total_general = df_rep_torta['Monto Total'].sum()
-            df_rep_torta['% Monto Total'] = df_rep_torta['Monto Total'] / monto_total_general
+            monto_total_general = df_rep_torta['Monto Total Compras'].sum()
+            df_rep_torta['% Monto Total'] = df_rep_torta['Monto Total Compras'] / monto_total_general
 
-            # --- 2. Identificar qué repuestos caen en la categoría 'OTRAS' ---
-            # Si la participación es menor que el umbral (4%), se marca como 'OTRAS'.
             df_rep_torta['Repuesto_Agrupado'] = np.where(
                 df_rep_torta['% Monto Total'] < UMBRAL_PORCENTAJE,
                 'OTRAS',
-                df_rep_torta['Repuesto']
+                df_rep_torta['Pieza']
             )
 
             df_torta_final = df_rep_torta.groupby('Repuesto_Agrupado').agg(
                 {
-                    'Monto Total': 'sum',
-                    'Cant Ord. Compra': 'sum'
+                    'Monto Total Compras': 'sum',
+                    'Cant. O.Compra': 'sum'
                 }
             ).reset_index()
 
@@ -1492,16 +1483,18 @@ else:
                 st.session_state.show_pie_chart_4 = not st.session_state.show_pie_chart_4
             
             if st.session_state.show_pie_chart_4:   
-                fig_pie_rep = create_pie_chart_repuestos(df_torta_final, 'Monto Total')
+                fig_pie_rep = create_pie_chart_repuestos(df_torta_final, 'Monto Total Compras')
                 st.plotly_chart(fig_pie_rep, use_container_width=True)
-                st.text(f"Total ord. compra (ene23-oct25): {df_torta_final['Cant Ord. Compra'].sum():,.0f}")
+                st.markdown(f"Total ord. compra (ene23-oct25): **{df_torta_final['Cant. O.Compra'].sum():,.0f}**")
                 # Formateo del monto total (suponiendo que es dinero)
-                st.text(f"Monto Total de Órdenes (ene23-oct25): ${df_torta_final['Monto Total'].sum():,.0f}") 
-                st.text(f"Total repuestos únicos: {df_rep_torta.Repuesto.nunique()}")
+                st.markdown(f"Monto Total de Órdenes (ene23-oct25): **${df_torta_final['Monto Total Compras'].sum():,.0f}**") 
+                st.markdown(f"Total repuestos únicos: **{df_rep_torta.Pieza.nunique()}**")
                 df_rep_torta['% Monto Total'] = df_rep_torta['% Monto Total'] * 100
                 df_rep_torta['% Monto Total'] = df_rep_torta['% Monto Total'].round(2).astype(str) + ' %'
 
-                st.dataframe(df_rep_torta.drop('Repuesto_Agrupado', axis=1), hide_index=True)
+                st.dataframe(df_rep_torta.drop(columns=['Repuesto_Agrupado', 'Cant. Piezas (Prom)', 'Cant. Piezas Total'],
+                                                axis=1).sort_values(by='Monto Total Compras', ascending=False),
+                                                hide_index=True)
 
                 st.markdown("---")
 
@@ -4179,25 +4172,90 @@ else:
 
 
     elif current_analysis == opcion_0:
-        x,y,z = st.columns([1,4,1])
-        with y:
-            st.markdown('### Composición de la cartera - La Segunda')
-            # fuente de datos bi
-            st.markdown("#### _Fuente de datos:_ \
-                \n:white_small_square: _La Segunda BI_")
+        
+        def generar_grafico_comparativo(df_long):
+            
+            fig = px.bar(
+                df_long,
+                x='Variable',
+                y='Valor',
+                color='marca',
+                barmode='group',
+                title="Comparativa por Marca (Participación y Ratios)",
+                labels={'Valor': 'Valor (%)', 'Variable': 'Métrica Analizada', 'marca': 'Marca'},
+                height=700,
+                # width=1000,
+                color_discrete_sequence=px.colors.qualitative.Bold
+            )
 
-            st.markdown('---')
-            st.image("data/coverables.png", use_container_width=True)   
-            st.markdown('')
-            st.image("data/marcas.png", use_container_width=True)
-            st.markdown('')
-            st.image("data/marcas_motos.png", use_container_width=True)
-            st.markdown('')
-            st.image("data/marcas_cam.png", use_container_width=True)
-            st.markdown('')
-            st.image("data/esp.png", use_container_width=True)
-            st.markdown('')
-            st.image("data/trp.png", use_container_width=True)
+            # Ajustes estéticos
+            fig.update_layout(
+                showlegend=True,
+                legend_title_text='',
+                font=dict(family="Arial", size=11),
+                margin=dict(t=80, b=50, l=50, r=50),
+                hovermode="x unified",
+                legend=dict(
+                    orientation="h",        # leyenda horizontalmente
+                    yanchor="top",          
+                    y=-0.2, 
+                    xanchor="center",  
+                    x=0.5),
+                bargap=0.15,    
+                bargroupgap=0.1,
+                title=dict(
+                    font=dict(size=17, family="Arial")               
+            ))
+            fig.update_xaxes(title_text=None)
+            # Añadimos etiquetas sobre las barras para mayor claridad
+            fig.update_traces(
+                texttemplate='%{y:.1f}', 
+                textposition='outside',
+                cliponaxis=False # Evita que se corten los números arriba
+            )
+            
+            return fig
+        
+
+        st.markdown('### Composición de cartera - La Segunda')
+        # fuente de datos bi
+        st.markdown("#### _Fuente de datos:_ \
+            \n:white_small_square: _La Segunda BI_")
+
+        st.markdown('---') 
+
+        st.markdown('##### :calendar: Período 2024-2025')
+        st.dataframe(
+            tabla_marcas_año,
+            use_container_width=True,
+            hide_index=True,)
+        
+        st.markdown('')
+        st.markdown('##### :arrow_right: Composición de la cartera por Marca - Corte en 20 primeras marcas')
+        st.dataframe(
+            tabla_marcas_head_20[['marca', 'prima_dev_hist', 'prima_%','prima_%_acum', 'prima_dev_ipc','prima_dev_ipc_%', 'prima_dev_ipc_%_acum',
+                'ar_t', 'ar_%', 'ar_%_acum', 'ns_t', 'ns_t_%', 'ns_t_%_acum',
+                'ns_t_nro_sin', 'is_t', 'is_t_%', 'is_t_%_acum', 'is_t_ipc', 'is_t_ipc_%', 'is_t_ipc_%_acum',
+                'sin', 'sin_ipc', 'frec']],
+            use_container_width=True,
+            hide_index=True,)
+        
+        st.markdown('')
+        st.markdown('##### :arrow_right: Composición de la cartera por Marca - Corte en 8 primeras marcas')
+        st.dataframe(
+            tabla_marcas_head_8[['marca', 'prima_dev_hist', 'prima_%','prima_%_acum', 'prima_dev_ipc','prima_dev_ipc_%', 'prima_dev_ipc_%_acum',
+                'ar_t', 'ar_%', 'ar_%_acum', 'ns_t', 'ns_t_%', 'ns_t_%_acum',
+                'ns_t_nro_sin', 'is_t', 'is_t_%', 'is_t_%_acum', 'is_t_ipc', 'is_t_ipc_%', 'is_t_ipc_%_acum',
+                'sin', 'sin_ipc', 'frec']],
+            use_container_width=True,
+            hide_index=True,)
+        
+        st.markdown('')
+        # st.markdown('##### :: Gráfico comparativo de métricas clave por Marca')
+        fig_comparativo = generar_grafico_comparativo(df_graf_cartera)
+        st.plotly_chart(fig_comparativo, use_container_width=True)
+
+
 
 
 
