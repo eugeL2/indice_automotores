@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import plotly.graph_objects as go # Necesario para go.Figure en caso de datos vacíos
+import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import json
 import requests
@@ -28,22 +28,22 @@ try:
     df_pagos_cristal = pd.read_csv('data/pagos_pkt_ok.csv')
 
     # dfs de repuestos orion/cesvi
-    df_tipo_rep = pd.read_csv('data/df_tipo_rep_oct.csv')
-    df_rep_tv = pd.read_csv('data/df_rep_tv_oct.csv')
+    df_tipo_rep = pd.read_csv('data/df_tipo_rep_dic.csv')
+    df_rep_tv = pd.read_csv('data/df_rep_tv_dic.csv')
     # df para graf torta
     df_rep_torta = pd.read_csv('data/todos_los_rep_orion_auto_ok.csv')
 
     # dfs de mano de obra orion/cesvi
-    df_cm_mo = pd.read_csv('data/df_cm_mo_oct.csv')
+    df_cm_mo = pd.read_csv('data/df_cm_mo_dic.csv')
 
     # dfs mano de obra cleas si/cleas no
-    df_cm_mo_cleas = pd.read_csv('data/df_cm_mo_cleas_oct.csv')
+    df_cm_mo_cleas = pd.read_csv('data/df_cm_mo_cleas_dic.csv')
 
     # dfs marcas
     df_marcas_autos = pd.read_csv('data/evol_todas_marcas_autos.csv')
-    df_rtos_marca_mes = pd.read_csv('data/df_rtos_marca_mes_oct.csv')
+    df_rtos_marca_mes = pd.read_csv('data/df_rtos_marca_mes_dic.csv')
     df_marcas_camiones = pd.read_csv('data/camion_marcas.csv')
-    df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_cam_oct.csv')
+    df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_cam_dic.csv')
     df_marcas_cartera = pd.read_csv(r'data\todas_las_marcas_bi.csv')
 
     # dfs var x prov
