@@ -70,10 +70,10 @@ try:
 
     # tablas aux
 
-    tabla_marcas_año = pd.read_parquet(r'data\tabla_20242025_medidas.parquet')
-    tabla_marcas_head_8 = pd.read_parquet(r'data\tabla_marcas_head.parquet')
-    tabla_marcas_head_20 = pd.read_parquet(r'data\tabla_marcas_head_20.parquet')
-    df_graf_cartera = pd.read_parquet(r'data\df_grafico_cartera.parquet')
+    tabla_marcas_año = pd.read_parquet('data/tabla_20242025_medidas.parquet')
+    tabla_marcas_head_8 = pd.read_parquet('data/tabla_marcas_head.parquet')
+    tabla_marcas_head_20 = pd.read_parquet('data/tabla_marcas_head_20.parquet')
+    df_graf_cartera = pd.read_parquet('data/df_grafico_cartera.parquet')
 
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. \nDetalles: {e}")
