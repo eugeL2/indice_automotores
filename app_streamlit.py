@@ -44,7 +44,7 @@ try:
     df_rtos_marca_mes = pd.read_csv('data/df_rtos_marca_mes_dic.csv')
     df_marcas_camiones = pd.read_csv('data/camion_marcas.csv')
     df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_cam_dic.csv')
-    df_marcas_cartera = pd.read_csv(r'data\todas_las_marcas_bi.csv')
+    # df_marcas_cartera = pd.read_csv(r'data\todas_las_marcas_bi.csv')
 
     # dfs var x prov
     df_cm_prov_orion = pd.read_csv('data/base_cm_prov_orion.csv')
