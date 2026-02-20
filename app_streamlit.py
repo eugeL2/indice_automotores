@@ -47,12 +47,12 @@ try:
     # df_marcas_cartera = pd.read_csv(r'data\todas_las_marcas_bi.csv')
 
     # dfs var x prov
-    df_cm_prov_orion = pd.read_csv('data/base_cm_prov_orion.csv')
-    df_cm_prov = pd.read_csv('data/base_cm_prov_ok.csv')
+    df_cm_prov_orion = pd.read_csv('data/base_cm_x_rep_prov_orion.csv')
+    df_cm_prov = pd.read_parquet('data/base_cm_prov_actual.parquet')
     with open('data/prov.geojson', 'r', encoding='utf-8') as f:
         provincias_geojson = json.load(f)
-    comparativo_orion_prov = pd.read_csv('data/comparativo_orion_prov.csv')
-    comparativo_cm_siniestral = pd.read_csv('data/comparativo_cm_siniestral.csv')
+    comparativo_orion_prov = pd.read_parquet('data/comparativo_orion_prov.parquet')
+    comparativo_cm_siniestral = pd.read_parquet('data/comparativo_bi_cm_prov.parquet')
 
     # dfs comparativo mano de obra
     df_chapa_pintura = pd.read_csv('data/df_chapa_pintura.csv')
@@ -98,11 +98,11 @@ if 'tipo_repuesto' in df_cristal.columns:
     df_cristal['tipo_repuesto'] = df_cristal['tipo_repuesto'].astype(str).str.replace('_', ' ').str.title()
 
 # ---- Formateo base provincias --------------------------------------------------
-df_cm_agg = df_cm_prov.groupby(['coverable','año','provincia',]).agg(
-    coste_medio_prom=('coste_medio', 'mean'))
-df_cm_agg = df_cm_agg.reset_index()
-# cambio formato de coste medio a int
-df_cm_agg['coste_medio_prom'] = df_cm_agg['coste_medio_prom'].astype(int)
+# df_cm_agg = df_cm_prov.groupby(['coverable','año','provincia',]).agg(
+#     coste_medio_prom=('coste_medio', 'mean'))
+# df_cm_agg = df_cm_agg.reset_index()
+# # cambio formato de coste medio a int
+# df_cm_agg['coste_medio_prom'] = df_cm_agg['coste_medio_prom'].astype(int)
 
 # ==========================================================================
 df_pagos_cristal['tipo_cristal'] = df_pagos_cristal['tipo_cristal'].replace('Cristales lateral y techo', 'Cristales laterales y de techo')
@@ -223,7 +223,7 @@ else:
 # ==========================================================================
     if current_analysis == opcion_1:
         st.markdown("## Variación de precios de Cristales y Mano de obra por Marca y Zona")
-        st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_")
+        st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_ \n Fecha de actualización: **01/11/2025**") 
         st.markdown("---")
 
         # Dropdown de Zona (barra lateral)
@@ -1303,33 +1303,12 @@ else:
         with tab3:
             st.plotly_chart(fig_usd, use_container_width=True)
 
-
-
-# # ==== DATA CRUDA ===========================================
-#         cols = ['fecha_de_pago', 'nro_siniestro_gw', 'cobertura_principal', 'tipo_cristal',
-#                 'año_mes_fecha_pago', 'marca_vehiculo', 'modelo_vehiculo','provincia', 'monto_transaccion',
-#                 'ipc_x_fecha_de_pago', 'pago_ipc', 'usd_blue_fp', 'pago_usd', 'zona']
-        
-#         df_to_show = df_pagos_cristal[cols]
-
-#         # if not selected_cristal:
-#         #     st.dataframe(df_to_show[df_to_show['marca_vehiculo'].isin(selected_marcas)].drop('año_mes_fecha_pago',axis=1), use_container_width=True)
-#         # else:
-#         st.markdown("##### Data Cruda (pagos)")
-#         df_pagos_cristal_filtered = df_to_show.drop(columns=['cobertura_principal','año_mes_fecha_pago'])[
-#             (df_to_show['tipo_cristal'] == selected_cristal) &
-#             (df_to_show['marca_vehiculo'].isin(selected_marcas))
-#             # & (df_to_show['zona'].isin(selected_zone))
-#         ].copy()
-#         st.dataframe(df_pagos_cristal_filtered, use_container_width=True)
-
-
 # ==========================================================================
 # ---- Análisis ORION/CESVI ------------------------------------------------
 # ==========================================================================
     elif current_analysis == opcion_3:
         st.title('Variación de Precios de Repuestos y Mano de obra')
-        st.markdown("#### _Fuente de datos: Orion/Cesvi_")
+        st.markdown("#### _Fuente de datos: Orion/Cesvi_ \nFecha actualización: **diciembre 2025**")
         st.markdown("---")
 
         # sidebar por tipo de variación: histórico, ipc, usd
@@ -1956,12 +1935,11 @@ else:
         st.title('Análisis Coste Medio por Provincia')     
         st.markdown("---")   
         st.header('Coste Medio de repuestos por provincia')
-        st.markdown("#### _Fuente de datos: Orion/Cesvi_")
+        st.markdown("#### _Fuente de datos: Orion/Cesvi_ \n Actualización: **enero 2025**")
         
 
-        def create_map_chart(df, selected_coverable, color, selected_fecha):
-            df_cm_filtered = df[(df['coverable'] == selected_coverable) &
-                                (df['año'] == selected_fecha)]
+        def create_map_chart(df, color, selected_fecha):
+            df_cm_filtered = df[df['año'] == selected_fecha]
 
             if df_cm_filtered.empty:
                 return st.warning("No hay información.")
@@ -1979,12 +1957,15 @@ else:
                 color=color,
                 color_continuous_scale="oranges",
                 range_color=[min_cost, max_cost],
-                labels={'coste_medio_prom': 'Coste Medio Promedio'},
+                labels={'coste_medio': 'Coste Medio Promedio'},
                 projection="mercator",
                 width=1000, 
                 height=1000  
             )
-            # Ajustes de visualización para el mapa
+            hover_tmpl = "<b>%{location}</b><br>"
+            hover_tmpl += "Coste medio Siniestral: $%{z:,.0f}<br><br>"
+            fig.update_traces(hovertemplate=hover_tmpl)
+
             fig.update_geos(
                 visible=False,
                 fitbounds=False,
@@ -1998,20 +1979,86 @@ else:
             )
             return fig
 
+        def create_map_chart_orion(df, selected_fecha):
+
+            df_filtered = df[df['año'] == selected_fecha].copy()
+
+            if df_filtered.empty:
+                st.warning(f"No hay información para el año {selected_fecha}.")
+                return None
+
+            df_general = df_filtered[df_filtered['tipo_repuesto'] == 'general'][['provincia', 'costo_pieza_prom']]
+            df_general.columns = ['provincia', 'costo_prom_total_real']
+
+            df_detalles = df_filtered[df_filtered['tipo_repuesto'] != 'general']
+            
+            df_pivot = df_detalles.pivot_table(
+                index='provincia', 
+                columns='tipo_repuesto', 
+                values='costo_pieza_prom',
+                aggfunc='mean'
+            ).reset_index()
+
+            df_final = pd.merge(df_general, df_pivot, on='provincia', how='left')
+
+            repuestos_cols = [c for c in df_pivot.columns if c != 'provincia']
+
+            # --- Configuración de Escala ---
+            min_cost = df_final['costo_prom_total_real'].min()
+            max_cost = df_final['costo_prom_total_real'].max()
+            ROUNDING_UNIT = 50000
+            if not np.isnan(min_cost):
+                min_cost = np.floor(min_cost / ROUNDING_UNIT) * ROUNDING_UNIT
+            else:
+                min_cost, max_cost = 0, 1
+
+            # MAPA
+            fig = px.choropleth(
+                df_final,
+                geojson=provincias_geojson,
+                locations='provincia',
+                featureidkey="properties.nombre_normalizado",
+                color='costo_prom_total_real', # Ahora el color lo da la categoría 'general'
+                color_continuous_scale="oranges",
+                range_color=[min_cost, max_cost],
+                # Cargamos los repuestos específicos en custom_data para el hover
+                hover_data={col: ":,.0f" for col in repuestos_cols},
+                labels={'costo_prom_total_real': 'Costo Medio Gral.'},
+                projection="mercator",
+                width=1000,
+                height=800
+            )
+
+            hover_tmpl = "<b>%{location}</b><br>"
+            hover_tmpl += "Coste Medio general: $%{z:,.0f}<br><br>" # %{z} toma el valor de 'color'
+            
+            # Añadimos cada repuesto específico al cartelito
+            for col in repuestos_cols:
+                nombre_limpio = col.replace('_', ' ').title()
+                # Buscamos el índice correspondiente en hover_data/customdata
+                hover_tmpl += f"{nombre_limpio}: $ %{{customdata[{repuestos_cols.index(col)}]}}<br>"
+            
+            fig.update_traces(hovertemplate=hover_tmpl)
+
+            fig.update_geos(
+                visible=False,
+                fitbounds=False,
+                showcountries=True,
+                landcolor="lightgrey",
+                showland=True,
+                scope="south america",
+                projection_scale=1,
+            )
+
+            return fig
+
 # ----- Comparativo Orion/Cesvi por provincia --------------------------------------------------
-        available_coverables_orion = sorted(df_cm_prov_orion['coverable'].unique().tolist())
         available_fechas = sorted(df_cm_prov_orion['año'].unique().tolist())
 
         # 2 cols para separar grafico y contenedor de filtros
         col3, col4 = st.columns([1, 4], gap='large') # la segunda col es 4 veces el ancho de la primera 
         
         with col3:  
-            with st.container(border=True):
-                selected_coverable_map = st.selectbox(
-                    "Seleccionar coverable:",
-                    options=available_coverables_orion,   
-                    index=available_coverables_orion.index('AUT'), 
-                )
             with st.container(border=True):
                 # contenedor para seleccionar fecha
                 selected_fecha = st.selectbox(
@@ -2020,75 +2067,86 @@ else:
                     index=len(available_fechas)-1 
                 )
 
-        df_cm_prov_orion_cov = df_cm_prov_orion[df_cm_prov_orion['coverable'] == selected_coverable_map]
-
         with col4:
             with st.container(border=True):            
-                st.markdown(f"#### Coverable selecccionado: {selected_coverable_map}")
-                st.markdown(f"#### Año: {selected_fecha}")
-                fig_prov = create_map_chart(df_cm_prov_orion, selected_coverable_map, 'costo_pieza_prom', selected_fecha)
+                st.markdown(f"#### Año: {selected_fecha} \n #### Coverable: AUT")
+                fig_prov = create_map_chart_orion(df_cm_prov_orion, selected_fecha)
                 st.plotly_chart(fig_prov, use_container_width=False)    
         
-        st.markdown("#### Tabla comparativa: Coste Medio por provincia - Orion/Cesvi")  
-        comparativo_orion_prov_raw = comparativo_orion_prov[(comparativo_orion_prov['coverable'] == selected_coverable_map)]
-        st.dataframe(comparativo_orion_prov_raw, use_container_width=True)    
-        
-        with st.expander("Ver data cruda",icon=":material/query_stats:"):
-            st.markdown("#### Data Cruda")
-            # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
-            df_cm_prov_orion_raw = df_cm_prov_orion[(df_cm_prov_orion['coverable'] == selected_coverable_map) &
-                                                        (df_cm_prov_orion['año'] == selected_fecha)]
-            st.dataframe(df_cm_prov_orion_raw, use_container_width=True)
+        st.markdown("#### Tabla comparativa: Coste Medio por provincia y repuesto - Orion/Cesvi")  
+        st.dataframe(comparativo_orion_prov, 
+                     use_container_width=True,
+                     hide_index=True,
+                     column_config={
+                        'provincia': 'Provincia',
+                        'tipo_repuesto': 'Tipo de Repuesto',
+                        "cant_ord_compra_2024": st.column_config.NumberColumn("Cant ord. 2024", format="%d"),
+                        "cant_ord_compra_2025": st.column_config.NumberColumn("Cant ord. 2025", format="%d"),
+                        "costo_pieza_prom_2024": st.column_config.NumberColumn("Costo prom. 2024", format="$ %.0f"),
+                        "costo_pieza_prom_2025": st.column_config.NumberColumn("Costo prom. 2025", format="$ %.0f"),
+                        "var_cant_ord": st.column_config.NumberColumn(
+                            "Var. Cant %", 
+                            format="%.1f%%",
+                            help="Variación en la cantidad de órdenes"
+                        ),
+                        "var_costo_prom": st.column_config.NumberColumn(
+                            "Var. Costo %", 
+                            format="%.1f%%",
+                            help="Variación en el costo promedio de la pieza"
+                            )
+                        })    
+
 # ==========================================================================
 
 # ----- Comparativo BI La Segunda por provincia --------------------------------------------------
         st.header('Coste Medio siniestral por provincia')
         st.markdown("#### _Fuente de datos: BI La Segunda_")
 
-        available_coverables = sorted(df_cm_agg['coverable'].unique().tolist())
-        available_fechas = sorted(df_cm_agg['año'].unique().tolist())
+        available_fechas = sorted(df_cm_prov['año'].unique().tolist())
 
         # 2 cols para separar grafico y contenedor de filtros
         col1, col2 = st.columns([1, 4], gap='large') # la segunda col es 4 veces el ancho de la primera 
         
         with col1:  
             with st.container(border=True):
-                selected_coverable_map = st.selectbox(
-                    "Seleccionar coverable:",
-                    options=available_coverables,   
-                    index=available_coverables.index('AUT'), 
-                )
-            with st.container(border=True):
         # contenedor para seleccionar fecha
                 selected_fecha = st.selectbox(
                 "Seleccionar año:",
                 options=available_fechas,   
-                index=len(available_fechas)-1, # por defecto la ultima fecha
+                index=len(available_fechas)-1, 
+                key="fecha_analisis_provincias"
                 )
-                # st.markdown("---")
-            # st.markdown(f"**Vehículo Seleccionado:** `{selected_coverable_map}`")
 
-        df_cm_cov_fecha = df_cm_agg[(df_cm_agg['coverable'] == selected_coverable_map)]# &
-                                    # (df_cm_agg['año'] == selected_fecha)]
 
         with col2:
             with st.container(border=True):
                 # st.subheader(f'Análisis Coste Medio por Provincia - {selected_coverable_map}')
-                st.markdown(f"#### Coverable selecccionado: {selected_coverable_map}")
+                st.markdown(f"#### Coverable: AUT")
                 st.markdown(f"#### Año: {selected_fecha}")
-                fig_prov = create_map_chart(df_cm_cov_fecha, selected_coverable_map, 'coste_medio_prom', selected_fecha)
+                fig_prov = create_map_chart(df_cm_prov, 'coste_medio', selected_fecha)
                 st.plotly_chart(fig_prov, use_container_width=False)    
 
         st.markdown("#### Tabla comparativa: Coste Medio siniestral por provincia")  
-        comparativo_cm_siniestral_raw = comparativo_cm_siniestral[(comparativo_cm_siniestral['coverable'] == selected_coverable_map)]
-        st.dataframe(comparativo_cm_siniestral_raw, use_container_width=True)
+        st.dataframe(comparativo_cm_siniestral, 
+                     use_container_width=True,
+                     hide_index=True,
+                    #  width=700,
+                     column_config={
+                         'provincia': 'Provincia',
+                         "coste_medio_2024": st.column_config.NumberColumn("Coste medio 2024", format="$ %.0f"),
+                         "coste_medio_2025": st.column_config.NumberColumn("Coste medio 2025", format="$ %.0f"),
+                         "var_coste_medio": st.column_config.NumberColumn(
+                            "Var. CM %", 
+                            format="%.1f%%",
+                            help="Variación coste medio siniestral (2024-2025)"
+                         )})
 
-        with st.expander("Ver data cruda",icon=":material/query_stats:"):
-            st.markdown("#### Data Cruda")
-            # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
-            df_cm_filtered_raw = df_cm_prov[(df_cm_prov['coverable'] == selected_coverable_map) &
-                                                            (df_cm_prov['año'] == selected_fecha)]
-            st.dataframe(df_cm_filtered_raw, use_container_width=True)   
+        # with st.expander("Ver data cruda",icon=":material/query_stats:"):
+        #     st.markdown("#### Data Cruda")
+        #     # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
+        #     df_cm_filtered_raw = df_cm_prov[(df_cm_prov['coverable'] == selected_coverable_map) &
+        #                                                     (df_cm_prov['año'] == selected_fecha)]
+        #     st.dataframe(df_cm_filtered_raw, use_container_width=True)   
 
 # ==========================================================================
 # ----- Comparativo Mano de obra -------------------------------------------
