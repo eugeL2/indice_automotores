@@ -69,11 +69,13 @@ try:
     df_pagos_cascos = pd.read_csv('data/pagos_cascos_ok.csv')
 
     # tablas aux
-
     tabla_marcas_año = pd.read_parquet('data/tabla_20242025_medidas.parquet')
     tabla_marcas_head_8 = pd.read_parquet('data/tabla_marcas_head.parquet')
     tabla_marcas_head_20 = pd.read_parquet('data/tabla_marcas_head_20.parquet')
     df_graf_cartera = pd.read_parquet('data/df_grafico_cartera.parquet')
+
+    # sa vs rep
+    df_sa_rep = pd.read_csv('data/df_sa_rep.csv')
 
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. \nDetalles: {e}")
@@ -166,8 +168,9 @@ opcion_5 = "Comparativo de Mano de Obra (L2 vs Cesvi vs Colegas)"
 opcion_6 = "Evolutivo pagos Robo de Ruedas"
 opcion_7 = "Evolutivo pagos Daños Materiales"
 opcion_8 = "Evolutivo pagos Cascos"
+opcion_9 = "Variación SA vs. Precio de repuestos"
 
-OPTIONS = [opcion_0, opcion_1, opcion_2, opcion_3, opcion_4, opcion_5, opcion_6, opcion_7, opcion_8]
+OPTIONS = [opcion_0, opcion_1, opcion_2, opcion_3, opcion_4, opcion_5, opcion_6, opcion_7, opcion_8, opcion_9]
 
 # ==========================================================================
 # PANTALLA INICIO DE LA APP
@@ -4312,3 +4315,148 @@ else:
         # st.markdown('##### :: Gráfico comparativo de métricas clave por Marca')
         fig_comparativo = generar_grafico_comparativo(df_graf_cartera)
         st.plotly_chart(fig_comparativo, use_container_width=True)
+
+    elif current_analysis == opcion_9:
+
+        st.markdown("## Comparativa: Variación SA vs Coste medio de repuestos")
+        st.markdown("#### _Período: marzo - diciembre 2025_")
+        # st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_ \n Fecha de actualización: **01/11/2025**") 
+        st.markdown("---")
+
+        df_sa_rep['año_mes'] = pd.to_datetime(df_sa_rep['año_mes'])
+
+        def generar_grafico_comparativo(df, col_var_rep, col_var_sa, titulo):
+
+            fig = go.Figure()
+
+            # Línea de Variación Repuestos
+            fig.add_trace(go.Scatter(
+                x=df['año_mes'], 
+                y=df[col_var_rep],
+                name="Var. Repuestos (%)",
+                line=dict(color='#e2e8f0', width=3), # Color secundario
+                mode='lines+markers'
+            ))
+
+            # Línea de Variación Suma Asegurada
+            fig.add_trace(go.Scatter(
+                x=df['año_mes'], 
+                y=df[col_var_sa],
+                name="Var. Suma Asegurada (%)",
+                # hovertemplate='<b>%{data.name}</b>: %{y:.2f}%<extra></extra>',
+                line=dict(color='#615fff', width=3), # Color primario
+                mode='lines+markers'
+            ))
+            fig.update_traces(
+                hovertemplate='<b>%{fullData.name}</b>: %{y:.2f}%<extra></extra>')
+
+            # Línea de referencia en 0
+            fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+
+            fig.update_layout(
+                title=titulo,
+                xaxis_title="",
+                yaxis_title="Variación Mensual (%)",
+                hovermode="x unified",
+                height=450,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                margin=dict(t=80, b=20, l=20, r=20),
+                yaxis=dict(tickformat=".2f", ticksuffix="%")
+            )
+            return fig
+        
+
+        with st.container(border=True):
+            st.subheader("1. Comparativo histórico")
+            fig_hist = generar_grafico_comparativo(
+                df_sa_rep, 'var_costo_prom', 'var_sa', 
+                "Variación Mensual: Repuestos vs SA (Nominal)"
+            )
+            st.plotly_chart(fig_hist, use_container_width=True)
+
+        with st.container(border=True):
+            st.subheader("2. Comparativa Ajustada por IPC")
+            # st.info("Muestra si las variables ganaron o perdieron contra la inflación en términos reales.")
+            fig_ipc = generar_grafico_comparativo(
+                df_sa_rep, 'var_costo_prom_ipc', 'var_sa_ipc', 
+                "Variación Mensual Real (Ajustado por IPC)"
+            )
+            st.plotly_chart(fig_ipc, use_container_width=True)
+
+        with st.container(border=True):
+            st.subheader("3. Comparativa en Dólar (USD Blue)")
+            fig_usd = generar_grafico_comparativo(
+                df_sa_rep, 'var_costo_prom_usd', 'var_sa_prom_usd', 
+                "Variación Mensual en Moneda Dura (USD)"
+            )
+            st.plotly_chart(fig_usd, use_container_width=True)
+
+        def calcular_resumen(df, col_rep, col_sa, label):
+            # Usamos suma simple de variaciones para una aproximación rápida del periodo
+            brecha = df[col_rep].sum() - df[col_sa].sum()
+            if brecha > 0:
+                return f"**{label}**: Los repuestos crecieron **{brecha:.1f} pts** más que la SA."
+            else:
+                return f"**{label}**: La SA creció **{abs(brecha):.1f} pts** más que los repuestos."
+            
+        # st.markdown("---")
+        # st.subheader("Resumen de margen de variación")
+        # st.write("Este análisis muestra la diferencia acumulada, en magnitud (puntos porcentuales), entre la variación del coste medio de los repuestos y la variación de la suma asegurada (SA) durante el período analizado.")
+    
+        # # st.markdown('Indica si los repuestos crecieron más que la SA o viceversa, y en qué magnitud (en puntos porcentuales).')
+        # st.markdown('---')
+        # cols = st.columns(3)
+
+        # with cols[0]:
+        #     st.write(calcular_resumen(df_sa_rep, 'var_costo_prom', 'var_sa', "Histórico"))
+        # with cols[1]:
+        #     st.write(calcular_resumen(df_sa_rep, 'var_costo_prom_ipc', 'var_sa_ipc', "Real (IPC)"))
+        # with cols[2]:
+        #     st.write(calcular_resumen(df_sa_rep, 'var_costo_prom_usd', 'var_sa_prom_usd', "Dólar"))
+
+        st.markdown("#### Data Cruda")
+        # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
+        df_sa_rep_raw = df_sa_rep[['año_mes',  'ipc', 'usd_blue',
+                                    'costo_pieza_prom_hist','sa_prom', 'var_costo_prom','var_sa', 
+                                    'costo_prom_ipc','sa_prom_ipc','var_costo_prom_ipc','var_sa_ipc',  
+                                    'costo_prom_usd', 'sa_prom_usd', 'var_costo_prom_usd',
+                                    'var_sa_prom_usd']]  
+
+        st.dataframe(df_sa_rep_raw, 
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                    'año_mes': st.column_config.DateColumn("Año-Mes", format="YYYY-MM"),
+                    'ipc': 'IPC',
+                    'usd_blue': 'Valor USD blue',
+                    "costo_pieza_prom_hist": st.column_config.NumberColumn("Coste medio rep. hist.", format="$ %.0f"),
+                    "sa_prom": st.column_config.NumberColumn("SA prom.", format="$ %.0f"),
+                    "var_costo_prom": st.column_config.NumberColumn(
+                        "Var. costo rep. %", 
+                        format="%.2f%%",
+                    ),
+                    "var_sa": st.column_config.NumberColumn(
+                        "Var. SA %", 
+                        format="%.2f%%",
+                        ),
+                    "costo_prom_ipc": st.column_config.NumberColumn("Coste medio rep. IPC", format="$ %.0f"),
+                    "sa_prom_ipc": st.column_config.NumberColumn("SA prom. IPC", format="$ %.0f"),
+                    "var_costo_prom_ipc": st.column_config.NumberColumn(                            
+                        "Var. Costo rep. IPC %", 
+                        format="%.2f%%",
+                        ),
+                    "var_sa_ipc": st.column_config.NumberColumn(
+                        "Var. SA IPC %", 
+                        format="%.2f%%",
+                        ),
+                    "costo_prom_usd": st.column_config.NumberColumn("Coste medio rep. USD", format="$ %.0f"),
+                    "sa_prom_usd": st.column_config.NumberColumn("SA prom. USD", format="$ %.0f"),
+                    "var_costo_prom_usd": st.column_config.NumberColumn(
+                        "Var. Costo rep. USD %", 
+                        format="%.2f%%",
+                        ),
+                    "var_sa_prom_usd": st.column_config.NumberColumn(
+                        "Var. SA USD %", 
+                        format="%.2f%%",
+                        ),
+                    })    
