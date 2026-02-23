@@ -4332,7 +4332,7 @@ else:
             # Línea de Variación Repuestos
             fig.add_trace(go.Scatter(
                 x=df['año_mes'], 
-                y=df[col_var_rep],
+                y=df[col_var_rep]*100,
                 name="Var. Repuestos (%)",
                 line=dict(color='#e2e8f0', width=3), # Color secundario
                 mode='lines+markers'
@@ -4341,7 +4341,7 @@ else:
             # Línea de Variación Suma Asegurada
             fig.add_trace(go.Scatter(
                 x=df['año_mes'], 
-                y=df[col_var_sa],
+                y=df[col_var_sa]*100,
                 name="Var. Suma Asegurada (%)",
                 # hovertemplate='<b>%{data.name}</b>: %{y:.2f}%<extra></extra>',
                 line=dict(color='#615fff', width=3), # Color primario
@@ -4398,24 +4398,12 @@ else:
                 return f"**{label}**: Los repuestos crecieron **{brecha:.1f} pts** más que la SA."
             else:
                 return f"**{label}**: La SA creció **{abs(brecha):.1f} pts** más que los repuestos."
-            
-        # st.markdown("---")
-        # st.subheader("Resumen de margen de variación")
-        # st.write("Este análisis muestra la diferencia acumulada, en magnitud (puntos porcentuales), entre la variación del coste medio de los repuestos y la variación de la suma asegurada (SA) durante el período analizado.")
-    
-        # # st.markdown('Indica si los repuestos crecieron más que la SA o viceversa, y en qué magnitud (en puntos porcentuales).')
-        # st.markdown('---')
-        # cols = st.columns(3)
-
-        # with cols[0]:
-        #     st.write(calcular_resumen(df_sa_rep, 'var_costo_prom', 'var_sa', "Histórico"))
-        # with cols[1]:
-        #     st.write(calcular_resumen(df_sa_rep, 'var_costo_prom_ipc', 'var_sa_ipc', "Real (IPC)"))
-        # with cols[2]:
-        #     st.write(calcular_resumen(df_sa_rep, 'var_costo_prom_usd', 'var_sa_prom_usd', "Dólar"))
 
         st.markdown("#### Data Cruda")
-        # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
+        col_var = ['var_costo_prom', 'var_sa', 'var_costo_prom_ipc', 'var_sa_ipc', 'var_costo_prom_usd', 'var_sa_prom_usd']
+        # multiplico por 100 estas columnas para expresarlas en porcentaje y facilitar la lectura en la tabla (en el gráfico ya se muestra con formato de porcentaje)
+        df_sa_rep[col_var] = df_sa_rep[col_var] * 100
+
         df_sa_rep_raw = df_sa_rep[['año_mes',  'ipc', 'usd_blue',
                                     'costo_pieza_prom_hist','sa_prom', 'var_costo_prom','var_sa', 
                                     'costo_prom_ipc','sa_prom_ipc','var_costo_prom_ipc','var_sa_ipc',  
