@@ -63,9 +63,9 @@ try:
 
     # df pagos ruedas
     df_pagos_ruedas = pd.read_csv('data/pagos_ruedas_ok.csv')
-    # df pagos ruedas
-    df_pagos_materiales = pd.read_csv('data/pagos_dano_mat_ok.csv')
-    # df pagos ruedas
+    # df pagos materiales
+    df_pagos_materiales = pd.read_csv('data/pagos_dano_mat_ok.csv', keep_default_na=False, na_values=[])
+    # df pagos cascos
     df_pagos_cascos = pd.read_csv('data/pagos_cascos_ok.csv')
 
     # tablas aux
@@ -74,8 +74,15 @@ try:
     tabla_marcas_head_20 = pd.read_parquet('data/tabla_marcas_head_20.parquet')
     df_graf_cartera = pd.read_parquet('data/df_grafico_cartera.parquet')
 
-    # sa vs rep
+    # sa vs rep - info autos
     df_sa_rep = pd.read_csv('data/df_sa_rep.csv')
+    # sa vs rep - cartera L2
+    df_sa_rep_cartera = pd.read_parquet('data/df_sa_rep_cartera.parquet') # sa cartera todos los planes y plan 30 / costo prom repuestos orion
+    df_sa_rep_cartera_marcas = pd.read_parquet('data/df_sa_rep_cartera_marcas.parquet')
+
+    # ruedas - grant
+    df_ruedas_grant = pd.read_parquet('data/costo_medio_ruedas_grant.parquet')
+    df_neum_grant = pd.read_parquet('data/costo_prom_neumatico.parquet')
 
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. \nDetalles: {e}")
@@ -99,15 +106,8 @@ if 'zona' in df_cristal.columns:
 if 'tipo_repuesto' in df_cristal.columns:
     df_cristal['tipo_repuesto'] = df_cristal['tipo_repuesto'].astype(str).str.replace('_', ' ').str.title()
 
-# ---- Formateo base provincias --------------------------------------------------
-# df_cm_agg = df_cm_prov.groupby(['coverable','año','provincia',]).agg(
-#     coste_medio_prom=('coste_medio', 'mean'))
-# df_cm_agg = df_cm_agg.reset_index()
-# # cambio formato de coste medio a int
-# df_cm_agg['coste_medio_prom'] = df_cm_agg['coste_medio_prom'].astype(int)
-
 # ==========================================================================
-df_pagos_cristal['tipo_cristal'] = df_pagos_cristal['tipo_cristal'].replace('Cristales lateral y techo', 'Cristales laterales y de techo')
+# df_pagos_cristal['tipo_cristal'] = df_pagos_cristal['tipo_cristal'].replace('Cristales lateral y techo', 'Cristales laterales y de techo')
 
 # ---- Variables de sesión para mostrar/ocultar gráficos --------------------------------------------------
 if 'show_pie_chart' not in st.session_state:
@@ -115,9 +115,6 @@ if 'show_pie_chart' not in st.session_state:
 
 if 'show_pie_chart_2' not in st.session_state:
     st.session_state.show_pie_chart_2 = False
-
-# if 'show_pie_chart_3' not in st.session_state:
-#     st.session_state.show_pie_chart_3 = False
 
 if 'show_pie_chart_4' not in st.session_state:
     st.session_state.show_pie_chart_4 = False
@@ -161,16 +158,18 @@ def create_pie_chart(df, value):
 
 opcion_0 = "Resumen cartera La Segunda"
 opcion_1 = "Evolutivo lista de precios Pilkington"
-opcion_2 = "Comparación precios vs pagos Cristales"
 opcion_3 = "Evolutivo precios ORION/CESVI"
 opcion_4 = "Análisis Coste Medio por Provincia"
 opcion_5 = "Comparativo de Mano de Obra (L2 vs Cesvi vs Colegas)"
+opcion_pagos_pkt = "Evolutivo pagos Cristales"
 opcion_6 = "Evolutivo pagos Robo de Ruedas"
 opcion_7 = "Evolutivo pagos Daños Materiales"
 opcion_8 = "Evolutivo pagos Cascos"
 opcion_9 = "Variación SA vs. Precio de repuestos"
+opcion_10 = "Costo Medio ruedas - GRANT"
 
-OPTIONS = [opcion_0, opcion_1, opcion_2, opcion_3, opcion_4, opcion_5, opcion_6, opcion_7, opcion_8, opcion_9]
+OPTIONS = [opcion_0, opcion_1, opcion_3, opcion_4, opcion_5, 
+           opcion_pagos_pkt, opcion_6, opcion_7, opcion_8, opcion_9, opcion_10]
 
 # ==========================================================================
 # PANTALLA INICIO DE LA APP
@@ -414,897 +413,6 @@ else:
             st.dataframe(df_filtered_raw[['fecha', 'marca', 'zona', 'cristal', 'precio', 'precio_ipc',
                 'precio_usd', 'instalacion', 'instalacion_ipc', 'instalacion_usd', 'ipc_empalme_ipim',
                 'ipc',  'var_ipc_%', 'var_precio_prom_%', 'var_instal_prom_%']], use_container_width=True)
-
-
-# ==========================================================================
-# ---- Comparación PAGOS vs LISTA PRECIOS ----------------------------------
-# ==========================================================================
-
-    elif current_analysis == opcion_2:
-        df_cristal_copy = df_cristal.copy()
-        df_cristal_copy.rename(columns={
-            'marca': 'marca_vehiculo',
-        }, inplace=True)
-
-        df_cristal_copy['precio_total'] = df_cristal_copy['precio'] + df_cristal_copy['instalacion'] 
-        df_cristal_copy['precio_total_ipc'] = df_cristal_copy['precio_ipc'] + df_cristal_copy['instalacion_ipc'] 
-        df_cristal_copy['precio_total_usd'] = df_cristal_copy['precio_usd'] + df_cristal_copy['instalacion_usd']
-        df_cristal_copy = df_cristal_copy[df_cristal_copy['fecha'] != '2025-11-01']
-
-
-        def create_plot_pagos(df_source, y1, y2, y3, title, x_tickangle=45):
-
-            df_filtered = df_source[
-                (df_source['tipo_cristal'] == selected_cristal) 
-                # & (df_source['marca_vehiculo'].isin(selected_marcas)) 
-                # & (df_source['zona'].isin(selected_zone))
-            ].copy()
-            df_filtered.sort_values('año_mes_fecha_pago', inplace=True)
-            df_plot = df_filtered.groupby('año_mes_fecha_pago').agg(
-                {
-                y1: 'mean',
-                y2: 'mean',           
-                y3: 'mean'         
-                }).reset_index()
-
-            # Columnas y etiquetas específicas para el gráfico (ajustadas al gráfico de la imagen)
-            y1_cols = [y1, y2] # Eje ARS (Primario)
-            y2_cols = [y3]                        # Eje USD (Secundario)
-            
-            y1_label = "Monto (ARS)"
-            y2_label = "Monto (USD)"
-            x_col = 'año_mes_fecha_pago'
-
-
-            line_colors = {
-                y1: '#1f77b4', 
-                y2: '#ff7f0e',       
-                y3: '#2ca02c'           
-            }
-            legend_names = {
-                y1: y1,
-                y2: y2,
-                y3: y3
-            }
-
-            fig = make_subplots(specs=[[{"secondary_y": True}]])
-
-            #  eje primario
-            for col in y1_cols:
-                fig.add_trace(
-                    go.Scatter(
-                        x=df_plot[x_col], 
-                        y=df_plot[col], 
-                        name=legend_names[col],
-                        line=dict(color=line_colors[col], width=3), 
-                        showlegend=True,
-                        # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} ARS<extra></extra>"
-                    ),
-                    secondary_y=False, # Eje Y Izquierdo
-                )
-
-            # eje secundario
-            for col in y2_cols:
-                fig.add_trace(
-                    go.Scatter(
-                        x=df_plot[x_col], 
-                        y=df_plot[col], 
-                        name=legend_names[col],
-                        line=dict(color=line_colors[col], width=3),
-                        showlegend=True,
-                        # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} USD<extra></extra>"
-                    ),
-                    secondary_y=True, # Eje Y Derecho
-                )
-
-
-            fig.update_yaxes(title_text=f"{y1_label}", secondary_y=False, nticks=10, showgrid=True)
-            fig.update_yaxes(title_text=f"{y2_label}", secondary_y=True, nticks=10, showgrid=False)
-
-            # Ajustes del Gráfico
-            fig.update_layout(
-                title_text=title,
-                height=700,
-                legend_title_text='', # Dejar vacío ya que el nombre de la línea lo explica
-                font=dict(family="Arial", size=15),
-                margin=dict(t=100, b=0, l=0, r=0),
-                title=dict(
-                    font=dict(size=20, family="Arial"),
-                    # x=0.5, # Centrar título
-                    # xanchor='center'
-                ),
-                # legend=dict(
-                #     orientation="h",
-                #     yanchor="top",
-                #     y=-0.1, # Mover leyenda debajo del gráfico
-                #     xanchor="center",
-                #     x=0.5
-                # )
-            )
-
-            # eje X
-            fig.update_xaxes(
-                tickangle=x_tickangle, 
-                showticklabels=True,
-                title_text=''
-            )
-                    
-            return fig
-        
-        def create_plot_pagos_marcas(df, y_col, color, facet_col, y_label, title, x_tickangle=None):                   
-            if df.empty:
-                fig = go.Figure().update_layout(
-                    title_text=f"No hay datos para graficar",
-                    height=400,
-                    font=dict(family="Arial", size=10),
-                    title_font_size=12
-                )
-                return fig
-
-            df_filtered = df[
-                (df['tipo_cristal'] == selected_cristal) &
-                (df['marca_vehiculo'].isin(selected_marcas)) 
-                # & (df['zona'].isin(selected_zone))
-            ].copy()
-
-            df_filtered.sort_values('año_mes_fecha_pago', inplace=True)
-            df_plot = df_filtered.groupby(['año_mes_fecha_pago', 'marca_vehiculo']).agg(
-                {
-                'monto_transaccion': 'mean',
-                'pago_usd': 'mean',           
-                'pago_ipc': 'mean'         
-                }).reset_index()
-            fig = px.line(
-                df_plot,
-                x='año_mes_fecha_pago',
-                y=y_col,
-                color=color,
-                color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
-                facet_col=facet_col,
-                # line_group='marca',
-                #title='', agrego titulo con subheader
-                labels={'año_mes_fecha_pago': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
-            )
-
-            fig.update_layout(
-                title_text=title,
-                height=700, # Altura del subplot individual
-                # width=200,
-                legend_title_text='',
-                font=dict(family="Arial", size=15),
-                margin=dict(t=50, b=0, l=0, r=0),
-                title=dict(
-                    font=dict(size=20, family="Arial")       
-            ),
-                legend=dict(
-                orientation="h",        # Muestra la leyenda horizontalmente
-                yanchor="top",          # Anclamos la leyenda en la parte superior del espacio que le damos (y)
-                y=-0.2,                 # Colocamos la leyenda debajo del gráfico (ajusta este valor si es necesario)
-                xanchor="center",       # Anclamos la leyenda en su centro
-                x=0.5)                   # Posicionamos el centro de la leyenda en el medio del eje X (0.5)
-                )
-
-            fig.for_each_xaxis(
-            lambda xaxis: xaxis.update(
-                tickangle=x_tickangle, # Aplicar el ángulo deseado
-                showticklabels=True     # Asegurarse de que las etiquetas sean visibles (si fuera necesario)
-                )
-            )
-            fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-            fig.update_traces(line=dict(width=2))
-            
-            return fig
-        
-        def create_plot_precios(df, y_col, y_label, title, fixed_color, x_tickangle=None):
-            if df.empty:
-                fig = go.Figure().update_layout(
-                    title_text=f"No hay datos para graficar",
-                    height=400,
-                    font=dict(family="Arial", size=10),
-                    title_font_size=12
-                )
-                return fig
-
-            df_filtered = df[
-                (df['tipo_cristal'] == selected_cristal) &
-                (df['marca_vehiculo'].isin(selected_marcas)) 
-            ].copy()
-
-            # --- Agregación ---
-            # df_filtered.sort_values('fecha', inplace=True)
-            df_plot = df_filtered.groupby(['fecha']).agg(
-                {
-                'precio_total': 'mean',
-                'precio_total_ipc': 'mean',         
-                'precio_total_usd': 'mean'        
-                }).reset_index()
-
-            fig = px.bar(
-                df_plot,
-                x='fecha',
-                y=y_col,
-                # color=color,
-                # facet_col=facet_col,
-                # Si tienes múltiples marcas por mes, considera usar barmode='group' o 'stack' aquí si es necesario
-                # barmode='group', 
-                labels={'fecha': '', y_col: y_label,}
-            )
-            fig.update_traces(marker_color=fixed_color)
-
-            # --- Ajustes del Layout (Se mantienen) ---
-            fig.update_layout(
-                title_text=title,
-                height=500, 
-                width=900, 
-                legend_title_text='',
-                font=dict(family="Arial", size=15),
-                margin=dict(t=50, b=0, l=0, r=0),
-                title=dict(
-                    font=dict(size=20, family="Arial") 
-                ),
-                legend=dict(
-                    orientation="h",
-                    yanchor="top", 
-                    y=-0.2,
-                    xanchor="center",
-                    x=0.5)
-            )
-
-            # --- Ajustes de Eje X y Facetas (Se mantienen) ---
-            fig.for_each_xaxis(
-                lambda xaxis: xaxis.update(
-                    tickangle=x_tickangle, 
-                    showticklabels=True
-                    )
-            )
-            fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-            
-            # # Calcula el rango real de tus datos
-            # y_min = df_plot[y_col].min() * 0.95  # 5% debajo del mínimo
-            # y_max = df_plot[y_col].max() * 1.05  # 5% por encima del máximo
-
-            # fig.update_yaxes(
-            #     range=[y_min, y_max],  # Define el rango manualmente
-            #     # Si tienes subplots (facet_col), usa: row='all', col='all'
-            #     nticks=6,
-            # )
-            # # fig.update_yaxes(title_text=f"{y1_label}", secondary_y=False, nticks=10, showgrid=True)
-
-            return fig
-        
-        available_cristales = sorted(df_pagos_cristal['tipo_cristal'].unique().tolist())       
-        available_marcas = sorted(df_pagos_cristal['marca_vehiculo'].unique().tolist())
-        DEFAULT_MARCAS = ["VOLKSWAGEN", "CHEVROLET", "FORD",  "TOYOTA", "FIAT", "PEUGEOT", "RENAULT"]
-
-        st.markdown("## Comparación pagos L2 vs lista precios de Cristales")
-        st.markdown("#### _Fuente de datos:_ \
-                    \n:white_small_square: _Listas de precios de Pilkington_ \
-                    \n:white_small_square: _La Segunda BI (pagos)_")
-        
-        st.markdown("---")
-        with st.sidebar:
-            st.markdown("---")
-            # st.markdown("Filtros") # Título para la barra lateral
-            st.markdown("##### _Seleccionar Tipo de Cristal:_") 
-            selected_cristal = st.selectbox(
-                "Cristal",
-                options=available_cristales,
-                index=1,
-                label_visibility ='collapsed',
-                # placeholder= "Selecciona una opción...",
-            )
-            st.markdown("---")
-
-# ==== GRAFICO 1 - PAGOS PROMEDIO POR TIPO DE CRISTAL ===========================================
-        fig_pagos1 = create_plot_pagos(
-            df_pagos_cristal, 
-            'monto_transaccion',
-            'pago_ipc',
-            'pago_usd',
-            title=f'Pagos promedio (L2) - {selected_cristal}', 
-            x_tickangle=45
-        )
-        st.plotly_chart(fig_pagos1, use_container_width=True)
-
-        # tabla para mostrar:
-        df_resumen1 = df_pagos_cristal.sort_values('año_mes_fecha_pago')
-        df_resumen1 = df_resumen1[(df_resumen1['tipo_cristal'] == selected_cristal)
-                # & (df_resumen1['marca_vehiculo'].isin(selected_marcas))
-            ]
-        df_tabla = df_resumen1.groupby(['año_mes_fecha_pago']).agg(
-            {'monto_transaccion': 'mean',
-            'pago_usd': 'mean',           
-            'pago_ipc': 'mean'}).reset_index()
-        df_tabla.monto_transaccion = df_tabla.monto_transaccion.round(0).astype(int) 
-        df_tabla.pago_usd = df_tabla.pago_usd.round(0).astype(int) 
-        df_tabla.pago_ipc = df_tabla.pago_ipc.round(0).astype(int)
-
-        with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
-            st.dataframe(df_tabla, hide_index=True, width=900)
-        st.subheader('', divider='grey')
-        
-
-# ==== GRAFICO 2 - PAGOS PROM POR MARCA ===========================================
-        col_1, col_2 = st.columns([0.9, 4])
-        with col_1:
-            st.markdown("**_Seleccionar Marcas:_**")
-            selected_marcas = st.multiselect(
-                "Marcas",
-                options=available_marcas,
-                default=[m for m in DEFAULT_MARCAS if m in available_marcas],
-                # default=["TODAS LAS MARCAS"],
-                label_visibility='collapsed',
-            )
-
-        with col_2:
-            fig_pagos2_hist = create_plot_pagos_marcas(
-                df_pagos_cristal,
-                'monto_transaccion', 
-                'marca_vehiculo',
-                None,
-                'Monto histórico',
-                title=f'Pagos históricos por marca - {selected_cristal}', 
-                x_tickangle=45)
-            fig_pagos2_ipc = create_plot_pagos_marcas(
-                df_pagos_cristal,
-                'pago_ipc', 
-                'marca_vehiculo',
-                None,
-                'Monto IPC',
-                title=f'Pagos por marca ajustados por IPC - {selected_cristal}', 
-                x_tickangle=45)
-            fig_pagos2_usd = create_plot_pagos_marcas(
-                df_pagos_cristal,
-                'pago_usd', 
-                'marca_vehiculo',
-                None,
-                'Monto USD',
-                title=f'Pagos por marca en valor USD - {selected_cristal}', 
-                x_tickangle=45)
-
-
-            tab1, tab2, tab3 = st.tabs(["Histórico", "IPC", 'USD'])
-            with tab1:
-                st.plotly_chart(fig_pagos2_hist, use_container_width=True)
-            with tab2:
-                st.plotly_chart(fig_pagos2_ipc, use_container_width=True)
-            with tab3:
-                st.plotly_chart(fig_pagos2_usd, use_container_width=True)
-                    
-        df_resumen2 = df_pagos_cristal.sort_values(by=['año_mes_fecha_pago','marca_vehiculo'])
-        df_resumen2 = df_resumen2[(df_resumen2['tipo_cristal'] == selected_cristal)
-                & (df_resumen2['marca_vehiculo'].isin(selected_marcas))
-            ]
-        df_tabla2 = df_resumen2.groupby(['año_mes_fecha_pago','marca_vehiculo']).agg(
-            {'monto_transaccion': 'mean',
-            'pago_usd': 'mean',           
-            'pago_ipc': 'mean'}).reset_index()
-        
-        df_tabla2.monto_transaccion = df_tabla2.monto_transaccion.round(0).astype(int) 
-        df_tabla2.pago_usd = df_tabla2.pago_usd.round(0).astype(int) 
-        df_tabla2.pago_ipc = df_tabla2.pago_ipc.round(0).astype(int)
-
-        with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
-            st.dataframe(df_tabla2, hide_index=True, width=900)
-
-        st.subheader('', divider='grey')
-
-# ==== GRAFICO 3 - PRECIOS DE LISTA PROM ===========================================
-
-        COLOR_HIST = '#1f77b4'  # Azul
-        COLOR_IPC = '#ff7f0e'   # Naranja
-        COLOR_USD = '#2ca02c'   # Verde
-                
-        fig_precio_hist = create_plot_precios(
-            df_cristal_copy, 
-            'precio_total',
-            'Precio (ARS)',
-            title=f'Precios de lista promedio histórico - {selected_cristal}',
-            fixed_color=COLOR_HIST, 
-            x_tickangle=45
-        )
-        fig_precio_ipc = create_plot_precios(
-            df_cristal_copy, 
-            'precio_total_ipc',
-            'Precio IPC (ARS)',
-            title=f'Precios de lista promedio ajustado IPC - {selected_cristal}', 
-            fixed_color=COLOR_IPC,
-            x_tickangle=45
-        )
-        fig_precio_usd = create_plot_precios(
-            df_cristal_copy, 
-            'precio_total_usd',
-            'Precio (USD)',
-            title=f'Precios de lista promedio en valor USD - {selected_cristal}', 
-            fixed_color=COLOR_USD,
-            x_tickangle=45
-        )
-
-        tab1, tab2, tab3 = st.tabs(["Histórico", "IPC", 'USD'])
-        with tab1:
-            st.plotly_chart(fig_precio_hist, use_container_width=False)
-        with tab2:
-            st.plotly_chart(fig_precio_ipc, use_container_width=False)
-        with tab3:
-            st.plotly_chart(fig_precio_usd, use_container_width=False)
-        st.write(f'Marcas seleccionadas: {", ".join(selected_marcas)}')
-
-        # tabla para mostrar:
-        df_resumen3 = df_cristal_copy.sort_values('fecha')
-        df_resumen3 = df_resumen3[(df_resumen3['tipo_cristal'] == selected_cristal)
-                & (df_resumen3['marca_vehiculo'].isin(selected_marcas))
-            ]
-        # df_resumen3.precio_total = df_resumen3.precio_total.round(0).astype(int) 
-        # df_resumen3.precio_total_ipc = df_resumen3.precio_total_ipc.round(0).astype(int) 
-        # df_resumen3.precio_total_usd = df_resumen3.precio_total_usd.round(0).astype(int)
-        df_resumen3['fecha'] = df_resumen3['fecha'].dt.strftime('%Y-%m-%d')
-        df_tabla3 = df_resumen3.groupby(['fecha']).agg(
-            {
-            'tipo_cristal': 'first',
-            'precio': 'mean',
-            'precio_ipc': 'mean',
-            'precio_usd': 'mean',
-            'instalacion': 'mean',
-            'instalacion_ipc': 'mean',
-            'instalacion_usd': 'mean',
-            'precio_total': 'mean',
-            'precio_total_ipc': 'mean',           
-            'precio_total_usd': 'mean'}).reset_index()
-        
-        df_tabla3.precio_total = df_tabla3.precio_total.round(0).astype(int) 
-        df_tabla3.precio_total_ipc = df_tabla3.precio_total_ipc.round(0).astype(int) 
-        df_tabla3.precio_total_usd = df_tabla3.precio_total_usd.round(0).astype(int)
-        df_tabla3.precio = df_tabla3.precio.round(0).astype(int) 
-        df_tabla3.precio_ipc = df_tabla3.precio_ipc.round(0).astype(int) 
-        df_tabla3.precio_usd = df_tabla3.precio_usd.round(0).astype(int)
-        df_tabla3.instalacion = df_tabla3.instalacion.round(0).astype(int) 
-        df_tabla3.instalacion_ipc = df_tabla3.instalacion_ipc.round(0).astype(int) 
-        df_tabla3.instalacion_usd = df_tabla3.instalacion_usd.round(0).astype(int)
-
-        with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
-            st.dataframe(df_tabla3, hide_index=True)
-        
-        st.subheader('', divider='grey')
-
-
-# === COMPARACION PRECIOS VS PAGOS ==========================================
-
-        st.markdown(f"### **Comparación pagos vs precios de lista promedio - {selected_cristal}**")
-        st.write('')
-
-        df_comp_precios = df_cristal_copy.sort_values('fecha')
-        df_comp_precios['fecha'] = pd.to_datetime(df_comp_precios['fecha'])
-        df_comp_precios['fecha'] = df_comp_precios['fecha'].dt.strftime('%Y-%m')
-
-        df_comp_pagos = df_pagos_cristal.sort_values(by=['año_mes_fecha_pago','marca_vehiculo'])
-        df_comp_pagos['año_mes_fecha_pago'] = pd.to_datetime(df_comp_pagos['año_mes_fecha_pago'])
-        df_comp_pagos['año_mes_fecha_pago'] = df_comp_pagos['año_mes_fecha_pago'].dt.strftime('%Y-%m')
-
-
-        fechas_disponibles = sorted(df_comp_precios['fecha'].unique().tolist(), reverse=True)
-        available_zones_full = sorted(df_comp_precios['zona'].unique().tolist())
-        zona_a_excluir = 'ROSARIO' # O 'Rosario', usa el valor exacto que aparece en tu columna 'zona'
-        available_zones_ui = [zona for zona in available_zones_full if zona != zona_a_excluir]
-
-        available_zonas_con_todas = ["TODAS (general)"] + available_zones_ui
-
-        col_fecha, col_marca, col_zona = st.columns(3)
-        with col_fecha:
-            selected_fecha = st.selectbox(
-                ":arrow_right: Seleccione Fecha (AAAA-MM):",
-                options=fechas_disponibles,
-                index=0 # Por defecto, la fecha más reciente (debido al sorted(reverse=True))
-            )
-
-        with col_marca:
-            selected_marcas_comp = st.selectbox(
-                ":arrow_right: Seleccione Marca:",
-                options=available_marcas,
-                index=available_marcas.index("CHEVROLET") if "CHEVROLET" in available_marcas else 0,
-                placeholder="Seleccione una Marca..."
-            )
-
-        with col_zona:
-            selected_zone_raw = st.selectbox(
-                ":arrow_right: Seleccione Provincia:",
-                options=available_zonas_con_todas,
-                index = available_zonas_con_todas.index("TODAS (general)"),
-            )
-        
-        if "TODAS (general)" in selected_zone_raw:
-            selected_zone = available_zones_full
-        else:
-            selected_zone = [selected_zone_raw]
-        
-        df_comp_precios = df_cristal_copy.sort_values('fecha')
-        df_comp_precios['fecha'] = pd.to_datetime(df_comp_precios['fecha'])
-        df_comp_precios['fecha'] = df_comp_precios['fecha'].dt.strftime('%Y-%m')
-
-        df_comp_precios = df_comp_precios[(df_comp_precios['tipo_cristal'] == selected_cristal)
-                & (df_comp_precios['marca_vehiculo'] == selected_marcas_comp)
-                & (df_comp_precios['fecha'] == selected_fecha)
-                & (df_comp_precios['zona'].isin(selected_zone))
-            ]
-
-        df_tabla3 = df_comp_precios.groupby(['fecha']).agg(
-            {
-            'tipo_cristal': 'first',
-            'precio': 'mean',
-            'precio_ipc': 'mean',
-            'precio_usd': 'mean',
-            'instalacion': 'mean',
-            'instalacion_ipc': 'mean',
-            'instalacion_usd': 'mean',
-            'precio_total': 'mean',
-            'precio_total_ipc': 'mean',           
-            'precio_total_usd': 'mean'}).reset_index()
-        
-        df_tabla3.precio_total = df_tabla3.precio_total.round(0).astype(int) 
-        df_tabla3.precio_total_ipc = df_tabla3.precio_total_ipc.round(0).astype(int) 
-        df_tabla3.precio_total_usd = df_tabla3.precio_total_usd.round(0).astype(int)
-        df_tabla3.precio = df_tabla3.precio.round(0).astype(int) 
-        df_tabla3.precio_ipc = df_tabla3.precio_ipc.round(0).astype(int) 
-        df_tabla3.precio_usd = df_tabla3.precio_usd.round(0).astype(int)
-        df_tabla3.instalacion = df_tabla3.instalacion.round(0).astype(int) 
-        df_tabla3.instalacion_ipc = df_tabla3.instalacion_ipc.round(0).astype(int) 
-        df_tabla3.instalacion_usd = df_tabla3.instalacion_usd.round(0).astype(int)
-
-
-        df_comp_pagos = df_comp_pagos[(df_comp_pagos['tipo_cristal'] == selected_cristal)
-                & (df_comp_pagos['marca_vehiculo'] == selected_marcas_comp)
-                & (df_comp_pagos['año_mes_fecha_pago'] == selected_fecha)
-                & (df_comp_pagos['zona'].isin(selected_zone))
-                ]
-        
-        df_tabla2 = df_comp_pagos.groupby(['año_mes_fecha_pago']).agg(
-            {'monto_transaccion': 'mean',
-            'pago_usd': 'mean',           
-            'pago_ipc': 'mean'}).reset_index()
-        
-        df_tabla2.monto_transaccion = df_tabla2.monto_transaccion.round(0).astype(int) 
-        df_tabla2.pago_usd = df_tabla2.pago_usd.round(0).astype(int) 
-        df_tabla2.pago_ipc = df_tabla2.pago_ipc.round(0).astype(int)
-
-        st.write('')
-
-        def format_ars_value(number):
-            """Formatea el número con punto como separador de miles y sin decimales."""
-            # Retorna NaN o cadena vacía si el input no es numérico, para evitar errores
-            if pd.isna(number):
-                return ""
-            
-            # Convertir a entero (si es float) y usar el formato de coma (,) para miles
-            formatted_number = f"{int(round(number)):,}"
-            
-            # Reemplazar la coma (,) por el punto (.) para ajustarse al estándar argentino
-            return formatted_number.replace(',', '.')
-        def format_ars_delta(diff_number):
-            """Formatea la diferencia (delta) incluyendo signo (+/-) y punto de miles."""
-            if pd.isna(diff_number):
-                return "N/A"
-                
-            signo = '+' if diff_number > 0 else ('-' if diff_number < 0 else '')
-            
-            # Obtener el valor absoluto
-            abs_number = abs(diff_number)
-            
-            # Usar el formateador de miles (punto) creado anteriormente
-            valor_absoluto_formateado = format_ars_value(abs_number)
-            
-            # Construir la cadena final
-            return f"{signo} ${valor_absoluto_formateado}"
-
-        if  not df_tabla2.empty:
-            # Agrupamos por los filtros para obtener el promedio de la métrica
-            pago_promedio_ars = df_tabla2['monto_transaccion'].values[0]
-            pago_promedio_ipc = df_tabla2['pago_ipc'].values[0]
-            pago_promedio_usd = df_tabla2['pago_usd'].values[0]
-        
-            # Creamos un indicador en Streamlit para el precio
-            st.markdown(f"#### 💰 Pago promedio (L2)")
-            col_pago_ars, col_pago_ipc, col_pago_usd = st.columns(3)
-
-            valor1 = format_ars_value(pago_promedio_ars)
-            valor2 = format_ars_value(pago_promedio_ipc)
-            valor3 = format_ars_value(pago_promedio_usd)
-
-            with col_pago_ars:
-                st.metric(label="Pago (ARS)", value=f'$ {valor1}', border=True)
-            with col_pago_ipc:
-                st.metric(label="Pago IPC (ARS)", value=f"$ {valor2}",border=True)
-            with col_pago_usd:
-                st.metric(label="Pago (USD)", value=f"U$D {valor3}",border=True)
-            
-        else:
-            st.warning(":warning: No se encontraron datos de **Pagos** para la selección actual.")
-            pago_promedio_ars = None
-
-        if  not df_tabla3.empty:
-            precio_promedio_ars = df_tabla3['precio_total'].values[0]
-            precio_promedio_ipc = df_tabla3['precio_total_ipc'].values[0]
-            precio_promedio_usd = df_tabla3['precio_total_usd'].values[0]
-        
-            # Creamos un indicador en Streamlit para el precio
-            st.markdown(f"#### 💰 Precio de lista promedio")
-            col_p_ars, col_p_ipc, col_p_usd = st.columns(3)
-
-            valor1 = format_ars_value(precio_promedio_ars)
-            valor2 = format_ars_value(precio_promedio_ipc)
-            valor3 = format_ars_value(precio_promedio_usd)
-
-            with col_p_ars:
-                st.metric(label="Precio (ARS)", value=f'$ {valor1}', border=True)
-                # st.write(precio_promedio_ars)
-            with col_p_ipc:
-                st.metric(label="Precio IPC (ARS)", value=f"$ {valor2}",border=True)
-            with col_p_usd:
-                st.metric(label="Precio (USD)", value=f"U$D {valor3}",border=True)
-            
-        else:
-            st.warning(":warning: No se encontraron datos de **Precios** para la selección actual.")
-            precio_promedio_ars = None
-
-        st.write('')
-        # st.subheader('', divider='grey')
-
-        # Renombrar la columna de df_tabla2 para que coincida con df_tabla3
-        df_tabla2_renombrado = df_tabla2.rename(columns={'año_mes_fecha_pago': 'fecha'})
-
-        df_comparacion = pd.merge(
-            df_tabla3,                 # Precio (Tabla Izquierda)
-            df_tabla2_renombrado,      # Pago (Tabla Derecha)
-            on='fecha',                # Columna clave de unión
-            how='inner',               # Solo filas que existen en ambos
-            suffixes=('_precio', '_pago') # Sufijos para diferenciar columnas duplicadas
-        )
-
-        columnas_presentacion = [
-            'fecha',
-            'precio_total', 
-            'precio_total_ipc',
-            'precio_total_usd',
-            'monto_transaccion',
-            'pago_ipc',
-            'pago_usd'
-        ]
-
-        df_comparacion_final = df_comparacion[columnas_presentacion].copy()
-
-        renombre_columnas = {
-            'fecha': 'Fecha',
-            'precio_total': 'Precio Total (ARS)',
-            'precio_total_ipc': 'Precio IPC (ARS)',
-            'precio_total_usd': 'Precio Total (USD)',
-            'monto_transaccion': 'Pago Total (ARS)',
-            'pago_ipc': 'Pago IPC (ARS)',
-            'pago_usd': 'Pago Total (USD)'
-        }
-
-        df_comparacion_final.rename(columns=renombre_columnas, inplace=True)
-
-        columnas_numericas_ars = [col for col in df_comparacion_final.columns if 'ARS' in col]
-
-        for col in columnas_numericas_ars:
-            df_comparacion_final[col] = df_comparacion_final[col].apply(
-                lambda x: format_ars_value(x)
-            )
-            df_comparacion_final[col] = '$ ' + df_comparacion_final[col].astype(str)
-
-        columnas_numericas_usd = [col for col in df_comparacion_final.columns if 'USD' in col]
-        for col in columnas_numericas_usd:
-            df_comparacion_final[col] = df_comparacion_final[col].apply(
-                lambda x: format_ars_value(x)
-            )
-            df_comparacion_final[col] = '$ ' + df_comparacion_final[col].astype(str)
-
-        col1, col2, col3 = st.columns(3)
-        if  not df_tabla2.empty:
-            with col1:
-                st.markdown("**VALORES ARS**")
-                
-                # Extraer los valores de la única fila
-                precio_ars = df_comparacion_final['Precio Total (ARS)'].iloc[0]
-                pago_ars = df_comparacion_final['Pago Total (ARS)'].iloc[0]
-                
-                # Mostrar como métricas simples
-                st.text(f"Pago: {pago_ars}")
-                st.text(f"Precio: {precio_ars}")
-                st.text("---")
-
-                pago_ars_num = float(pago_ars.replace('$', '').replace('.', '').replace(',', '').strip())
-                precio_ars_num = float(precio_ars.replace('$', '').replace('.', '').replace(',', '').strip())
-                
-                diff_ars_numerico = pago_ars_num - precio_ars_num 
-                if precio_ars_num != 0:
-                    delta_ars_percent = (diff_ars_numerico / precio_ars_num) * 100
-                else:
-                    # Manejo de división por cero
-                    delta_ars_percent = 0
-
-                valor_final_display = format_ars_delta(diff_ars_numerico)
-
-                st.metric(label="Diferencia en pagos ARS", 
-                          value=valor_final_display, 
-                          delta=f"{delta_ars_percent:+.2f} %",
-                          delta_color='inverse')
-
-                
-            # 2. Columna IPC (Ajustado por IPC)
-            with col2:
-                st.markdown("**VALORES IPC**")
-                
-                precio_ipc = df_comparacion_final['Precio IPC (ARS)'].iloc[0]
-                pago_ipc = df_comparacion_final['Pago IPC (ARS)'].iloc[0]
-                
-                st.text(f"Pago: {pago_ipc}")
-                st.text(f"Precio: {precio_ipc}")
-                st.text("---")
-
-                pago_ipc_num = float(pago_ipc.replace('$', '').replace('.', '').replace(',', '').strip())
-                precio_ipc_num = float(precio_ipc.replace('$', '').replace('.', '').replace(',', '').strip())
-                diff_ipc = pago_ipc_num - precio_ipc_num
-                if precio_ipc_num != 0:
-                    delta_ipc_percent = (diff_ipc / precio_ipc_num) * 100
-                else:
-                    # Manejo de división por cero
-                    delta_ipc_percent = 0
-
-                valor_final_ipc = format_ars_delta(diff_ipc)
-
-                st.metric(label="Diferencia en pagos IPC", 
-                          value=valor_final_ipc, 
-                          delta=f"{delta_ipc_percent:+.2f} %",
-                          delta_color='inverse')
-                
-            # 3. Columna USD
-            with col3:
-                st.markdown("**VALORES USD**")
-                
-                precio_usd = df_comparacion_final['Precio Total (USD)'].iloc[0]
-                pago_usd = df_comparacion_final['Pago Total (USD)'].iloc[0]
-
-                st.text(f"Pago: {pago_usd}")           
-                st.text(f"Precio: {precio_usd}")
-                st.text("---")
-                pago_usd_num = float(pago_usd.replace('$', '').replace('.', '').replace(',', '').strip())
-                precio_usd_num = float(precio_usd.replace('$', '').replace('.', '').replace(',', '').strip())
-
-                diff_usd = pago_usd_num - precio_usd_num
-                # Evitar división por cero
-                if precio_usd_num != 0:
-                    delta_usd_percent = (diff_usd / precio_usd_num) * 100
-                else:
-                    delta_usd_percent = 0
-
-                valor_final_usd = format_ars_delta(diff_usd)
-
-                st.metric(label="Diferencia en pagos USD", 
-                          value=valor_final_usd, 
-                          delta=f"{delta_usd_percent:+.2f} %",
-                          delta_color='inverse')
-
-
-            st.subheader('', divider='grey')
-            # # 4. Mostrar el DataFrame debajo para detalles (si el usuario lo requiere)
-            # st.markdown("#### **Datos Crudos Filtrados**")
-            # st.dataframe(df_comparacion_final, hide_index=True, use_container_width=True)
-        else:
-            st.warning(":warning: No se encontraron datos para mostrar la comparación detallada.")
-
-        # VENIR ACA
-
-
-        def create_historical_comparison_plot(df_pagos, df_precios, pago_col, precio_col, y_label, title):
-
-            df_pagos_agg = df_pagos.copy()
-
-            # filtro por tipo_cristal
-            df_pagos_agg = df_pagos_agg[(df_pagos_agg['tipo_cristal'] == selected_cristal) &
-                                        (df_pagos_agg['marca_vehiculo'] == selected_marcas_comp)]
-                            
-            df_pagos_agg['año_mes_fecha_pago'] = pd.to_datetime(df_pagos_agg['año_mes_fecha_pago'])
-            df_pagos_agg['fecha'] = df_pagos_agg['año_mes_fecha_pago'].dt.strftime('%Y-%m')
-            
-            # Agrupar por fecha y obtener el promedio de la columna de pago
-            df_pagos_agg = df_pagos_agg.groupby('fecha').agg({pago_col: 'mean'}).reset_index()
-            df_pagos_agg.rename(columns={pago_col: 'Pago Promedio'}, inplace=True)
-
-            df_precios_agg = df_precios.copy()
-            df_precios_agg = df_precios_agg[(df_precios_agg['tipo_cristal'] == selected_cristal) &
-                                            (df_precios_agg['marca_vehiculo'] == selected_marcas_comp)]
-            df_precios_agg['fecha'] = pd.to_datetime(df_precios_agg['fecha'])
-            df_precios_agg['fecha'] = df_precios_agg['fecha'].dt.strftime('%Y-%m')
-
-            # Agrupar por fecha y obtener el promedio de la columna de precio
-            df_precios_agg = df_precios_agg.groupby('fecha').agg({precio_col: 'mean'}).reset_index()
-            df_precios_agg.rename(columns={precio_col: 'Precio Promedio'}, inplace=True)
-
-            # 3. Unión de DataFrames
-            # Merge con la clave 'fecha' (que ahora son ambas cadenas 'YYYY-MM')
-            df_comparacion = pd.merge(
-                df_precios_agg,
-                df_pagos_agg,
-                on='fecha',
-                how='outer'
-            ).sort_values('fecha')
-
-            df_long = pd.melt(
-                df_comparacion, 
-                id_vars=['fecha'], 
-                value_vars=['Precio Promedio', 'Pago Promedio'],
-                var_name='Métrica', 
-                value_name='Monto'
-            ).dropna(subset=['Monto']) # Eliminar NaNs para que las líneas no se rompan
-
-            fig = px.line(
-                df_long,
-                x='fecha',
-                y='Monto',
-                color='Métrica',
-                title=title,
-                labels={'fecha': '', 'Monto': y_label, 'Métrica': ''},
-                height=550
-            )
-
-            # Ajustes visuales
-            fig.update_layout(
-                hovermode="x unified",
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-                yaxis_tickprefix=y_label.split('(')[0].strip(), # Añadir símbolo de moneda ($, U$D, etc.)
-                title=dict(
-                    font=dict(size=20, family="Arial")   
-            ))
-
-            fig.update_yaxes(
-                title_text=y_label, # Mantenemos la etiqueta limpia
-                tickprefix="",      # Elimina cualquier prefijo de texto no deseado
-                tickformat=".3s"    # Esto usa la notación SI, mostrando 340k en lugar de 340000
-            )
-            fig.update_traces(mode='lines+markers', line=dict(width=3))
-            
-            return fig
-                
-        # --- Definición de las tres llamadas a la función ---
-
-        # 1. Gráfico TOTAL (ARS)
-        fig_total = create_historical_comparison_plot(
-            df_pagos_cristal,
-            df_cristal_copy,
-            pago_col='monto_transaccion',
-            precio_col='precio_total',
-            y_label='Monto (ARS)',
-            title='Evolución: Monto Total de Pago vs. Precio de Lista (ARS)'
-        )
-
-        # 2. Gráfico IPC (ARS Ajustado)
-        fig_ipc = create_historical_comparison_plot(
-            df_pagos_cristal,
-            df_cristal_copy,
-            pago_col='pago_ipc',
-            precio_col='precio_total_ipc',
-            y_label='Monto IPC (ARS)',
-            title='Evolución: Monto de Pago vs. Precio de Lista (Ajustado por IPC)'
-        )
-
-        # 3. Gráfico USD (Dólar)
-        fig_usd = create_historical_comparison_plot(
-            df_pagos_cristal,
-            df_cristal_copy,
-            pago_col='pago_usd',
-            precio_col='precio_total_usd',
-            y_label='Monto (USD)',
-            title='Evolución: Monto de Pago vs. Precio de Lista (USD)'
-        )
-
-        tab1, tab2, tab3 = st.tabs(["Total (ARS)", "IPC (ARS)", "USD"])
-        with tab1:
-            st.plotly_chart(fig_total, use_container_width=True)
-
-        with tab2:
-            st.plotly_chart(fig_ipc, use_container_width=True)
-
-        with tab3:
-            st.plotly_chart(fig_usd, use_container_width=True)
 
 # ==========================================================================
 # ---- Análisis ORION/CESVI ------------------------------------------------
@@ -2500,10 +1608,583 @@ else:
                 # st.subheader("Tabla de Datos de Ejemplo")
                 st.dataframe(df_costo_hora[['anio_mes','usd_blue','grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd', 'san_cristobal_usd', 'sancor_usd']], 
                             hide_index=True, width=1000,)
+
+# ==========================================================================
+# EVOLUTIVO PAGOS CRISTALES L2
+# ==========================================================================
+
+    elif current_analysis == opcion_pagos_pkt:
+        st.markdown('## Evolución de monto de pagos de Cristales (L2)')    
+        st.markdown("---")
+        st.markdown("#### _Fuente de datos:_ \
+                    \n:white_small_square: _La Segunda BI (pagos)_")
+        
+        st.markdown('---')
+
+        def create_plot_pagos(df_source, y1, y2, y3, title, x_tickangle=45):
+
+            df_filtered = df_source[
+                (df_source['marca_vehiculo'].isin(final_marcas_to_filter)) 
+                & (df_source['tipo_cristal'] == selected_tipo_cristal)
+            ].copy()
+
+            df_filtered.sort_values('año_mes_fecha_pago', inplace=True)
+            df_plot = df_filtered.groupby('año_mes_fecha_pago').agg(
+                {
+                y1: 'mean',
+                y2: 'mean',           
+                y3: 'mean'         
+                }).reset_index()
+
+            # Columnas y etiquetas específicas para el gráfico (ajustadas al gráfico de la imagen)
+            y1_cols = [y1, y2] # Eje ARS (Primario)
+            y2_cols = [y3]                        # Eje USD (Secundario)
+            
+            y1_label = "Monto (ARS)"
+            y2_label = "Monto (USD)"
+            x_col = 'año_mes_fecha_pago'
+
+
+            line_colors = {
+                y1: '#1f77b4', 
+                y2: '#ff7f0e',       
+                y3: '#2ca02c'           
+            }
+            legend_names = {
+                y1: y1,
+                y2: y2,
+                y3: y3
+            }
+
+            fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+            #  eje primario
+            for col in y1_cols:
+                fig.add_trace(
+                    go.Scatter(
+                        x=df_plot[x_col], 
+                        y=df_plot[col], 
+                        name=legend_names[col],
+                        line=dict(color=line_colors[col], width=3), 
+                        showlegend=True,
+                        # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} ARS<extra></extra>"
+                    ),
+                    secondary_y=False, # Eje Y Izquierdo
+                )
+
+            # eje secundario
+            for col in y2_cols:
+                fig.add_trace(
+                    go.Scatter(
+                        x=df_plot[x_col], 
+                        y=df_plot[col], 
+                        name=legend_names[col],
+                        line=dict(color=line_colors[col], width=3),
+                        showlegend=True,
+                        # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} USD<extra></extra>"
+                    ),
+                    secondary_y=True, # Eje Y Derecho
+                )
+
+
+            fig.update_yaxes(title_text=f"{y1_label}", secondary_y=False, nticks=14, showgrid=True)
+            fig.update_yaxes(title_text=f"{y2_label}", secondary_y=True, nticks=14, showgrid=False)
+
+            # Ajustes del Gráfico
+            fig.update_layout(
+                title_text=title,
+                height=700,
+                legend_title_text='', # Dejar vacío ya que el nombre de la línea lo explica
+                font=dict(family="Arial", size=15),
+                margin=dict(t=100, b=0, l=0, r=0),
+                title=dict(
+                    font=dict(size=20, family="Arial"),
+                ),
+            )
+
+            # eje X
+            fig.update_xaxes(
+                tickangle=x_tickangle, 
+                showticklabels=True,
+                title_text=''
+            )
+                    
+            return fig
+        
+        def create_plot_pagos_marcas(df, y_col, color, facet_col, y_label, title, x_tickangle=None):
+
+            if df.empty:
+                fig = go.Figure().update_layout(
+                    title_text=f"No hay datos para graficar",
+                    height=400,
+                    font=dict(family="Arial", size=10),
+                    title_font_size=12
+                )
+                return fig
+
+            df_filtered = df[
+                (df['tipo_cristal'] == selected_tipo_cristal) &
+                (df['marca_vehiculo'].isin(final_marcas_to_filter)) 
+                # & (df['zona'].isin(selected_zone))
+            ].copy()
+
+            df_filtered.sort_values('año_mes_fecha_pago', inplace=True)
+            df_plot = df_filtered.groupby(['año_mes_fecha_pago', 'marca_vehiculo']).agg(
+                {
+                'monto_transaccion': 'mean',
+                'pago_usd': 'mean',           
+                'pago_ipc': 'mean'         
+                }).reset_index()
+            
+            fig = px.line(
+                df_plot,
+                x='año_mes_fecha_pago',
+                y=y_col,
+                color=color,
+                color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+                facet_col=facet_col,
+                labels={'año_mes_fecha_pago': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
+            )
+
+            fig.update_layout(
+                title_text=title,
+                height=700, # Altura del subplot individual
+                # width=200,
+                legend_title_text='',
+                font=dict(family="Arial", size=15),
+                margin=dict(t=50, b=0, l=0, r=0),
+                title=dict(
+                    font=dict(size=20, family="Arial")       
+            ),
+                legend=dict(
+                orientation="h",        # Muestra la leyenda horizontalmente
+                yanchor="top",          # Anclamos la leyenda en la parte superior del espacio que le damos (y)
+                y=-0.2,                 # Colocamos la leyenda debajo del gráfico (ajusta este valor si es necesario)
+                xanchor="center",       # Anclamos la leyenda en su centro
+                x=0.5)                   # Posicionamos el centro de la leyenda en el medio del eje X (0.5)
+                )
+
+            fig.for_each_xaxis(
+            lambda xaxis: xaxis.update(
+                tickangle=x_tickangle, # Aplicar el ángulo deseado
+                showticklabels=True     # Asegurarse de que las etiquetas sean visibles (si fuera necesario)
+                )
+            )
+            fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+            fig.update_traces(line=dict(width=2))
+            
+            return fig
+
+        available_marcas = sorted(df_pagos_cristal['marca_vehiculo'].unique().tolist())
+        available_marcas_todas = ["TODAS (general)"] + available_marcas
+        available_tipo_cristal = sorted(df_pagos_cristal['tipo_cristal'].unique().tolist())
+        DEFAULT_MARCAS = ["VOLKSWAGEN", "CHEVROLET", "FORD",  "TOYOTA", "FIAT", "PEUGEOT", "RENAULT"]
+
+
+
+        # selectbox para tipo de vehiculo
+        with st.sidebar:
+            st.markdown("---")
+            st.markdown("Filtros")
+            st.markdown("##### _Seleccionar Tipo de Vehículo:_") 
+            selected_tipo_cristal = st.selectbox(
+                "Tipo cristal",
+                options=available_tipo_cristal,
+                index=0,
+                label_visibility ='collapsed',
+            )
+            st.markdown("---")
+
+            if selected_tipo_cristal:
+                df_filtered_by_tipo_crist = df_pagos_cristal[df_pagos_cristal['tipo_cristal'] == selected_tipo_cristal]
+                available_marcas_for_tipo_crist = sorted(df_filtered_by_tipo_crist['marca_vehiculo'].unique().tolist())
+            else:
+                available_marcas_for_tipo_crist = sorted(df_pagos_cristal['marca_vehiculo'].unique().tolist())
+
+            default_selection = [
+                m for m in DEFAULT_MARCAS 
+                if m in available_marcas_for_tipo_crist
+            ]
+
+            # multiselect para diferentes marcas
+            st.markdown("##### _Seleccionar Marcas:_")
+            selected_marcas = st.multiselect(
+                "Marcas",
+                options=available_marcas_for_tipo_crist,
+                default=default_selection,
+                label_visibility='collapsed',
+                placeholder="Seleccione una o varias Marcas..."
+            )
+            st.markdown("---")
+
+            if not selected_marcas:
+                final_marcas_to_filter = available_marcas_for_tipo_crist
+                st.info(f"Filtro de Marcas: **TODAS** ({len(available_marcas_for_tipo_crist)} marcas)")
+            else:
+                final_marcas_to_filter = selected_marcas
+
+# ----- PAGOS CRISTALES EVOLUTIVO --------------------------------------------------
+        fig_pagos_cristal = create_plot_pagos(
+            df_pagos_cristal, 
+            'monto_transaccion',
+            'pago_ipc',
+            'pago_usd',
+            title=f'Pagos promedio de {selected_tipo_cristal} (L2) ', 
+            x_tickangle=45
+        )
+        st.plotly_chart(fig_pagos_cristal, use_container_width=True)
+        
+        df_pagos_cristal.sort_values('año_mes_fecha_pago', inplace=True)
+        pagos_cristal_filtered = df_pagos_cristal[
+            (df_pagos_cristal['marca_vehiculo'].isin(final_marcas_to_filter)) 
+            & (df_pagos_cristal['tipo_cristal'] ==selected_tipo_cristal)
+        ]
+        pagos_cristal_filtered = pagos_cristal_filtered.groupby(['año_mes_fecha_pago']).agg(
+            {'monto_transaccion': 'mean',
+            'pago_ipc': 'mean',           
+            'pago_usd': 'mean'}).reset_index()
+        
+        pagos_cristal_filtered.monto_transaccion = pagos_cristal_filtered.monto_transaccion.round(0).astype(int) 
+        pagos_cristal_filtered.pago_usd = pagos_cristal_filtered.pago_usd.round(0).astype(int) 
+        pagos_cristal_filtered.pago_ipc = pagos_cristal_filtered.pago_ipc.round(0).astype(int)
+
+        with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
+            st.dataframe(pagos_cristal_filtered, hide_index=True, width=900)
+
+        st.subheader('', divider='grey')
+
+
+# ----- PAGO CRISTALES POR MARCA --------------------------------------------------
+
+        fig_pagos_cristal_hist = create_plot_pagos_marcas(
+            df_pagos_cristal,
+            'monto_transaccion', 
+            'marca_vehiculo',
+            None,
+            'Monto histórico',
+            title=f'Pagos robo de ruedas históricos por marca - {selected_tipo_cristal}', 
+            x_tickangle=45)
+        
+        fig_pagos_cristal_ipc = create_plot_pagos_marcas(
+            df_pagos_cristal,
+            'pago_ipc', 
+            'marca_vehiculo',
+            None,
+            'Monto IPC',
+            title=f'Pagos robo de ruedas por marca ajustados por IPC - {selected_tipo_cristal}', 
+            x_tickangle=45)
+        
+        fig_pagos_cristal_usd = create_plot_pagos_marcas(
+            df_pagos_cristal,
+            'pago_usd', 
+            'marca_vehiculo',
+            None,
+            'Monto USD',
+            title=f'Pagos robo de ruedas por marca en valor USD - {selected_tipo_cristal}', 
+            x_tickangle=45)
+
+
+        tab1, tab2, tab3 = st.tabs(["Histórico", "IPC", 'USD'])
+        with tab1:
+            st.plotly_chart(fig_pagos_cristal_hist, use_container_width=True)
+        with tab2:
+            st.plotly_chart(fig_pagos_cristal_ipc, use_container_width=True)
+        with tab3:
+            st.plotly_chart(fig_pagos_cristal_usd, use_container_width=True)
+                    
+        df_resumen_cristales = df_pagos_cristal.sort_values(by=['año_mes_fecha_pago', 'marca_vehiculo'])
+        df_resumen_cristales = df_resumen_cristales[(df_resumen_cristales['tipo_cristal'] == selected_tipo_cristal)
+                & (df_resumen_cristales['marca_vehiculo'].isin(final_marcas_to_filter))
+            ]
+        df_tabla_cristales = df_resumen_cristales.groupby(['año_mes_fecha_pago','marca_vehiculo']).agg(
+            {'monto_transaccion': 'mean',
+            'pago_usd': 'mean',           
+            'pago_ipc': 'mean'}).reset_index()
+        
+        df_tabla_cristales.monto_transaccion = df_tabla_cristales.monto_transaccion.round(0).astype(int) 
+        df_tabla_cristales.pago_usd = df_tabla_cristales.pago_usd.round(0).astype(int) 
+        df_tabla_cristales.pago_ipc = df_tabla_cristales.pago_ipc.round(0).astype(int)
+
+        with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
+            st.dataframe(df_tabla_cristales, hide_index=True, width=900)
+
+        st.subheader('', divider='grey')
+
+        
+# ----- COMPARATIVO PARTICIPACION DE MERCADO CRISTALES POR MARCA --------------------------
+
+        column_1, column_2 = st.columns(2)
+
+        with column_1:
+            st.markdown(f'#### :white_small_square: Participación de pagos por Marca - {selected_tipo_cristal}')
+            df_participacion = df_pagos_cristal.sort_values(by=['marca_vehiculo'])
+            df_participacion = df_participacion[
+                (df_participacion['tipo_cristal'] == selected_tipo_cristal)
+                ]
+            df_participacion = df_participacion.groupby(['marca_vehiculo']).agg(
+                {'monto_transaccion': 'sum',}).reset_index()
+            
+            monto_total = df_participacion['monto_transaccion'].sum()
+            df_participacion['% Participación'] = (
+                df_participacion['monto_transaccion'] / monto_total
+            ) * 100
+            
+            df_participacion['% Participación'] = df_participacion['% Participación'].round(0).astype(int)
+            
+            df_participacion.sort_values(
+                '% Participación', 
+                ascending=False, 
+                inplace=True
+            )
+            df_participacion['Part. Acum.'] = df_participacion['% Participación'].cumsum()
+            df_participacion['Part. Acum.'] = df_participacion['Part. Acum.'].round(0).astype(int)
+
+
+            def format_participacion(row): 
+
+                participacion_individual_str = f"{row['% Participación']} %"
                 
+                # corte en 90% de acumulacion de pagos
+                if row['Part. Acum.'] > 90.00:
+                    # Si supera el 90%, el acumulado es vacío, pero el individual se mantiene
+                    participacion_acumulada_str = ''
+                else:
+                    # Si es <= 90%, formateamos el acumulado
+                    participacion_acumulada_str = f"{row['Part. Acum.']} %" 
+
+                return pd.Series(
+                    [participacion_individual_str, participacion_acumulada_str], 
+                    index=['% Participación', 'Part. Acum. (%)']
+                )
+
+            df_participacion[['% Participación', 'Part. Acum. (%)']] = df_participacion.apply(
+                format_participacion, 
+                axis=1 
+            )
+            df_participacion.drop(columns=['Part. Acum.'], inplace=True)
+
+
+            fila_total = pd.DataFrame([{
+                'marca_vehiculo': 'TOTAL',
+                'monto_transaccion': monto_total,
+                '% Participación': '',
+                'Part. Acum. (%)': ''
+            }])
+
+            # Concatenar la fila total al final del DataFrame
+            df_participacion = pd.concat(
+                [df_participacion, fila_total],
+                ignore_index=True
+            )
+
+            st.dataframe(df_participacion.rename(columns={'monto_transaccion':'Suma de Pagos'}), hide_index=True, width=450, height=600)
+
+# ----- PARTICIPACION POR MODELO --------------------------------------------------
+        with column_2:
+            st.markdown('#### :white_small_square: Participación de pagos por Modelo')
+
+            TARGET_BRAND = "TOYOTA"
+
+            if TARGET_BRAND in available_marcas_for_tipo_crist:
+                # Si TOYOTA existe, encontramos su índice en la lista FINAL (que tiene el placeholder en la pos 0)
+                default_index = available_marcas_for_tipo_crist.index(TARGET_BRAND)
+            else:
+
+                default_index = 0
+
+            selected_brand_for_model = st.selectbox(
+                "Seleccionar Marca:",
+                options=available_marcas_for_tipo_crist,
+                index=default_index,
+                label_visibility='visible',
+                placeholder="Seleccione una Marca...",
+            )
+
+            if selected_brand_for_model and selected_tipo_cristal:
+                # filtro por modelo
+                df_modelos = df_pagos_cristal[
+                    (df_pagos_cristal['marca_vehiculo'] == selected_brand_for_model) &
+                    (df_pagos_cristal['tipo_cristal'] == selected_tipo_cristal)
+                ].copy()
+                
+                df_modelos_participacion = df_modelos.groupby('modelo_vehiculo').agg(
+                    {'monto_transaccion': 'sum'}
+                ).reset_index()
+                
+                df_modelos_participacion.rename(
+                    columns={'monto_transaccion': 'Suma de Pagos'}, 
+                    inplace=True
+                )
+
+                df_modelos_participacion.sort_values(
+                    'Suma de Pagos', 
+                    ascending=False, 
+                    inplace=True
+                )
+                monto_total_marca = df_modelos_participacion['Suma de Pagos'].sum()
+
+                df_modelos_participacion['% Participación'] = (
+                    df_modelos_participacion['Suma de Pagos'] / monto_total_marca
+                ) * 100
+                
+                # Redondear y formatear el porcentaje
+                df_modelos_participacion['% Participación'] = (
+                    df_modelos_participacion['% Participación']
+                    .round(0)
+                    .astype(int)
+                    .astype(str) + ' %'
+                )
+
+                st.dataframe(df_modelos_participacion, hide_index=True, width=450, height=600)
+
+            else:
+                st.info("Por favor, seleccione una marca de vehículo para ver la participación por modelo.")
+
+
+        if selected_brand_for_model:
+            df_filtered_by_brand = df_pagos_cristal[
+                (df_pagos_cristal['marca_vehiculo'] == selected_brand_for_model) &
+                (df_pagos_cristal['tipo_cristal'] == selected_tipo_cristal)
+            ].copy()
+            
+            # Obtenemos la lista única de modelos para esa marca
+            available_modelos = sorted(df_filtered_by_brand['modelo_vehiculo'].unique().tolist())
+        else:
+            available_modelos = []
+        PLACEHOLDER_ALL_MODELS = "TODOS LOS MODELOS"
+        options_with_all = [PLACEHOLDER_ALL_MODELS] + available_modelos
+
+
+        st.markdown(f"###### :arrow_right: **Seleccionar modelo de {selected_brand_for_model} para análisis histórico:**")
+        col1, col2 = st.columns([1, 3])
+        with col1:
+            if options_with_all:
+                # Usar el primer modelo disponible como default (índice 0)
+                selected_model_raw = st.selectbox(
+                    "Modelo",
+                    options=options_with_all,
+                    index=0,
+                    label_visibility='collapsed',
+                    placeholder=PLACEHOLDER_ALL_MODELS,
+                )
+            else:
+                st.info("No hay modelos disponibles para la marca seleccionada.")
+                selected_model_raw = None
+
+        if selected_model_raw:
+            if selected_model_raw == PLACEHOLDER_ALL_MODELS:
+                # Si se selecciona "TODOS LOS MODELOS", la lista de modelos a filtrar
+                # debe ser la lista completa de modelos disponibles para esa marca.
+                selected_model_list = available_modelos
+                display_title = PLACEHOLDER_ALL_MODELS
+            else:
+                # Si se selecciona un modelo específico, la lista a filtrar es solo ese modelo.
+                selected_model_list = [selected_model_raw]
+                display_title = selected_model_raw
+
+            df_historico = df_pagos_cristal[
+                (df_pagos_cristal['modelo_vehiculo'].isin(selected_model_list)) &
+                (df_pagos_cristal['marca_vehiculo'] == selected_brand_for_model) &
+                (df_pagos_cristal['tipo_cristal'] == selected_tipo_cristal)
+            ].copy()
+
+            
+            st.markdown(f"#### Histórico de Pagos: **{selected_brand_for_model} - {display_title}**")
+
+            df_historico['Fecha Agrupación'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
+            
+            # df_historico['Año mes Fecha Pago'] = df_historico['año_mes_fecha_pago'] 
+            
+            agg_cols = {
+                'monto_transaccion': 'mean', # Promedio de Monto Transaccion
+                'pago_ipc': 'mean', # Promedio de Pago IPC
+                'pago_usd': 'mean', # Promedio de Pago USD
+            }
+            
+            df_tabla_final = df_historico.groupby('Fecha Agrupación').agg(agg_cols).reset_index()
+
+            # 3.3. Renombrar las columnas para visualización
+            df_tabla_final.rename(columns={
+                'Fecha Agrupación': 'Año mes Fecha Pago',
+                'monto_transaccion': 'Promedio de Monto Transaccion',
+                'pago_ipc': 'Promedio de Pago IPC x Fecha de Pago',
+                'pago_usd': 'Promedio de Pago USD x Fecha de Pago',
+            }, inplace=True)
+
+            df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
+            
+            # 3.4. Agregar la fila de "Total Resultado" (Promedio General)
+            
+            promedio_general = df_tabla_final.mean(numeric_only=True)
+            
+            fila_total = pd.DataFrame([{
+                'Año mes Fecha Pago': 'Total Resultado',
+                'Promedio de Monto Transaccion': promedio_general['Promedio de Monto Transaccion'],
+                'Promedio de Pago IPC x Fecha de Pago': promedio_general['Promedio de Pago IPC x Fecha de Pago'],
+                'Promedio de Pago USD x Fecha de Pago': promedio_general['Promedio de Pago USD x Fecha de Pago'],
+            }])
+            
+            df_tabla_final = pd.concat([df_tabla_final, fila_total], ignore_index=True)
+            
+            
+            # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
+            df_tabla_final['Promedio de Monto Transaccion'] = df_tabla_final['Promedio de Monto Transaccion'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+            
+            # Formatear las columnas USD/IPC (0 decimales)
+            for col in ['Promedio de Pago IPC x Fecha de Pago', 'Promedio de Pago USD x Fecha de Pago']:
+                df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+            
+            
+            st.dataframe(df_tabla_final, use_container_width=True, hide_index=True, height=500, width=900)
+
+
+            MONTO_COLS = ['monto_transaccion', 'pago_ipc', 'pago_usd']
+
+            # Calculamos los promedios
+            promedios_globales = df_pagos_ruedas[MONTO_COLS].mean().round(2)
+
+            promedios_marca = df_filtered_by_brand[MONTO_COLS].mean().round(2)
+
+            promedios_modelo = df_historico[MONTO_COLS].mean().round(2)
+
+            diferencias_porcentuales = (
+                (promedios_modelo - promedios_marca) / promedios_marca
+            ) * 100
+            diferencias_porcentuales = diferencias_porcentuales.round(1)
+
+            st.markdown("#### :memo: Resumen de promedios y comparativa")
+
+            data_resumen = {
+                'Métrica': [
+                    'Promedio de Pagos',
+                    'Promedio de Pagos IPC',
+                    'Promedio de Pagos USD'
+                ],
+                f'Todas las Marcas (General)': promedios_globales.tolist(),
+                f'{selected_brand_for_model} (General)': promedios_marca.tolist(),
+                f'{display_title} (Modelo)': promedios_modelo.tolist(),
+                'Dif. Modelo vs Marca (%)': [
+                    f"{diferencias_porcentuales['monto_transaccion']:.1f} %",
+                    f"{diferencias_porcentuales['pago_ipc']:.1f} %",
+                    f"{diferencias_porcentuales['pago_usd']:.1f} %",
+                ]
+            }
+
+            df_resumen = pd.DataFrame(data_resumen)
+
+            # Formatear las columnas de Promedio (Monetario, para mejor visualización)
+            for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
+                # Usamos f-string para formatear con separadores de miles y 0 decimales
+                df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
+
+            st.dataframe(df_resumen, hide_index=True, use_container_width=True)
+
+
+
 # ==========================================================================
 # ---- Análisis PAGOS Robo de ruedas ---------------------------------------
 # ==========================================================================
+
 
     elif current_analysis == opcion_6:
         st.markdown('## Evolución de monto de pagos de Robo de ruedas (L2)')    
@@ -3054,7 +2735,7 @@ else:
                 f'Todas las Marcas (General)': promedios_globales.tolist(),
                 f'{selected_brand_for_model} (General)': promedios_marca.tolist(),
                 f'{display_title} (Modelo)': promedios_modelo.tolist(),
-                'Dif. vs Marca (%)': [
+                'Dif. Modelo vs Marca (%)': [
                     f"{diferencias_porcentuales['monto_transaccion']:.1f} %",
                     f"{diferencias_porcentuales['pago_ipc']:.1f} %",
                     f"{diferencias_porcentuales['pago_usd']:.1f} %",
@@ -3070,7 +2751,9 @@ else:
 
             st.dataframe(df_resumen, hide_index=True, use_container_width=True)
 
-
+# =====================================================================================
+# --- Evolución de monto de pagos de Daños Materiales 
+# =====================================================================================
 
     elif current_analysis == opcion_7:
             st.markdown('## Evolución de monto de pagos de Daños Materiales (L2)')    
@@ -4316,11 +3999,14 @@ else:
         fig_comparativo = generar_grafico_comparativo(df_graf_cartera)
         st.plotly_chart(fig_comparativo, use_container_width=True)
 
+# =======================================================================================
+# --- COMPARATIVO SA vs COSTE MEDIO DE REPUESTOS ========================================
+# =======================================================================================
+
     elif current_analysis == opcion_9:
 
-        st.markdown("## Comparativa: Variación SA vs Coste medio de repuestos")
+        st.markdown("## Comparativa: Variación SA (InfoAuto) vs Coste medio de repuestos")
         st.markdown("#### _Período: marzo - diciembre 2025_")
-        # st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_ \n Fecha de actualización: **01/11/2025**") 
         st.markdown("---")
 
         df_sa_rep['año_mes'] = pd.to_datetime(df_sa_rep['año_mes'])
@@ -4332,7 +4018,7 @@ else:
             # Línea de Variación Repuestos
             fig.add_trace(go.Scatter(
                 x=df['año_mes'], 
-                y=df[col_var_rep]*100,
+                y=df[col_var_rep],
                 name="Var. Repuestos (%)",
                 line=dict(color='#e2e8f0', width=3), # Color secundario
                 mode='lines+markers'
@@ -4341,7 +4027,7 @@ else:
             # Línea de Variación Suma Asegurada
             fig.add_trace(go.Scatter(
                 x=df['año_mes'], 
-                y=df[col_var_sa]*100,
+                y=df[col_var_sa],
                 name="Var. Suma Asegurada (%)",
                 # hovertemplate='<b>%{data.name}</b>: %{y:.2f}%<extra></extra>',
                 line=dict(color='#615fff', width=3), # Color primario
@@ -4366,6 +4052,96 @@ else:
             return fig
         
 
+        def generar_grafico_comparativo_facetado(df, col_var_rep, col_var_sa, titulo, col_ref=None):
+            """
+            Genera un gráfico comparativo facetado por marca para dos variables de variación.
+            """
+            df_plot = df.copy()
+            
+            # for col in [col_var_rep, col_var_sa]:
+            #     if df_plot[col].dtype == 'object':
+            #         df_plot[col] = df_plot[col].str.replace('%', '', regex=False).str.replace(',', '.', regex=False)
+            #     df_plot[col] = pd.to_numeric(df_plot[col], errors='coerce')
+                
+            #     # Si los datos vienen como decimales (0.05), pasamos a porcentaje (5.0)
+            #     if df_plot[col].abs().max() <= 1.1: # Tolerancia por variaciones altas
+            #         df_plot[col] = df_plot[col] * 100
+
+            # 2. Formato Largo (Melt) para Plotly Express
+            # Esto permite que Plotly maneje la leyenda y los colores automáticamente
+            columnas_interes = [col_var_rep, col_var_sa]
+            if col_ref:
+                columnas_interes.append(col_ref)
+
+            df_melted = df_plot.melt(
+                id_vars=['año_mes', 'marca'],
+                value_vars=columnas_interes,
+                var_name='Métrica',
+                value_name='Variación'
+            )
+
+            nombres_map = {
+                col_var_rep: 'Var. Repuestos (%)',
+                col_var_sa: 'Var. Suma Asegurada (%)'
+            }
+    
+            if col_ref:
+                nombres_map[col_ref] = 'IPC'
+            
+            df_melted['Métrica'] = df_melted['Métrica'].map(nombres_map)
+
+            # 3. Construcción del Gráfico con Plotly Express
+            # Usamos facet_col='marca' para crear la grilla
+            fig = px.line(
+                df_melted,
+                x='año_mes',
+                y='Variación',
+                color='Métrica',
+                facet_col='marca',
+                facet_col_wrap=2,
+                markers=True,
+                color_discrete_map={
+                    'Var. Suma Asegurada (%)': '#615fff', 
+                    'Var. Repuestos (%)': '#e2e8f0',
+                    'IPC': '#ff6361'
+                },
+                # line_dash_map={
+                #     'Var. Suma Asegurada (%)': 'solid',
+                #     'Var. Repuestos (%)': 'solid',
+                #     'IPC': 'dot'
+                # },
+                labels={'año_mes': '', 'Variación': 'Variación Mensual (%)'}
+            )
+
+            fig.for_each_trace(lambda t: t.update(
+                line=dict(dash='dot') if 'IPC' in t.name else dict(dash='solid'),
+                mode='lines' if 'IPC' in t.name else 'lines+markers' # Quitamos marcadores al IPC para que se vea el punteado
+            ))
+            fig.update_traces(
+                hovertemplate='<b>%{fullData.name}</b>: %{y:.2f}%<extra></extra>'
+            )
+
+            # Línea de referencia en 0 para cada subgráfico
+            fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+
+            # Configuración del Layout
+            fig.update_layout(
+                title=dict(text=f"<b>{titulo}</b>", x=0.01, font=dict(size=18)),
+                xaxis_title="",
+                hovermode="x unified",
+                height=1000, # Altura para acomodar las marcas
+                legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="right", x=1, title_text=None),
+                margin=dict(t=100, b=40, l=40, r=40),
+                font=dict(family="Arial")
+            )
+
+            # Formateo de Ejes Y (2 decimales y signo %)
+            fig.update_yaxes(tickformat=".2f", ticksuffix="%", showgrid=True)
+            fig.for_each_annotation(lambda a: a.update(text=f"<b>{a.text.split('=')[-1]}</b>"))
+
+            return fig
+        
+        
         with st.container(border=True):
             st.subheader("1. Comparativo histórico")
             fig_hist = generar_grafico_comparativo(
@@ -4398,13 +4174,11 @@ else:
                 return f"**{label}**: Los repuestos crecieron **{brecha:.1f} pts** más que la SA."
             else:
                 return f"**{label}**: La SA creció **{abs(brecha):.1f} pts** más que los repuestos."
-
+        
+        st.markdown('')
         st.markdown("#### Data Cruda")
-        col_var = ['var_costo_prom', 'var_sa', 'var_costo_prom_ipc', 'var_sa_ipc', 'var_costo_prom_usd', 'var_sa_prom_usd']
-        # multiplico por 100 estas columnas para expresarlas en porcentaje y facilitar la lectura en la tabla (en el gráfico ya se muestra con formato de porcentaje)
-        df_sa_rep[col_var] = df_sa_rep[col_var] * 100
 
-        df_sa_rep_raw = df_sa_rep[['año_mes',  'ipc', 'usd_blue',
+        df_sa_rep_raw = df_sa_rep[['año_mes', 'ipc', 'usd_blue',
                                     'costo_pieza_prom_hist','sa_prom', 'var_costo_prom','var_sa', 
                                     'costo_prom_ipc','sa_prom_ipc','var_costo_prom_ipc','var_sa_ipc',  
                                     'costo_prom_usd', 'sa_prom_usd', 'var_costo_prom_usd',
@@ -4448,3 +4222,481 @@ else:
                         format="%.2f%%",
                         ),
                     })    
+        
+        st.markdown("---")
+        st.markdown("## Variación SA (cartera L2) vs Coste medio de repuestos (Orion/Cesvi)")
+        st.markdown("#### _Período: enero 2023 - diciembre 2025_")
+
+
+        with st.container(border=True):
+
+            st.markdown("#### 1. Comparativo: Variación SA (todos los planes) vs Costo medio repuestos")
+            df_sa_rep_cartera_todos = df_sa_rep_cartera[df_sa_rep_cartera.plan=='Todos']
+            fig_hist_cart = generar_grafico_comparativo(
+                df_sa_rep_cartera_todos, 'var_costo_prom_hist', 'var_sa_prom', 
+                "Variación histórica: Costo prom. repuestos vs SA prom."
+            )
+            fig_ipc_cart = generar_grafico_comparativo(
+                df_sa_rep_cartera_todos, 'var_costo_prom_ipc', 'var_sa_prom_ipc', 
+                "Variación IPC: Costo prom. repuestos vs SA prom."
+            )
+            fig_usd_cart = generar_grafico_comparativo(
+                df_sa_rep_cartera_todos, 'var_costo_prom_usd', 'var_sa_prom_usd', 
+                "Variación USD: Costo prom. repuestos vs SA prom."
+            )
+            
+            fig_hist_cart.add_trace(go.Scatter(
+                x=df_sa_rep_cartera_todos['año_mes'],
+                y=df_sa_rep_cartera_todos['var_ipc'],
+                name='IPC',        # Nombre que aparecerá en la leyenda
+                mode='lines',
+                line=dict(color='#ff6361', dash='dot')
+            ))
+            
+            tab1, tab2, tab3 = st.tabs(["📊 Histórico", "📈 IPC", "💵 USD"])
+            with tab1:
+                st.plotly_chart(fig_hist_cart, use_container_width=True)
+            with tab2:
+                st.plotly_chart(fig_ipc_cart, use_container_width=True)
+            with tab3:
+                st.plotly_chart(fig_usd_cart, use_container_width=True)
+
+
+        with st.container(border=True):
+
+            st.markdown("#### 2. Comparativo: Variación SA (Plan 30) vs Costo medio repuestos")
+            df_sa_rep_cartera_plan_30 = df_sa_rep_cartera[df_sa_rep_cartera.plan=='Plan 30']
+            fig_hist_cart_plan30 = generar_grafico_comparativo(
+                df_sa_rep_cartera_plan_30, 'var_costo_prom_hist', 'var_sa_prom', 
+                "Variación histórica: Costo prom. repuestos vs SA prom."
+            )
+            fig_ipc_cart_plan30 = generar_grafico_comparativo(
+                df_sa_rep_cartera_plan_30, 'var_costo_prom_ipc', 'var_sa_prom_ipc', 
+                "Variación IPC: Costo prom. repuestos vs SA prom."
+            )
+            fig_usd_cart_plan30 = generar_grafico_comparativo(
+                df_sa_rep_cartera_plan_30, 'var_costo_prom_usd', 'var_sa_prom_usd', 
+                "Variación USD: Costo prom. repuestos vs SA prom."
+            )
+            
+            fig_hist_cart_plan30.add_trace(go.Scatter(
+                x=df_sa_rep_cartera_plan_30['año_mes'],
+                y=df_sa_rep_cartera_plan_30['var_ipc'],
+                name='IPC',        # Nombre que aparecerá en la leyenda
+                mode='lines',
+                line=dict(color='#ff6361', dash='dot')
+            ))
+            
+            tab1, tab2, tab3 = st.tabs(["📊 Histórico", "📈 IPC", "💵 USD"])
+            with tab1:
+                st.plotly_chart(fig_hist_cart_plan30, use_container_width=True)
+            with tab2:
+                st.plotly_chart(fig_ipc_cart_plan30, use_container_width=True)
+            with tab3:
+                st.plotly_chart(fig_usd_cart_plan30, use_container_width=True)
+
+
+        st.markdown('')
+        st.markdown("#### Data Cruda")
+        st.dataframe(df_sa_rep_cartera.drop(columns=['coverable','ipc_empalme_ipim']), 
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                    'año_mes': st.column_config.DateColumn("Año-Mes", format="YYYY-MM"),
+                    'usd_blue': 'Valor USD blue',
+                    'años_riesgos_total': st.column_config.NumberColumn("Años Riesgo", format="%.0f"),
+                    'plan': 'Plan',
+                    "suma_asegurada": st.column_config.NumberColumn("SA", format="$ %.0f"),
+                    "suma_asegurada_ipc": st.column_config.NumberColumn("SA IPC", format="$ %.0f"),
+                    "suma_asegurada_exp_a_riesgos": st.column_config.NumberColumn("SA Exp. a Riesgos", format="$ %.0f"),
+                    "sa_prom": st.column_config.NumberColumn("SA Prom", format="$ %.0f"),
+                    "var_sa_prom": st.column_config.NumberColumn(
+                        "Var. SA Prom %", 
+                        format="%.2f%%",
+                    ),
+                    "suma_asegurada_exp_a_riesgos_ipc": st.column_config.NumberColumn("SA Exp. a Riesgos IPC", format="$ %.0f"),
+                    "sa_prom_ipc": st.column_config.NumberColumn("SA Prom IPC", format="$ %.0f"),
+                    "var_sa_prom_ipc": st.column_config.NumberColumn(
+                        "Var. SA Prom IPC %", 
+                        format="%.2f%%",
+                    ),
+                    "suma_asegurada_usd": st.column_config.NumberColumn("SA USD", format="$ %.0f"),
+                    "suma_asegurada_exp_a_riesgos_usd": st.column_config.NumberColumn("SA Exp. a Riesgos USD", format="$ %.0f"),
+                    "sa_prom_usd": st.column_config.NumberColumn("SA Prom USD", format="$ %.0f"),
+                    "var_sa_prom_usd": st.column_config.NumberColumn(
+                        "Var. SA Prom USD %", 
+                        format="%.2f%%",
+                        ),
+                    "costo_prom_ipc": st.column_config.NumberColumn("Coste medio rep. IPC", format="$ %.0f"),
+                    "sa_prom_ipc": st.column_config.NumberColumn("SA prom. IPC", format="$ %.0f"),
+                    "var_costo_prom_ipc": st.column_config.NumberColumn(                            
+                        "Var. Costo rep. IPC %", 
+                        format="%.2f%%",
+                        ),
+                    "costo_pieza_prom_hist": st.column_config.NumberColumn("CM rep. hist", format="$ %.0f"),
+                    "costo_prom_ipc": st.column_config.NumberColumn("CM rep. IPC", format="$ %.0f"),
+                    "costo_prom_usd": st.column_config.NumberColumn("CM rep. USD", format="$ %.0f"),
+                    "var_costo_prom_usd": st.column_config.NumberColumn(
+                        "Var. Costo rep. USD %", 
+                        format="%.2f%%",
+                        ),
+                    "var_costo_prom_hist": st.column_config.NumberColumn(
+                        "Var. Costo rep. %", 
+                        format="%.2f%%",
+                        ),
+
+                    "var_ipc": st.column_config.NumberColumn(
+                        "Var. IPC %", 
+                        format="%.2f%%",
+                        ),
+                    })    
+        with st.container(border=True):
+
+            st.markdown("#### 3. Comparativo por marcas: Variación SA (Plan 30) vs Costo medio repuestos") 
+
+            tab1, tab2, tab3 = st.tabs(["📊 Histórico", "📈 IPC", "💵 USD"])
+
+            with tab1:
+                fig_marcas_h = generar_grafico_comparativo_facetado(
+                    df_sa_rep_cartera_marcas, 
+                    'var_costo_prom_hist', 
+                    'var_sa_prom', 
+                    "Variación Mensual: Histórico",
+                    col_ref='var_ipc' 
+                )
+
+                st.plotly_chart(fig_marcas_h, use_container_width=True)
+
+            with tab2:
+                fig_marcas_ipc = generar_grafico_comparativo_facetado(
+                    df_sa_rep_cartera_marcas, 
+                    'var_costo_prom_ipc', 
+                    'var_sa_prom_ipc', 
+                    "Variación Mensual: IPC",
+                )
+                st.plotly_chart(fig_marcas_ipc, use_container_width=True)
+
+            with tab3:
+                fig_marcas_usd = generar_grafico_comparativo_facetado(
+                    df_sa_rep_cartera_marcas, 
+                    'var_costo_prom_usd', 
+                    'var_sa_prom_usd', 
+                    "Variación Mensual: USD"
+                )
+                st.plotly_chart(fig_marcas_usd, use_container_width=True)
+
+
+        st.markdown('')
+        st.markdown("#### Data Cruda")
+        st.dataframe(df_sa_rep_cartera_marcas.drop(columns=['coverable','plan','ipc_empalme_ipim']), 
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                    'año_mes': st.column_config.DateColumn("Año-Mes", format="YYYY-MM"),
+                    'usd_blue': 'Valor USD blue',
+                    'años_riesgos_total': st.column_config.NumberColumn("Años Riesgo", format="%.0f"),
+                    "suma_asegurada": st.column_config.NumberColumn("SA", format="$ %.0f"),
+                    "suma_asegurada_ipc": st.column_config.NumberColumn("SA IPC", format="$ %.0f"),
+                    "suma_asegurada_exp_a_riesgos": st.column_config.NumberColumn("SA Exp. a Riesgos", format="$ %.0f"),
+                    "sa_prom": st.column_config.NumberColumn("SA Prom", format="$ %.0f"),
+                    "var_sa_prom": st.column_config.NumberColumn(
+                        "Var. SA Prom %", 
+                        format="%.2f%%",
+                    ),
+                    "suma_asegurada_exp_a_riesgos_ipc": st.column_config.NumberColumn("SA Exp. a Riesgos IPC", format="$ %.0f"),
+                    "sa_prom_ipc": st.column_config.NumberColumn("SA Prom IPC", format="$ %.0f"),
+                    "var_sa_prom_ipc": st.column_config.NumberColumn(
+                        "Var. SA Prom IPC %", 
+                        format="%.2f%%",
+                    ),
+                    "suma_asegurada_usd": st.column_config.NumberColumn("SA USD", format="$ %.0f"),
+                    "suma_asegurada_exp_a_riesgos_usd": st.column_config.NumberColumn("SA Exp. a Riesgos USD", format="$ %.0f"),
+                    "sa_prom_usd": st.column_config.NumberColumn("SA Prom USD", format="$ %.0f"),
+                    "var_sa_prom_usd": st.column_config.NumberColumn(
+                        "Var. SA Prom USD %", 
+                        format="%.2f%%",
+                        ),
+                    "costo_prom_ipc": st.column_config.NumberColumn("Coste medio rep. IPC", format="$ %.0f"),
+                    "sa_prom_ipc": st.column_config.NumberColumn("SA prom. IPC", format="$ %.0f"),
+                    "var_costo_prom_ipc": st.column_config.NumberColumn(                            
+                        "Var. Costo rep. IPC %", 
+                        format="%.2f%%",
+                        ),
+                    "costo_pieza_prom_hist": st.column_config.NumberColumn("CM rep. hist", format="$ %.0f"),
+                    "costo_prom_ipc": st.column_config.NumberColumn("CM rep. IPC", format="$ %.0f"),
+                    "costo_prom_usd": st.column_config.NumberColumn("CM rep. USD", format="$ %.0f"),
+                    "var_costo_prom_usd": st.column_config.NumberColumn(
+                        "Var. Costo rep. USD %", 
+                        format="%.2f%%",
+                        ),
+                    "var_costo_prom_hist": st.column_config.NumberColumn(
+                        "Var. Costo rep. %", 
+                        format="%.2f%%",
+                        ),
+
+                    "var_ipc": st.column_config.NumberColumn(
+                        "Var. IPC %", 
+                        format="%.2f%%",
+                        ),
+                    })    
+        
+    # ======================================================================================
+    # --- VARIACION CM RUEDAS - GRANT ======================================================
+    # ======================================================================================
+
+    elif current_analysis == opcion_10:
+
+        def create_plot_grant(df, y_col, y_label, titulo, x_tickangle=None):       
+                    if df.empty:
+                        fig = go.Figure().update_layout(
+                            title_text=f"No hay datos para graficar",
+                            height=400,
+                            font=dict(family="Arial", size=10),
+                            title_font_size=12
+                        )
+                        return fig
+
+                    fig = px.line(
+                        df,
+                        x='año_mes',
+                        y=y_col,
+                        color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+                        title=titulo,
+                        labels={'año_mes': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
+                    )
+
+                    fig.update_layout(
+                        height=400, # Altura del subplot individual
+                        font=dict(family="Arial", size=15),
+                        margin=dict(t=50, b=0, l=0, r=0),
+                    )
+                    fig.for_each_xaxis(
+                    lambda xaxis: xaxis.update(
+                        tickangle=x_tickangle, # Aplicar el ángulo deseado
+                        showticklabels=True     # Asegurarse de que las etiquetas sean visibles (si fuera necesario)
+                        )
+                    )
+                    fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+                    
+                    return fig
+        
+
+        def generar_grafico_gap_interanual(df, col_valor, label, titulo):
+            """
+            Genera un gráfico comparativo de Año Actual vs Año Anterior (Gap Analysis).
+            El eje X son los meses (1-12) y las líneas son los años.
+            """
+            df_gap = df[df.año!=2026].copy()
+            df_gap['año_mes'] = pd.to_datetime(df_gap['año_mes'])
+            
+            
+            # Normalización a porcentaje si es necesario
+            if df_gap[col_valor].abs().max() <= 1.1:
+                df_gap[col_valor] = df_gap[col_valor] * 100
+
+            # Ordenamos por mes para asegurar la continuidad de la línea
+            df_gap = df_gap.sort_values('mes')
+
+            # Diccionario de meses para el eje X
+            meses_nombres = {
+                1: 'Ene', 2: 'Feb', 3: 'Mar', 4: 'Abr', 5: 'May', 6: 'Jun',
+                7: 'Jul', 8: 'Ago', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dic'
+            }
+            df_gap['Mes_Nom'] = df_gap['mes'].map(meses_nombres)
+
+            fig = px.line(
+                df_gap,
+                x='mes',
+                y=col_valor,
+                color='año',
+                text=col_valor,
+                markers=True,
+                title=titulo,
+                labels={col_valor: label, 'mes': ''},
+                color_discrete_sequence=px.colors.qualitative.Bold
+            )
+
+            # Formato de hover y etiquetas
+            fig.update_traces(
+                hovertemplate='<b>Año-Mes:</b> %{x} %{fullData.name} <br><b>Coste prom:</b> $ %{y:,.0f}<extra></extra>',
+                texttemplate='$ %{text:,.0f}', # Muestra 2 decimales. Usa %{text:,.0f} para miles sin decimales.
+                textposition='top center', # Posiciona el valor arriba del punto
+                textfont_size=12,
+                cliponaxis=False # Evita que las etiquetas se corten en los bordes
+                )
+
+            fig.update_layout(
+                xaxis=dict(
+                    tickmode='array',
+                    tickvals=list(meses_nombres.keys()),
+                    ticktext=list(meses_nombres.values())
+                ),
+                # yaxis=dict(tickformat=".2f", ticksuffix="%"),
+                hovermode="x unified",
+                height=500,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, title_text=None),
+                margin=dict(t=100, b=40, l=40, r=40)
+            )
+
+            return fig
+
+        
+        st.markdown("## Evolutivo: Coste medio de Ruedas")
+        st.markdown("##### _Fuente: Grant_\n_Período: enero 2023 - febrero 2026_")
+        st.markdown("---")
+
+
+        st.markdown("### Costo promedio siniestro de Ruedas (con IVA)")
+
+        fig_grant_hist = create_plot_grant(df_ruedas_grant, 'costo_medio', 'Costo Promedio ARS', 'Costo promedio siniestro de ruedas con IVA en AR$')
+        fig_grant_ipc = create_plot_grant(df_ruedas_grant, 'costo_medio_ipc', 'Costo Promedio ajust. IPC', 'Costo promedio siniestro de ruedas con IVA ajust. IPC')
+        fig_grant_usd = create_plot_grant(df_ruedas_grant, 'costo_medio_usd', 'Costo Promedio USD', 'Costo promedio siniestro de ruedas con IVA en USD')
+        fig_grant_vs_ipc = create_plot_grant(df_ruedas_grant, 'var_cm_ars_%', 'Var. Costo Promedio ARS', 'Var. costo promedio ruedas vs var. IPC')
+
+        fig_grant_vs_ipc.data[0].name = "Var. CM Ruedas"
+        fig_grant_vs_ipc.data[0].showlegend = True
+        fig_grant_vs_ipc.add_trace(go.Scatter(
+            x=df_neum_grant['año_mes'],
+            y=df_neum_grant['var_ipc'],
+            name='IPC',        # Nombre que aparecerá en la leyenda
+            mode='lines',
+            line=dict(color='white', dash='dot')
+        ))
+        fig_grant_vs_ipc.update_traces(
+            hovertemplate='<b>%{fullData.name}</b>: %{y:.2f}%<extra></extra>')
+        fig_grant_vs_ipc.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+        fig_grant_vs_ipc.update_layout(hovermode="x unified",
+                                      yaxis=dict(tickformat=".2f", ticksuffix="%"))
+
+
+        tab1, tab2, tab3, tab4 = st.tabs(["📊 Histórico", "📈 IPC", "💵 USD", "🔺Variación vs IPC"])
+        with tab1:
+            st.plotly_chart(fig_grant_hist, use_container_width=True)
+        with tab2: 
+            st.plotly_chart(fig_grant_ipc, use_container_width=True)
+        with tab3: 
+            st.plotly_chart(fig_grant_usd, use_container_width=True)
+        with tab4: 
+            st.plotly_chart(fig_grant_vs_ipc, use_container_width=True)
+
+
+        tab1, tab2, tab3 = st.tabs(["📊 Histórico", "📈 IPC", "💵 USD"])
+        with tab1:
+            fig_gap = generar_grafico_gap_interanual(df_ruedas_grant, 'costo_medio','Coste Medio ARS', "Gap Interanual: Costo promedio siniestro de ruedas histórico")
+            st.plotly_chart(fig_gap, use_container_width=True)
+        with tab2:
+            fig_gap_ipc = generar_grafico_gap_interanual(df_ruedas_grant, 'costo_medio_ipc','Coste Medio IPC', "Gap Interanual: Costo promedio siniestro de ruedas ajust. IPC")
+            st.plotly_chart(fig_gap_ipc, use_container_width=True)
+        with tab3:
+            fig_gap_usd = generar_grafico_gap_interanual(df_ruedas_grant, 'costo_medio_usd','Coste Medio USD', "Gap Interanual: Costo promedio siniestro de ruedas en USD")
+            st.plotly_chart(fig_gap_usd, use_container_width=True)
+
+        with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
+            st.dataframe(df_ruedas_grant.drop(columns=['mes','año']), 
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                        'año_mes': st.column_config.DateColumn("Año-Mes", format="YYYY-MM"),
+                        'usd_blue': 'Valor USD blue',
+                        "costo_medio": st.column_config.NumberColumn("Coste Medio ruedas", format="$ %.0f"),
+                        "costo_medio_ipc": st.column_config.NumberColumn("Coste Medio IPC", format="$ %.0f"),
+                        "costo_medio_usd": st.column_config.NumberColumn("Coste Medio USD", format="$ %.0f"),
+                        "ipc": st.column_config.NumberColumn("IPC", format="%.2f"),
+                        "var_cm_ars_%": st.column_config.NumberColumn(
+                            "Var. CM histórico %", 
+                            format="%.2f%%",
+                        ),
+                        "var_cm_ipc_%": st.column_config.NumberColumn(
+                            "Var. CM IPC %", 
+                            format="%.2f%%",
+                        ),
+                        "var_cm_usd_%": st.column_config.NumberColumn(
+                            "Var. CM en USD %", 
+                            format="%.2f%%",
+                            ),
+                        "var_ipc": st.column_config.NumberColumn(
+                            "Var. IPC %", 
+                            format="%.2f%%",
+                            ),
+                        })    
+
+        st.subheader('', divider='grey')
+
+
+        st.markdown("#### Variación del valor de un neumático promedio (Para todas las marcas y medidas de mayor rotación) - MERCADO ASEGURADOR")
+
+        fig_neum_hist = create_plot_grant(df_neum_grant, 'costo_medio', 'Costo Promedio ARS', 'Variación costo promedio de un neumático en AR$')
+        fig_neum_ipc = create_plot_grant(df_neum_grant, 'costo_medio_ipc', 'Costo Promedio ajust. IPC', 'Variación costo promedio de un neumático ajust. IPC')
+        fig_neum_usd = create_plot_grant(df_neum_grant, 'costo_medio_usd', 'Costo Promedio USD', 'Variación costo promedio de un neumático en USD')
+        fig_neum_vs_ipc = create_plot_grant(df_neum_grant, 'var_%', 'Var. Costo Promedio ARS', 'Var. costo promedio neumático vs var. IPC')
+
+        fig_neum_vs_ipc.data[0].name = "Var. CM Neumático"
+        fig_neum_vs_ipc.data[0].showlegend = True
+        fig_neum_vs_ipc.add_trace(go.Scatter(
+            x=df_neum_grant['año_mes'],
+            y=df_neum_grant['var_ipc'],
+            name='IPC',        # Nombre que aparecerá en la leyenda
+            mode='lines',
+            line=dict(color='white', dash='dot')
+        ))
+        fig_neum_vs_ipc.update_traces(
+            hovertemplate='<b>%{fullData.name}</b>: %{y:.2f}%<extra></extra>')
+        fig_neum_vs_ipc.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+        fig_neum_vs_ipc.update_layout(hovermode="x unified",
+                                      yaxis=dict(tickformat=".2f", ticksuffix="%"))
+        
+        tab1, tab2, tab3, tab4 = st.tabs(["📊 Histórico", "📈 IPC", "💵 USD", "🔺Variación vs IPC"])
+        with tab1:
+            st.plotly_chart(fig_neum_hist, use_container_width=True)
+        with tab2: 
+            st.plotly_chart(fig_neum_ipc, use_container_width=True)
+        with tab3:     
+            st.plotly_chart(fig_neum_usd, use_container_width=True)
+        with tab4:
+            st.plotly_chart(fig_neum_vs_ipc, use_container_width=True)
+        
+
+
+        tab1, tab2, tab3 = st.tabs(["📊 Histórico", "📈 IPC", "💵 USD"])
+        with tab1:
+            fig_neum_gap = generar_grafico_gap_interanual(df_neum_grant, 'costo_medio','Coste Medio ARS', "Gap Interanual: Costo promedio neumático histórico")
+            st.plotly_chart(fig_neum_gap, use_container_width=True)
+        with tab2:
+            fig_neum_gap_ipc = generar_grafico_gap_interanual(df_neum_grant, 'costo_medio_ipc','Coste Medio IPC', "Gap Interanual: Costo promedio neumático ajust. IPC")
+            st.plotly_chart(fig_neum_gap_ipc, use_container_width=True)
+        with tab3:
+            fig_neum_gap_usd = generar_grafico_gap_interanual(df_neum_grant, 'costo_medio_usd','Coste Medio USD', "Gap Interanual: Costo promedio neumático en USD")
+            st.plotly_chart(fig_neum_gap_usd, use_container_width=True)
+
+        with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
+            st.dataframe(df_neum_grant.drop(columns=['mes','año']), 
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                'año_mes': st.column_config.DateColumn("Año-Mes", format="YYYY-MM"),
+                'usd_blue': 'Valor USD blue',
+                "costo_medio": st.column_config.NumberColumn("Coste Medio neumáticos", format="$ %.0f"),
+                "costo_medio_ipc": st.column_config.NumberColumn("Coste Medio IPC", format="$ %.0f"),
+                "costo_medio_usd": st.column_config.NumberColumn("Coste Medio USD", format="$ %.0f"),
+                "ipc": st.column_config.NumberColumn("IPC", format="%.2f"),
+                "var_%": st.column_config.NumberColumn(
+                    "Var. CM histórico %", 
+                    format="%.2f%%",
+                ),
+                "var_cm_ipc_%": st.column_config.NumberColumn(
+                    "Var. CM IPC %", 
+                    format="%.2f%%",
+                ),
+                "var_cm_usd_%": st.column_config.NumberColumn(
+                    "Var. CM en USD %", 
+                    format="%.2f%%",
+                    ),
+                "var_ipc": st.column_config.NumberColumn(
+                    "Var. IPC %", 
+                    format="%.2f%%",
+                    ),
+                })    
+        
+
+
+# ULTIMA REVISION Y PUSHEAR A GITHUB
