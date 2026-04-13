@@ -55,11 +55,11 @@ try:
     comparativo_cm_siniestral = pd.read_parquet('data/comparativo_bi_cm_prov.parquet')
 
     # dfs comparativo mano de obra
-    df_chapa_pintura = pd.read_csv('data/df_chapa_pintura.csv')
-    df_mo_repuestos_final = pd.read_csv('data/df_mo_repuestos_final_ok.csv')
-    df_peritaciones = pd.read_csv('data/df_peritaciones.csv')
-    df_costo_hora = pd.read_csv('data/df_costo_hora_ok.csv')
-    df_tot_reparacion = pd.read_csv('data/df_tot_reparacion_ok.csv')
+    df_chapa_pintura = pd.read_csv('data/df_chapa_pintura_100426.csv')
+    df_mo_repuestos_final = pd.read_csv('data/df_mo_repuestos_final_100426.csv')
+    df_peritaciones = pd.read_csv('data/df_peritaciones_100426.csv')
+    df_costo_hora = pd.read_csv('data/df_costo_hora_100426.csv')
+    df_tot_reparacion = pd.read_csv('data/df_tot_reparacion_100426.csv')
 
     # df pagos ruedas
     df_pagos_ruedas = pd.read_csv('data/pagos_ruedas_ok.csv')
@@ -84,6 +84,11 @@ try:
     df_ruedas_grant = pd.read_parquet('data/costo_medio_ruedas_grant.parquet')
     df_neum_grant = pd.read_parquet('data/costo_prom_neumatico.parquet')
 
+    # INDICE
+    indice_hist = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_hist')
+    indice_ipc = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_ipc')
+    indice_usd = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_usd')
+
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. \nDetalles: {e}")
     # La app se detiene si no encuentra los archivos
@@ -107,7 +112,6 @@ if 'tipo_repuesto' in df_cristal.columns:
     df_cristal['tipo_repuesto'] = df_cristal['tipo_repuesto'].astype(str).str.replace('_', ' ').str.title()
 
 # ==========================================================================
-# df_pagos_cristal['tipo_cristal'] = df_pagos_cristal['tipo_cristal'].replace('Cristales lateral y techo', 'Cristales laterales y de techo')
 
 # ---- Variables de sesión para mostrar/ocultar gráficos --------------------------------------------------
 if 'show_pie_chart' not in st.session_state:
@@ -167,9 +171,10 @@ opcion_7 = "Evolutivo pagos Daños Materiales"
 opcion_8 = "Evolutivo pagos Cascos"
 opcion_9 = "Variación SA vs. Precio de repuestos"
 opcion_10 = "Costo Medio ruedas - GRANT"
+opcion_11 = "INDICE"
 
 OPTIONS = [opcion_0, opcion_1, opcion_3, opcion_4, opcion_5, 
-           opcion_pagos_pkt, opcion_6, opcion_7, opcion_8, opcion_9, opcion_10]
+           opcion_pagos_pkt, opcion_6, opcion_7, opcion_8, opcion_9, opcion_10, opcion_11]
 
 # ==========================================================================
 # PANTALLA INICIO DE LA APP
@@ -319,15 +324,14 @@ else:
             
             return fig
 
-
-        # ----- GRAFICOS HISTORICOS, IPC y USD --------------------------------------------------
+        # ==========================================================================
+        # ----- GRAFICOS HISTORICOS, IPC y USD -------------------------------------
 
         if not selected_marcas:
             st.warning(":warning: Seleccionar una marca para ver la información.")
             st.stop()
 
         else:
-    # ==========================================================================
 
             with st.container(border=True):
                 # st.subheader('1. Precios de Material históricos (Sin IVA)')
@@ -1455,7 +1459,7 @@ else:
         
 # ----- GRAFICOS HISTORICOS --------------------------------------------------
         if st.session_state['selected_variation_type_2'] == "Histórico":
-            y_cols_hist = ['grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal', 'sancor']
+            y_cols_hist = ['grupo_cesvi', 'grupo_sls', 'la_segunda']
             
             st.subheader('Evolución monto de Repuestos y Mano de Obra (MO)')
             # mostrar evolutivo MO (Chapa/Pintura)
@@ -1525,11 +1529,11 @@ else:
             # muestro el dataset
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
                 # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_tot_reparacion[['anio_mes', 'grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal',
-                                        'sancor', 'ipc','ipc_empalme_ipim','var_ipc', 'var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda',
-                                        'var_%_san_cristobal', 'var_%_sancor']], hide_index=True,)
+                st.dataframe(df_tot_reparacion[['anio_mes', 'grupo_cesvi', 'grupo_sls', 'la_segunda',
+                                         'ipc','ipc_empalme_ipim','var_ipc', 'var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda',
+                                        ]], hide_index=True,)
 
-            y_cols_var = ['var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor']
+            y_cols_var = ['var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda']
 
             fig_3_ipc = create_plot_mo(df_tot_reparacion, y_cols_var, None, None, 'Variación (base 1)')
             fig_3_ipc.add_trace(go.Scatter(
@@ -1556,9 +1560,9 @@ else:
             # muestro el dataset
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
                 # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_costo_hora[['anio_mes', 'grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal',
-                                        'sancor', 'ipc','ipc_empalme_ipim','var_ipc', 'var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda',
-                                        'var_%_san_cristobal', 'var_%_sancor']], hide_index=True,)
+                st.dataframe(df_costo_hora[['anio_mes', 'grupo_cesvi', 'grupo_sls', 'la_segunda',
+                                       'ipc','ipc_empalme_ipim','var_ipc', 'var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda',
+                                        ]], hide_index=True,)
 
             fig_5_ipc = create_plot_mo(df_costo_hora, y_cols_var, None, None, 'Variación (base 1)')
             fig_5_ipc.add_trace(go.Scatter(
@@ -1587,35 +1591,35 @@ else:
             # muestro el dataset
             with st.expander("Ver tabla de datos",):
                 # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_peritaciones[['anio_mes', 'grupo_cesvi', 'grupo_sls', 'la_segunda', 'san_cristobal', 'sancor']], hide_index=True, width=1000,)
+                st.dataframe(df_peritaciones[['anio_mes', 'grupo_cesvi', 'grupo_sls', 'la_segunda',]], hide_index=True, width=1000,)
 # ==========================================================================
 
             st.subheader('▫️ % Variación mensual de cantidad de Peritaciones')
-            y_var=['var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor']
+            y_var=['var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda']
             fig_5 = create_plot_mo(df_peritaciones, y_var, None, None, '% variación', leg_title_text='')
             st.plotly_chart(fig_5, use_container_width=True)
 
             # muestro el dataset
             with st.expander("Ver tabla de datos",):
                 # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_peritaciones[['anio_mes', 'part_grupo_sls_vs_cesvi', 'part_la_segunda_vs_cesvi', 'part_san_cristobal_vs_cesvi', 'part_sancor_vs_cesvi']], 
+                st.dataframe(df_peritaciones[['anio_mes', 'part_grupo_sls_vs_cesvi', 'part_la_segunda_vs_cesvi']], 
                             hide_index=True, width=1000,)
 # ==========================================================================
              
-            st.subheader('▫️ % Participacion respecto a Grupo Cesvi')
-            y_cols_part=['part_grupo_sls_vs_cesvi', 'part_sancor_vs_cesvi', 'part_la_segunda_vs_cesvi', 'part_san_cristobal_vs_cesvi', ]
-            fig_6 = create_plot_mo(df_peritaciones, y_cols_part, None, None, '% participacion', leg_title_text='')
-            st.plotly_chart(fig_6, use_container_width=True)
+            # st.subheader('▫️ % Participacion respecto a Grupo Cesvi')
+            # y_cols_part=['part_grupo_sls_vs_cesvi', 'part_la_segunda_vs_cesvi' ]
+            # fig_6 = create_plot_mo(df_peritaciones, y_cols_part, None, None, '% participacion', leg_title_text='')
+            # st.plotly_chart(fig_6, use_container_width=True)
 
-            # muestro el dataset
-            with st.expander("Ver tabla de datos",):
-                # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_peritaciones[['anio_mes', 'var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda', 'var_%_san_cristobal', 'var_%_sancor']], 
-                            hide_index=True, width=1000,)
+            # # muestro el dataset
+            # with st.expander("Ver tabla de datos",):
+            #     # st.subheader("Tabla de Datos de Ejemplo")
+            #     st.dataframe(df_peritaciones[['anio_mes', 'var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda']], 
+            #                 hide_index=True, width=1000,)
 
 # ----- GRAFICOS IPC --------------------------------------------------
         if st.session_state['selected_variation_type_2'] == "IPC":
-            y_cols_ipc = ['grupo_cesvi_ipc', 'grupo_sls_ipc', 'la_segunda_ipc', 'san_cristobal_ipc', 'sancor_ipc']
+            y_cols_ipc = ['grupo_cesvi_ipc', 'grupo_sls_ipc', 'la_segunda_ipc']
             
             st.subheader('Evolución monto de Repuestos y Mano de Obra (MO) - ajust. por IPC')
             # mostrar evolutivo MO (Chapa/Pintura)
@@ -1647,7 +1651,7 @@ else:
             # muestro el dataset
             with st.expander("Ver tabla de datos", icon=':material/query_stats:'):
                 # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_tot_reparacion[['anio_mes','ipc','grupo_cesvi_ipc', 'grupo_sls_ipc', 'la_segunda_ipc', 'san_cristobal_ipc', 'sancor_ipc']], 
+                st.dataframe(df_tot_reparacion[['anio_mes','ipc','grupo_cesvi_ipc', 'grupo_sls_ipc', 'la_segunda_ipc']], 
                             hide_index=True, width=1000,)
 
             st.subheader('', divider='grey') 
@@ -1659,11 +1663,11 @@ else:
             # muestro el dataset
             with st.expander("Ver tabla de datos", icon=':material/query_stats:'):
                 # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_costo_hora[['anio_mes','ipc','grupo_cesvi_ipc', 'grupo_sls_ipc', 'la_segunda_ipc', 'san_cristobal_ipc', 'sancor_ipc']], hide_index=True,)
+                st.dataframe(df_costo_hora[['anio_mes','ipc','grupo_cesvi_ipc', 'grupo_sls_ipc', 'la_segunda_ipc']], hide_index=True,)
 
 # ----- GRAFICOS USD --------------------------------------------------
         if st.session_state['selected_variation_type_2'] == "USD":
-            y_cols_usd = ['grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd', 'san_cristobal_usd', 'sancor_usd']
+            y_cols_usd = ['grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd']
             
             st.subheader('Evolución monto de Repuestos y Mano de Obra (MO) - en USD')
             # mostrar evolutivo MO (Chapa/Pintura)
@@ -1696,7 +1700,7 @@ else:
             # muestro el dataset
             with st.expander("Ver tabla de datos", icon=':material/query_stats:'):
                 # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_tot_reparacion[['anio_mes','usd_blue','grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd', 'san_cristobal_usd', 'sancor_usd']], 
+                st.dataframe(df_tot_reparacion[['anio_mes','usd_blue','grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd']], 
                             hide_index=True, width=1000,)
             
             st.subheader('', divider='grey') 
@@ -1707,7 +1711,7 @@ else:
             # muestro el dataset
             with st.expander("Ver tabla de datos", icon=':material/query_stats:'):
                 # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_costo_hora[['anio_mes','usd_blue','grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd', 'san_cristobal_usd', 'sancor_usd']], 
+                st.dataframe(df_costo_hora[['anio_mes','usd_blue','grupo_cesvi_usd', 'grupo_sls_usd', 'la_segunda_usd']], 
                             hide_index=True, width=1000,)
 
 # ==========================================================================
@@ -4786,7 +4790,94 @@ else:
                     format="%.2f%%",
                     ),
                 })    
+            
+    # ======================================================================================
+    # --- INDICE - CONSTRUCCION ============================================================
+    # ======================================================================================
+            
+    elif current_analysis == opcion_11:
+        st.title('Ponderacioens y cálculo del Indice')
+        st.markdown("#### _En construcción..._ ")
+        # st.markdown("#### _Fuente de datos: Orion/Cesvi_ \nFecha actualización: **diciembre 2025**")
+
+    #     def plot_indices_comparados(df, title):
+    #         # Lista de las variables que quieres graficar
+    #         columnas_indices = [
+    #             'indice_cascos', 
+    #             'indice_daño_mat', 
+    #             'indice_cristales', 
+    #             'indice_ruedas', 
+    #             'indice_autos'
+    #         ]
+            
+    #         # Asegúrate de que el dataframe esté ordenado por fecha
+    #         df = df.sort_values('año_mes')
+
+    #         # Crear el gráfico (Formato "Wide")
+    #         fig = px.line(
+    #             df, 
+    #             x='año_mes', 
+    #             y=columnas_indices,
+    #             labels={'año_mes': 'Período', 'value': 'Índice', 'variable': 'Indicador'},
+    #             title=title,
+    #             markers=True # Puntos en cada mes para mayor precisión
+    #         )
+
+    #         # Configuración estética y Hover Unificado
+    #         fig.update_layout(
+    #             height=600,
+    #             hovermode="x unified", # Ver todos los índices al mismo tiempo
+    #             # plot_bgcolor="white",
+    #             legend=dict(
+    #                 orientation="h",
+    #                 yanchor="top",
+    #                 y=-0.2,
+    #                 xanchor="center",
+    #                 x=0.5,
+    #                 title_text=""
+    #             ),
+    #             margin=dict(t=80, b=100, l=50, r=20),
+    #             title=dict(font=dict(size=22, family="Arial Black"), x=0.5)
+    #         )
+
+    #         # Mejorar el hover para que muestre 2 decimales
+    #         fig.update_traces(
+    #             mode="lines+markers",
+    #             marker=dict(size=4),
+    #             hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+    #         )
+
+    #         # Cuadrícula sutil
+    #         # fig.update_xaxes(showgrid=True, gridcolor="#f0f0f0", tickangle=45)
+    #         # fig.update_yaxes(showgrid=True, gridcolor="#f0f0f0")
+
+    #         return fig
+        
+    #     with st.expander("Ver tabla de datos históricos", icon=":material/query_stats:"):
+    #         st.dataframe(indice_hist, hide_index=True, use_container_width=True,)
+
+    #     fig_indice_hist = plot_indices_comparados(indice_hist, 'Indice Histórico')
+    #     st.plotly_chart(fig_indice_hist, use_container_width=True)
+
+    #     with st.expander("Ver tabla de datos ajust. IPC", icon=":material/query_stats:"):
+    #         st.dataframe(indice_ipc, hide_index=True, use_container_width=True,)
+    #     fig_indice_ipc = plot_indices_comparados(indice_ipc, 'Indice ajust. por IPC')
+    #     st.plotly_chart(fig_indice_ipc, use_container_width=True)
+
+    #     with st.expander("Ver tabla de datos en USD", icon=":material/query_stats:"):
+    #         st.dataframe(indice_usd, hide_index=True, use_container_width=True,)
+    #     fig_indice_usd = plot_indices_comparados(indice_usd, 'Indice en USD')
+    #     st.plotly_chart(fig_indice_usd, use_container_width=True)
+
+
+
+
+
+
+
+
         
 
 
-# ULTIMA REVISION Y PUSHEAR A GITHUB
+
+    
