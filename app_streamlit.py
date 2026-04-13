@@ -1406,11 +1406,18 @@ else:
                 labels={'value': y_label, 'anio_mes': ''}
             )
 
+            fig.update_traces(
+                    mode="lines+markers",
+                    marker=dict(size=2),
+                    hovertemplate="<b>%{fullData.name}:</b> $ %{y:,.0f}<extra></extra>" # Muestra solo el valor con separador de miles
+                )
+            
             fig.update_layout(
                 legend_title_text=leg_title_text,
                 height=400, # Altura del subplot individual
                 font=dict(family="Arial", size=15),
                 margin=dict(t=50, b=0, l=0, r=0),
+                hovermode="x unified",
             )
             fig.for_each_xaxis(
                 lambda xaxis: xaxis.update(
@@ -1422,7 +1429,8 @@ else:
             fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
             
             return fig
-        
+          
+
         def create_plot_mo_area(df, y_col, color, facet_col, y_label):
 
             if df.empty:
@@ -1510,6 +1518,7 @@ else:
             ),
             row=1, col=2)
             fig_1_ipc.update_layout(legend_title_text='Variación')
+            fig_1_ipc.update_traces(hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>")
 
 
             tab1, tab2 = st.tabs(["Evolutivo CM ",'Variación vs IPC'])
@@ -1544,6 +1553,7 @@ else:
                 line=dict(color='white', dash='dot'),
             ))
             fig_3_ipc.update_layout(legend_title_text='')
+            fig_3_ipc.update_traces(hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>")
 
             tab1, tab2 = st.tabs(["Evolutivo CM ",'Variación vs IPC'])
             with tab1:
@@ -1573,6 +1583,7 @@ else:
                 line=dict(color='white', dash='dot'),
             ))
             fig_5_ipc.update_layout(legend_title_text='')
+            fig_5_ipc.update_traces(hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>")
 
             tab1, tab2 = st.tabs(["Evolutivo CM ",'Variación vs IPC'])
             with tab1:
@@ -1596,8 +1607,10 @@ else:
 
             st.subheader('▫️ % Variación mensual de cantidad de Peritaciones')
             y_var=['var_%_grupo_cesvi', 'var_%_grupo_sls', 'var_%_la_segunda']
-            fig_5 = create_plot_mo(df_peritaciones, y_var, None, None, '% variación', leg_title_text='')
-            st.plotly_chart(fig_5, use_container_width=True)
+            fig_6 = create_plot_mo(df_peritaciones, y_var, None, None, '% variación', leg_title_text='')
+            fig_6.update_traces(hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>")
+            
+            st.plotly_chart(fig_6, use_container_width=True)
 
             # muestro el dataset
             with st.expander("Ver tabla de datos",):
