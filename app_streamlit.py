@@ -8,7 +8,6 @@ import json
 import requests
 from io import StringIO
 import unicodedata
-import openpyxl
 
 pd.options.display.max_columns=None
 pd.set_option('display.max_rows', 500)
