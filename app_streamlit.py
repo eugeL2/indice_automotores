@@ -8,6 +8,7 @@ import json
 import requests
 from io import StringIO
 import unicodedata
+import openpyxl
 
 pd.options.display.max_columns=None
 pd.set_option('display.max_rows', 500)
@@ -84,10 +85,10 @@ try:
     df_ruedas_grant = pd.read_parquet('data/costo_medio_ruedas_grant.parquet')
     df_neum_grant = pd.read_parquet('data/costo_prom_neumatico.parquet')
 
-    # INDICE
-    indice_hist = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_hist')
-    indice_ipc = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_ipc')
-    indice_usd = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_usd')
+    # # INDICE
+    # indice_hist = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_hist')
+    # indice_ipc = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_ipc')
+    # indice_usd = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_usd')
 
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. \nDetalles: {e}")
