@@ -1,3 +1,5 @@
+# ----- Librerias y dependencias ---------------------------------
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -84,10 +86,18 @@ try:
     df_ruedas_grant = pd.read_parquet('data/costo_medio_ruedas_grant.parquet')
     df_neum_grant = pd.read_parquet('data/costo_prom_neumatico.parquet')
 
-    # # INDICE
-    # indice_hist = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_hist')
-    # indice_ipc = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_ipc')
-    # indice_usd = pd.read_excel('data/bases_indice.xlsx', sheet_name='indice_usd')
+    # INDICE
+    df_pond = pd.read_parquet('data/df_ponderaciones.parquet')
+    df_pond_autos = pd.read_parquet('data/df_ponderaciones_autos.parquet')
+    df_mostrar_pesos = pd.read_parquet('data/df_mostrar_pesos.parquet')
+
+    df_datos_mensuales_hist = pd.read_parquet('data/df_datos_mensuales_hist.parquet')
+    df_datos_mensuales_ipc = pd.read_parquet('data/df_datos_mensuales_ipc.parquet')
+    df_datos_mensuales_usd = pd.read_parquet('data/df_datos_mensuales_usd.parquet')
+
+    df_indice_h = pd.read_parquet('data/df_indice_h.parquet')
+    df_indice_ipc = pd.read_parquet('data/df_indice_ipc.parquet')
+    df_indice_usd = pd.read_parquet('data/df_indice_usd.parquet')
 
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. \nDetalles: {e}")
@@ -4809,87 +4819,165 @@ else:
     # ======================================================================================
             
     elif current_analysis == opcion_11:
-        st.title('Ponderacioens y cálculo del Indice')
-        st.markdown("#### _En construcción..._ ")
-        # st.markdown("#### _Fuente de datos: Orion/Cesvi_ \nFecha actualización: **diciembre 2025**")
+        st.title('Indice: Ponderaciones y cálculo')
+        st.markdown("##### _Fecha actualización: **enero 2026**_")
+        st.markdown('---')
 
-    #     def plot_indices_comparados(df, title):
-    #         # Lista de las variables que quieres graficar
-    #         columnas_indices = [
-    #             'indice_cascos', 
-    #             'indice_daño_mat', 
-    #             'indice_cristales', 
-    #             'indice_ruedas', 
-    #             'indice_autos'
-    #         ]
+        def plot_indices_comparados(df, title):
+            # Lista de las variables que quieres graficar
+            columnas_indices = [c for c in df.columns if c.startswith('Indice') ]
             
-    #         # Asegúrate de que el dataframe esté ordenado por fecha
-    #         df = df.sort_values('año_mes')
+            # Asegúrate de que el dataframe esté ordenado por fecha
+            df = df.sort_values('Mes_Año')
 
-    #         # Crear el gráfico (Formato "Wide")
-    #         fig = px.line(
-    #             df, 
-    #             x='año_mes', 
-    #             y=columnas_indices,
-    #             labels={'año_mes': 'Período', 'value': 'Índice', 'variable': 'Indicador'},
-    #             title=title,
-    #             markers=True # Puntos en cada mes para mayor precisión
-    #         )
+            # Crear el gráfico (Formato "Wide")
+            fig = px.line(
+                df, 
+                x='Mes_Año', 
+                y=columnas_indices,
+                labels={'Mes_Año': 'Período', 'value': 'Índice', 'variable': 'Indicador'},
+                title=title,
+                markers=True # Puntos en cada mes para mayor precisión
+            )
 
-    #         # Configuración estética y Hover Unificado
-    #         fig.update_layout(
-    #             height=600,
-    #             hovermode="x unified", # Ver todos los índices al mismo tiempo
-    #             # plot_bgcolor="white",
-    #             legend=dict(
-    #                 orientation="h",
-    #                 yanchor="top",
-    #                 y=-0.2,
-    #                 xanchor="center",
-    #                 x=0.5,
-    #                 title_text=""
-    #             ),
-    #             margin=dict(t=80, b=100, l=50, r=20),
-    #             title=dict(font=dict(size=22, family="Arial Black"), x=0.5)
-    #         )
+            fig.for_each_trace(lambda trace: 
+                    # Si el nombre de la traza es exactamente 'Indice Autos'
+                    trace.update(line=dict(width=4, dash='solid')) # Grosor mayor y línea continua
+                    if trace.name == 'Indice Autos'
+                    # Para todas las DEMÁS trazas
+                    else trace.update(line=dict(width=2, dash='dash')) # Grosor normal y línea discontinua (dash)
+                )
 
-    #         # Mejorar el hover para que muestre 2 decimales
-    #         fig.update_traces(
-    #             mode="lines+markers",
-    #             marker=dict(size=4),
-    #             hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
-    #         )
+            # Configuración estética y Hover Unificado
+            fig.update_layout(
+                height=600,
+                hovermode="x unified", # Ver todos los índices al mismo tiempo
+                # plot_bgcolor="white",
+                legend=dict(
+                    orientation="h",
+                    yanchor="top",
+                    y=-0.2,
+                    xanchor="center",
+                    x=0.5,
+                    title_text=""
+                ),
+                margin=dict(t=80, b=100, l=50, r=20),
+                title=dict(font=dict(size=20))#, family="Arial Black"))
+            )
 
-    #         # Cuadrícula sutil
-    #         # fig.update_xaxes(showgrid=True, gridcolor="#f0f0f0", tickangle=45)
-    #         # fig.update_yaxes(showgrid=True, gridcolor="#f0f0f0")
+            # Mejorar el hover para que muestre 2 decimales
+            fig.update_traces(
+                mode="lines+markers",
+                marker=dict(size=4),
+                hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+            )
 
-    #         return fig
+            # Cuadrícula sutil
+            # fig.update_xaxes(showgrid=True, gridcolor="#f0f0f0", tickangle=45)
+            # fig.update_yaxes(showgrid=True, gridcolor="#f0f0f0")
+
+            return fig
         
-    #     with st.expander("Ver tabla de datos históricos", icon=":material/query_stats:"):
-    #         st.dataframe(indice_hist, hide_index=True, use_container_width=True,)
+        st.markdown("## Ponderaciones")
+        st.markdown("#### Todos los TV")
+        # Aplicamos el formato en Python
+        df_view = df_pond.style.format({
+            'Monto Transaccion': "$ {:,.0f}",
+            'Pago IPC x Fecha de Pago': "$ {:,.0f}",
+            'Pago USD x Fecha Pago': "$ {:,.0f}",
+            'Part % H': "{:.2f}%",
+            'Part % IPC': "{:.2f}%",
+            'Part % USD': "{:.2f}%"
+        })
 
-    #     fig_indice_hist = plot_indices_comparados(indice_hist, 'Indice Histórico')
-    #     st.plotly_chart(fig_indice_hist, use_container_width=True)
-
-    #     with st.expander("Ver tabla de datos ajust. IPC", icon=":material/query_stats:"):
-    #         st.dataframe(indice_ipc, hide_index=True, use_container_width=True,)
-    #     fig_indice_ipc = plot_indices_comparados(indice_ipc, 'Indice ajust. por IPC')
-    #     st.plotly_chart(fig_indice_ipc, use_container_width=True)
-
-    #     with st.expander("Ver tabla de datos en USD", icon=":material/query_stats:"):
-    #         st.dataframe(indice_usd, hide_index=True, use_container_width=True,)
-    #     fig_indice_usd = plot_indices_comparados(indice_usd, 'Indice en USD')
-    #     st.plotly_chart(fig_indice_usd, use_container_width=True)
+        st.dataframe(df_view, hide_index=True, use_container_width=True)
 
 
+        st.markdown("#### Autos particulares")
+        df_view2 = df_pond_autos.style.format({
+            'Monto Transaccion': "$ {:,.0f}",
+            'Pago IPC x Fecha de Pago': "$ {:,.0f}",
+            'Pago USD x Fecha Pago': "$ {:,.0f}",
+            'Part % H': "{:.2f}%",
+            'Part % IPC': "{:.2f}%",
+            'Part % USD': "{:.2f}%",
+            '% Monto Particulares': "{:.2f}%",
+        })
+        st.dataframe(df_view2, hide_index=True, use_container_width=True,)
 
+        st.markdown('---')
+        st.markdown("#### Datos mensuales (Pagos)")
 
+        tab1, tab2, tab3 = st.tabs(["📊 Histórico", "📈 IPC", "💵 USD"])
+        with tab1:
+            st.markdown("##### Datos mensuales históricos (Pagos)")
+            cols = [c for c in df_datos_mensuales_hist.columns if c != 'Mes_Año']
+            formatos = {col: "$ {:,.0f}" for col in cols}    
+            df_view3 = df_datos_mensuales_hist.style.format(formatos)
+            st.dataframe(df_view3, hide_index=True, use_container_width=True, column_config={
+                'Mes_Año': st.column_config.DateColumn("Año_Mes", format="YYYY-MM")})
+        with tab2:
+            st.markdown("##### Datos mensuales ajustados por IPC (Pagos)")
+            cols = [c for c in df_datos_mensuales_ipc.columns if c != 'Mes_Año']
+            formatos = {col: "$ {:,.0f}" for col in cols}
+            df_view4 = df_datos_mensuales_ipc.style.format(formatos)
+            st.dataframe(df_view4, hide_index=True, use_container_width=True, column_config={
+                'Mes_Año': st.column_config.DateColumn("Año_Mes", format="YYYY-MM")})
+        with tab3:
+            st.markdown("##### Datos mensuales en USD (Pagos)")
+            cols = [c for c in df_datos_mensuales_usd.columns if c != 'Mes_Año']
+            formatos = {col: "$ {:,.0f}" for col in cols}
+            df_view5 = df_datos_mensuales_usd.style.format(formatos)
+            st.dataframe(df_view5, hide_index=True, use_container_width=True, column_config={
+                'Mes_Año': st.column_config.DateColumn("Año_Mes", format="YYYY-MM")})
 
+        st.markdown('---')
+        st.markdown("### Indice")
 
+        tab1, tab2, tab3 = st.tabs(["📊 Histórico", "📈 IPC", "💵 USD"])
+        with tab1:
+            # st.markdown("##### Indice histórico")
+            cols = [c for c in df_indice_h.columns if c != 'Mes_Año']
+            formatos = {col: "{:,.2f}" for col in cols}
+            df_view6 = df_indice_h.style.format(formatos)
 
+            with st.expander("Ver tabla de datos históricos", icon=":material/query_stats:"):
+                st.dataframe(df_view6, hide_index=True, use_container_width=True, column_config={
+                    'Mes_Año': st.column_config.DateColumn("Año_Mes", format="YYYY-MM")})
+                st.markdown('Pesos de cada variable:')
+                st.dataframe(df_mostrar_pesos.style.format("{:.2f}"), hide_index=True, use_container_width=True)
+                
+            fig_indice_hist = plot_indices_comparados(df_indice_h, 'Indice Histórico')
+            st.plotly_chart(fig_indice_hist, use_container_width=True)
 
-        
+        with tab2:
+            # st.markdown("##### Indice ajustado por IPC")
+            cols = [c for c in df_indice_ipc.columns if c != 'Mes_Año']
+            formatos = {col: "{:,.2f}" for col in cols}
+            df_view7 = df_indice_ipc.style.format(formatos)
+            with st.expander("Ver tabla de datos ajust. por IPC", icon=":material/query_stats:"):
+                st.dataframe(df_view7, hide_index=True, use_container_width=True, column_config={
+                    'Mes_Año': st.column_config.DateColumn("Año_Mes", format="YYYY-MM")})
+                st.markdown('Pesos de cada variable:')
+                st.dataframe(df_mostrar_pesos.style.format("{:.2f}"), hide_index=True, use_container_width=True)
+            
+            # Gráfico
+            fig_indice_ipc = plot_indices_comparados(df_indice_ipc, 'Indice ajustado por IPC')
+            st.plotly_chart(fig_indice_ipc, use_container_width=True)
+
+        with tab3:
+            # st.markdown("##### Indice en dólares")
+            cols = [c for c in df_indice_usd.columns if c != 'Mes_Año']
+            formatos = {col: "{:,.2f}" for col in cols}
+            df_view7 = df_indice_usd.style.format(formatos)
+            with st.expander("Ver tabla de datos en USD", icon=":material/query_stats:"):
+                st.dataframe(df_view7, hide_index=True, use_container_width=True, column_config={
+                    'Mes_Año': st.column_config.DateColumn("Año_Mes", format="YYYY-MM")})
+                st.markdown('Pesos de cada variable:')
+                st.dataframe(df_mostrar_pesos.style.format("{:.2f}"), hide_index=True, use_container_width=True)
+            
+            fig_indice_usd = plot_indices_comparados(df_indice_usd, 'Indice en dólares')
+            st.plotly_chart(fig_indice_usd, use_container_width=True)
 
 
 
