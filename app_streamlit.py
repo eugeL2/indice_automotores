@@ -179,14 +179,9 @@ opcion_1 = "Evolutivo lista de precios Pilkington"
 opcion_3 = "Evolutivo precios ORION/CESVI"
 opcion_4 = "Análisis Coste Medio por Provincia"
 opcion_5 = "Comparativo de Mano de Obra (L2 vs Cesvi vs Colegas)"
-opcion_pagos_pkt = "Evolutivo pagos Cristales"
-opcion_6 = "Evolutivo pagos Robo de Ruedas"
-opcion_7 = "Evolutivo pagos Daños Materiales"
-opcion_8 = "Evolutivo pagos Cascos"
 opcion_9 = "Variación SA vs. Precio de repuestos"
 opcion_10 = "Costo Medio ruedas - GRANT"
 opcion_11 = "INDICE"
-opcion_12 = 'Evolutivo pagos DT/RT/IT'
 opcion_13 = 'Evolutivo pagos Lesiones'
 opcion_pagos = 'Análisis Evolutivos de Pagos'
 
@@ -1760,8 +1755,8 @@ else:
             "Robo de Ruedas": "robo_ruedas",
             "Daños Materiales": "danos_materiales",
             "Cascos": "cascos",
-            "DT/RT/IT": "dt_rt_it",
-            'Lesiones': 'lesiones'
+            "Acc. Total - Robo Total - Inc. Total": "dt_rt_it",
+            # 'Lesiones': 'lesiones'
         }   
 
         st.markdown("##### **Seleccionar tipo de cobertura a analizar:**") 
@@ -1865,7 +1860,7 @@ else:
                 fig.update_traces(
                     mode="lines+markers",
                     marker=dict(size=4),
-                    hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+                    hovertemplate="<b>%{fullData.name}:</b> %{y:,.0f}<extra></extra>"
                 )
                 # eje X
                 fig.update_xaxes(
@@ -1932,7 +1927,7 @@ else:
                 fig.update_traces(
                     mode="lines+markers",
                     marker=dict(size=4),
-                    hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+                    hovertemplate="<b>%{fullData.name}:</b> %{y:,.0f}<extra></extra>"
                 )
 
                 fig.for_each_xaxis(
@@ -2407,7 +2402,7 @@ else:
                             name=legend_names[col],
                             line=dict(color=line_colors[col], width=3), 
                             showlegend=True,
-                            # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} ARS<extra></extra>"
+
                         ),
                         secondary_y=False, # Eje Y Izquierdo
                     )
@@ -2421,7 +2416,7 @@ else:
                             name=legend_names[col],
                             line=dict(color=line_colors[col], width=3),
                             showlegend=True,
-                            # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} USD<extra></extra>"
+
                         ),
                         secondary_y=True, # Eje Y Derecho
                     )
@@ -2445,7 +2440,7 @@ else:
                 fig.update_traces(
                     mode="lines+markers",
                     marker=dict(size=4),
-                    hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+                    hovertemplate="<b>%{fullData.name}:</b> %{y:,.0f}<extra></extra>"
                 )
                         
 
@@ -2514,7 +2509,7 @@ else:
                 fig.update_traces(
                     mode="lines+markers",
                     marker=dict(size=4),
-                    hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+                    hovertemplate="<b>%{fullData.name}:</b> %{y:,.0f}<extra></extra>"
                 )
 
                 fig.for_each_xaxis(
@@ -3027,7 +3022,7 @@ else:
                     fig.update_traces(
                         mode="lines+markers",
                         marker=dict(size=4),
-                        hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+                        hovertemplate="<b>%{fullData.name}:</b> %{y:,.0f}<extra></extra>"
                     )
                 
                     # eje X
@@ -3095,7 +3090,7 @@ else:
                     fig.update_traces(
                         mode="lines+markers",
                         marker=dict(size=4),
-                        hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+                        hovertemplate="<b>%{fullData.name}:</b> %{y:,.0f}<extra></extra>"
                     )
                     fig.for_each_xaxis(
                     lambda xaxis: xaxis.update(
@@ -3621,7 +3616,7 @@ else:
                         fig.update_traces(
                             mode="lines+markers",
                             marker=dict(size=4),
-                            hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+                            hovertemplate="<b>%{fullData.name}:</b> %{y:,.0f}<extra></extra>"
                         )
                     
                         # eje X
@@ -3690,7 +3685,7 @@ else:
                         fig.update_traces(
                             mode="lines+markers",
                             marker=dict(size=4),
-                            hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+                            hovertemplate="<b>%{fullData.name}:</b> %{y:,.0f}<extra></extra>"
                         )
 
                         fig.for_each_xaxis(
@@ -4129,8 +4124,8 @@ else:
 # EVOLUTIVO PAGOS DT/RT/IT
 # ========================================================================
 
-        elif seleccion_pago == 'DT/RT/IT':
-                    st.markdown('## Evolución de monto de pagos de DT/RT/IT (L2)')    
+        elif seleccion_pago == "Acc. Total - Robo Total - Inc. Total":
+                    st.markdown('## Evolución de monto de pagos de Acc. Total/RT/IT (L2)')    
                     st.markdown("---")
 
                     def create_plot_pagos(df_source, y1, y2, y3, title, x_tickangle=45):
@@ -4218,7 +4213,7 @@ else:
                         fig.update_traces(
                             mode="lines+markers",
                             marker=dict(size=4),
-                            hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+                            hovertemplate="<b>%{fullData.name}:</b> %{y:,.0f}<extra></extra>"
                         )
 
                         # eje X
@@ -4287,7 +4282,7 @@ else:
                         fig.update_traces(
                             mode="lines+markers",
                             marker=dict(size=4),
-                            hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+                            hovertemplate="<b>%{fullData.name}:</b> %{y:,.0f}<extra></extra>"
                         )
 
                         fig.for_each_xaxis(
@@ -4757,128 +4752,128 @@ else:
 # EVOLUTIVO PAGOS LESIONES
 # ========================================================================
 
-        elif seleccion_pago == 'Lesiones':
-                    st.markdown('## Evolución de monto de pagos de Lesiones (L2)')    
-                    st.markdown("---")
-                    st.markdown("#### _Fuente de datos:_ \
-                        \n:white_small_square: _La Segunda BI (pagos)_")
-                    st.markdown('---')
+        # elif seleccion_pago == 'Lesiones':
+        #             st.markdown('## Evolución de monto de pagos de Lesiones (L2)')    
+        #             st.markdown("---")
+        #             st.markdown("#### _Fuente de datos:_ \
+        #                 \n:white_small_square: _La Segunda BI (pagos)_")
+        #             st.markdown('---')
 
-                    def create_plot_pagos(df_source, y1, y2, y3, title, x_tickangle=45):
+        #             def create_plot_pagos(df_source, y1, y2, y3, title, x_tickangle=45):
 
-                        df_source.sort_values('año_mes_fp', inplace=True)
-                        df_plot = df_source.groupby('año_mes_fp').agg(
-                            {
-                            y1: 'mean',
-                            y2: 'mean',           
-                            y3: 'mean'         
-                            }).reset_index()
+        #                 df_source.sort_values('año_mes_fp', inplace=True)
+        #                 df_plot = df_source.groupby('año_mes_fp').agg(
+        #                     {
+        #                     y1: 'mean',
+        #                     y2: 'mean',           
+        #                     y3: 'mean'         
+        #                     }).reset_index()
 
-                        # Columnas y etiquetas específicas para el gráfico (ajustadas al gráfico de la imagen)
-                        y1_cols = [y1, y2] # Eje ARS (Primario)
-                        y2_cols = [y3]                        # Eje USD (Secundario)
+        #                 # Columnas y etiquetas específicas para el gráfico (ajustadas al gráfico de la imagen)
+        #                 y1_cols = [y1, y2] # Eje ARS (Primario)
+        #                 y2_cols = [y3]                        # Eje USD (Secundario)
                         
-                        y1_label = "Monto (ARS)"
-                        y2_label = "Monto (USD)"
-                        x_col = 'año_mes_fp'
+        #                 y1_label = "Monto (ARS)"
+        #                 y2_label = "Monto (USD)"
+        #                 x_col = 'año_mes_fp'
 
 
-                        line_colors = {
-                            y1: '#1f77b4', 
-                            y2: '#ff7f0e',       
-                            y3: '#2ca02c'           
-                        }
-                        legend_names = {
-                            y1: y1,
-                            y2: y2,
-                            y3: y3
-                        }
+        #                 line_colors = {
+        #                     y1: '#1f77b4', 
+        #                     y2: '#ff7f0e',       
+        #                     y3: '#2ca02c'           
+        #                 }
+        #                 legend_names = {
+        #                     y1: y1,
+        #                     y2: y2,
+        #                     y3: y3
+        #                 }
 
-                        fig = make_subplots(specs=[[{"secondary_y": True}]])
+        #                 fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-                        #  eje primario
-                        for col in y1_cols:
-                            fig.add_trace(
-                                go.Scatter(
-                                    x=df_plot[x_col], 
-                                    y=df_plot[col], 
-                                    name=legend_names[col],
-                                    line=dict(color=line_colors[col], width=3), 
-                                    showlegend=True,
-                                    # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} ARS<extra></extra>"
-                                ),
-                                secondary_y=False, # Eje Y Izquierdo
-                            )
+        #                 #  eje primario
+        #                 for col in y1_cols:
+        #                     fig.add_trace(
+        #                         go.Scatter(
+        #                             x=df_plot[x_col], 
+        #                             y=df_plot[col], 
+        #                             name=legend_names[col],
+        #                             line=dict(color=line_colors[col], width=3), 
+        #                             showlegend=True,
+        #                             # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} ARS<extra></extra>"
+        #                         ),
+        #                         secondary_y=False, # Eje Y Izquierdo
+        #                     )
 
-                        # eje secundario
-                        for col in y2_cols:
-                            fig.add_trace(
-                                go.Scatter(
-                                    x=df_plot[x_col], 
-                                    y=df_plot[col], 
-                                    name=legend_names[col],
-                                    line=dict(color=line_colors[col], width=3),
-                                    showlegend=True,
-                                    # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} USD<extra></extra>"
-                                ),
-                                secondary_y=True, # Eje Y Derecho
-                            )
+        #                 # eje secundario
+        #                 for col in y2_cols:
+        #                     fig.add_trace(
+        #                         go.Scatter(
+        #                             x=df_plot[x_col], 
+        #                             y=df_plot[col], 
+        #                             name=legend_names[col],
+        #                             line=dict(color=line_colors[col], width=3),
+        #                             showlegend=True,
+        #                             # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} USD<extra></extra>"
+        #                         ),
+        #                         secondary_y=True, # Eje Y Derecho
+        #                     )
 
 
-                        fig.update_yaxes(title_text=f"{y1_label}", secondary_y=False, nticks=14, showgrid=True)
-                        fig.update_yaxes(title_text=f"{y2_label}", secondary_y=True, nticks=14, showgrid=False)
+        #                 fig.update_yaxes(title_text=f"{y1_label}", secondary_y=False, nticks=14, showgrid=True)
+        #                 fig.update_yaxes(title_text=f"{y2_label}", secondary_y=True, nticks=14, showgrid=False)
 
-                        # Ajustes del Gráfico
-                        fig.update_layout(
-                            title_text=title,
-                            hovermode="x unified",
-                            height=700,
-                            legend_title_text='', # Dejar vacío ya que el nombre de la línea lo explica
-                            font=dict(family="Arial", size=15),
-                            margin=dict(t=100, b=0, l=0, r=0),
-                            title=dict(
-                                font=dict(size=20, family="Arial"),
-                            ),
-                        )
-                        # Mejorar el hover para que muestre 2 decimales
-                        fig.update_traces(
-                            mode="lines+markers",
-                            marker=dict(size=4),
-                            hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
-                        )
+        #                 # Ajustes del Gráfico
+        #                 fig.update_layout(
+        #                     title_text=title,
+        #                     hovermode="x unified",
+        #                     height=700,
+        #                     legend_title_text='', # Dejar vacío ya que el nombre de la línea lo explica
+        #                     font=dict(family="Arial", size=15),
+        #                     margin=dict(t=100, b=0, l=0, r=0),
+        #                     title=dict(
+        #                         font=dict(size=20, family="Arial"),
+        #                     ),
+        #                 )
+        #                 # Mejorar el hover para que muestre 2 decimales
+        #                 fig.update_traces(
+        #                     mode="lines+markers",
+        #                     marker=dict(size=4),
+        #                     hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+        #                 )
 
-                        # eje X
-                        fig.update_xaxes(
-                            tickangle=x_tickangle, 
-                            showticklabels=True,
-                            title_text=''
-                        )
+        #                 # eje X
+        #                 fig.update_xaxes(
+        #                     tickangle=x_tickangle, 
+        #                     showticklabels=True,
+        #                     title_text=''
+        #                 )
                                 
-                        return fig
+        #                 return fig
 
-                    fig_pagos_lesiones = create_plot_pagos(
-                        df_pagos_lesiones, 
-                        'monto_transaccion',
-                        'pago_ipc',
-                        'pago_usd',
-                        title=f'Pagos promedio de Lesiones (terceros) (L2) -', 
-                        x_tickangle=45
-                    )
-                    st.plotly_chart(fig_pagos_lesiones, use_container_width=True)
+        #             fig_pagos_lesiones = create_plot_pagos(
+        #                 df_pagos_lesiones, 
+        #                 'monto_transaccion',
+        #                 'pago_ipc',
+        #                 'pago_usd',
+        #                 title=f'Pagos promedio de Lesiones (terceros) (L2) -', 
+        #                 x_tickangle=45
+        #             )
+        #             st.plotly_chart(fig_pagos_lesiones, use_container_width=True)
                     
-                    df_pagos_lesiones.sort_values('año_mes_fp', inplace=True)
+        #             df_pagos_lesiones.sort_values('año_mes_fp', inplace=True)
 
-                    df_pagos_lesiones_tabla = df_pagos_lesiones.groupby(['año_mes_fp']).agg(
-                        {'monto_transaccion': 'mean',
-                        'pago_ipc': 'mean',           
-                        'pago_usd': 'mean'}).reset_index()
+        #             df_pagos_lesiones_tabla = df_pagos_lesiones.groupby(['año_mes_fp']).agg(
+        #                 {'monto_transaccion': 'mean',
+        #                 'pago_ipc': 'mean',           
+        #                 'pago_usd': 'mean'}).reset_index()
                     
-                    df_pagos_lesiones_tabla.monto_transaccion = df_pagos_lesiones_tabla.monto_transaccion.round(0).astype(int) 
-                    df_pagos_lesiones_tabla.pago_usd = df_pagos_lesiones_tabla.pago_usd.round(0).astype(int) 
-                    df_pagos_lesiones_tabla.pago_ipc = df_pagos_lesiones_tabla.pago_ipc.round(0).astype(int)
+        #             df_pagos_lesiones_tabla.monto_transaccion = df_pagos_lesiones_tabla.monto_transaccion.round(0).astype(int) 
+        #             df_pagos_lesiones_tabla.pago_usd = df_pagos_lesiones_tabla.pago_usd.round(0).astype(int) 
+        #             df_pagos_lesiones_tabla.pago_ipc = df_pagos_lesiones_tabla.pago_ipc.round(0).astype(int)
 
-                    with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
-                        st.dataframe(df_pagos_lesiones_tabla, hide_index=True, width=900)
+        #             with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
+        #                 st.dataframe(df_pagos_lesiones_tabla, hide_index=True, width=900)
 
 
 
@@ -4969,23 +4964,6 @@ else:
         # st.markdown('##### :: Gráfico comparativo de métricas clave por Marca')
         fig_comparativo = generar_grafico_comparativo(df_graf_cartera)
         st.plotly_chart(fig_comparativo, use_container_width=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     elif current_analysis == opcion_0:
