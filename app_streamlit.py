@@ -26,26 +26,26 @@ st.set_page_config(
 # ----- Cargo las bases de datos --------------------------------------------------
 try:
     # df PKT (cristales)
-    df_cristal = pd.read_csv('data/base_pkt_nov.csv')
+    df_cristal = pd.read_csv('data/base_pkt_abril.csv')
     df_pagos_cristal = pd.read_csv('data/pagos_pkt_ok.csv')
 
     # dfs de repuestos orion/cesvi
-    df_tipo_rep = pd.read_csv('data/df_tipo_rep_feb.csv')
-    df_rep_tv = pd.read_csv('data/df_rep_tv_feb.csv')
+    df_tipo_rep = pd.read_csv('data/df_tipo_rep_marzo.csv')
+    df_rep_tv = pd.read_csv('data/df_rep_tv_marzo.csv')
     # df para graf torta
     df_rep_torta = pd.read_csv('data/todos_los_rep_orion_auto_ok.csv')
 
     # dfs de mano de obra orion/cesvi
-    df_cm_mo = pd.read_csv('data/df_cm_mo_feb.csv')
+    df_cm_mo = pd.read_csv('data/df_cm_mo_marzo.csv')
 
     # dfs mano de obra cleas si/cleas no
     df_cm_mo_cleas = pd.read_csv('data/df_cm_mo_cleas_feb.csv')
 
     # dfs marcas
     df_marcas_autos = pd.read_csv('data/evol_todas_marcas_autos.csv')
-    df_rtos_marca_mes = pd.read_csv('data/df_rtos_marca_mes_feb.csv')
+    df_rtos_marca_mes = pd.read_csv('data/df_rtos_marca_mes_marzo.csv')
     df_marcas_camiones = pd.read_csv('data/camion_marcas.csv')
-    df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_cam_feb.csv')
+    df_rtos_marca_mes_cam = pd.read_csv('data/df_rtos_marca_mes_cam_marzo.csv')
     # df_marcas_cartera = pd.read_csv(r'data\todas_las_marcas_bi.csv')
 
     # dfs var x prov
@@ -245,8 +245,7 @@ else:
 # ==========================================================================
     if current_analysis == opcion_1:
         st.markdown("## Variación de precios de Cristales y Mano de obra por Marca y Zona")
-        st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_ \n Fecha de actualización: **01/11/2025**") 
-        st.markdown("---")
+        st.markdown("#### _Fuente de datos: Listas de precios de Pilkington_ \n Fecha de actualización: **01/04/2026**") 
 
         # Dropdown de Zona (barra lateral)
         available_zones = sorted(df_cristal['zona'].unique().tolist())
@@ -404,6 +403,7 @@ else:
                     ),
                     row=1, col=col_num)
                 fig2_ipc_.update_layout(legend_title_text='Variación')
+                fig2_ipc_.update_traces(hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>")
 
                 tab1, tab2 = st.tabs(["Evolutivo precios", "Variación vs IPC"])
                 with tab1:
@@ -823,64 +823,64 @@ else:
             st.subheader('', divider='grey')
 # ==========================================================================
 
-            # GRAFICO 6: evolución costo mano de obra cleas si vs cleas no
-            st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO')
-            # muestro el dataset
-            with st.expander("Ver tabla de datos",icon=":material/query_stats:"):
-                st.dataframe(df_cm_mo_cleas[df_cm_mo_cleas['tva'] != 'camion_cleas_si'], 
-                            hide_index=True,          
-                            column_config={
-                                "var_costo": st.column_config.NumberColumn(
-                                    "Var. Costo %", 
-                                    format="%.2f",
-                                ),
-                                "var_ipc": st.column_config.NumberColumn(
-                                    "Var. CM IPC %", 
-                                    format="%.2f",
-                                ),
-                                "var_costo_usd": st.column_config.NumberColumn(
-                                    "Var. CM en USD %", 
-                                    format="%.2f",
-                                    ),
-                                })    
+            # # GRAFICO 6: evolución costo mano de obra cleas si vs cleas no
+            # st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO')
+            # # muestro el dataset
+            # with st.expander("Ver tabla de datos",icon=":material/query_stats:"):
+            #     st.dataframe(df_cm_mo_cleas[df_cm_mo_cleas['tva'] != 'camion_cleas_si'], 
+            #                 hide_index=True,          
+            #                 column_config={
+            #                     "var_costo": st.column_config.NumberColumn(
+            #                         "Var. Costo %", 
+            #                         format="%.2f",
+            #                     ),
+            #                     "var_ipc": st.column_config.NumberColumn(
+            #                         "Var. CM IPC %", 
+            #                         format="%.2f",
+            #                     ),
+            #                     "var_costo_usd": st.column_config.NumberColumn(
+            #                         "Var. CM en USD %", 
+            #                         format="%.2f",
+            #                         ),
+            #                     })    
                                                  
-            # quito camion_cleas_si del df resumen por poca cantidad de datos
-            df_cm_mo_cleas = df_cm_mo_cleas[df_cm_mo_cleas['tva'] != 'camion_cleas_si']
-            fig14 = create_plot_orion(df_cm_mo_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio', 45)
-            fig14.update_traces(
-                    mode="lines+markers",
-                    marker=dict(size=1),)
+            # # quito camion_cleas_si del df resumen por poca cantidad de datos
+            # df_cm_mo_cleas = df_cm_mo_cleas[df_cm_mo_cleas['tva'] != 'camion_cleas_si']
+            # fig14 = create_plot_orion(df_cm_mo_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio', 45)
+            # fig14.update_traces(
+            #         mode="lines+markers",
+            #         marker=dict(size=1),)
 
-            df_cm_mo_cleas2 = df_cm_mo_cleas[
-                (df_cm_mo_cleas['tva'] == 'auto_cleas_no') & (df_cm_mo_cleas['tipo_costo'] != 'cm_hs_mec') |
-                (df_cm_mo_cleas['tva'] != 'auto_cleas_no')
-            ]
-            fig14_ipc = create_plot_orion(df_cm_mo_cleas2, 'var_costo', 'tva', 'tipo_costo', 'Variación (base 1)')
+            # df_cm_mo_cleas2 = df_cm_mo_cleas[
+            #     (df_cm_mo_cleas['tva'] == 'auto_cleas_no') & (df_cm_mo_cleas['tipo_costo'] != 'cm_hs_mec') |
+            #     (df_cm_mo_cleas['tva'] != 'auto_cleas_no')
+            # ]
+            # fig14_ipc = create_plot_orion(df_cm_mo_cleas2, 'var_costo', 'tva', 'tipo_costo', 'Variación (base 1)')
 
-            NUM_COLUMNS = 5
+            # NUM_COLUMNS = 5
         
-            for col_num in range (1, NUM_COLUMNS + 1):
+            # for col_num in range (1, NUM_COLUMNS + 1):
 
-                mostrar_leyenda = (col_num==1)
+            #     mostrar_leyenda = (col_num==1)
         
-                fig14_ipc.add_trace(go.Scatter(
-                    x=df_ipc_data['año_mes'],
-                    y=df_ipc_data['var_ipc'],
-                    name='IPC', 
-                    mode='lines',
-                    line=dict(color='white', dash='dot'), # Cambié a negro para asegurar visibilidad
-                    showlegend=mostrar_leyenda,     
-                ),
-                row=1, col=col_num)
+            #     fig14_ipc.add_trace(go.Scatter(
+            #         x=df_ipc_data['año_mes'],
+            #         y=df_ipc_data['var_ipc'],
+            #         name='IPC', 
+            #         mode='lines',
+            #         line=dict(color='white', dash='dot'), # Cambié a negro para asegurar visibilidad
+            #         showlegend=mostrar_leyenda,     
+            #     ),
+            #     row=1, col=col_num)
             
-            fig14_ipc.update_layout(legend_title_text='Variación')
-            fig14_ipc.update_traces(hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>")
+            # fig14_ipc.update_layout(legend_title_text='Variación')
+            # fig14_ipc.update_traces(hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>")
                 
-            tab1, tab2 = st.tabs(["Evolutivo CM ",'Variación vs IPC'])
-            with tab1:
-                st.plotly_chart(fig14, use_container_width=True)
-            with tab2:
-                st.plotly_chart(fig14_ipc, use_container_width=True)
+            # tab1, tab2 = st.tabs(["Evolutivo CM ",'Variación vs IPC'])
+            # with tab1:
+            #     st.plotly_chart(fig14, use_container_width=True)
+            # with tab2:
+            #     st.plotly_chart(fig14_ipc, use_container_width=True)
 
             
 # ----- GRAFICOS AJUSTADOS POR IPC --------------------------------------------------
@@ -991,33 +991,33 @@ else:
 # ==========================================================================
 
 # ----- GRAFICO 6: evolución costo mano de obra cleas si vs cleas no IPC
-            st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO - Ajust. por IPC')
+            # st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO - Ajust. por IPC')
 
-            # muestro el dataset
-            with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
-                st.dataframe(df_cm_mo_cleas, hide_index=True,
-                            column_config={
-                                "var_costo": st.column_config.NumberColumn(
-                                    "Var. Costo %", 
-                                    format="%.2f",
-                                ),
-                                "var_ipc": st.column_config.NumberColumn(
-                                    "Var. CM IPC %", 
-                                    format="%.2f",
-                                ),
-                                "var_costo_usd": st.column_config.NumberColumn(
-                                    "Var. CM en USD %", 
-                                    format="%.2f",
-                                    ),
-                                }) 
+            # # muestro el dataset
+            # with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
+            #     st.dataframe(df_cm_mo_cleas, hide_index=True,
+            #                 column_config={
+            #                     "var_costo": st.column_config.NumberColumn(
+            #                         "Var. Costo %", 
+            #                         format="%.2f",
+            #                     ),
+            #                     "var_ipc": st.column_config.NumberColumn(
+            #                         "Var. CM IPC %", 
+            #                         format="%.2f",
+            #                     ),
+            #                     "var_costo_usd": st.column_config.NumberColumn(
+            #                         "Var. CM en USD %", 
+            #                         format="%.2f",
+            #                         ),
+            #                     }) 
 
-            # quito camion_cleas_si del df resumen por poca cantidad de datos
-            df_cm_mo_cleas = df_cm_mo_cleas[df_cm_mo_cleas['tva'] != 'camion_cleas_si']
-            fig15 = create_plot_orion(df_cm_mo_cleas, 'valor_ipc', 'tva','tipo_costo', 'Costo Promedio ajust. por IPC')
-            fig15.update_traces(
-                    mode="lines+markers",
-                    marker=dict(size=1),)
-            st.plotly_chart(fig15, use_container_width=True)
+            # # quito camion_cleas_si del df resumen por poca cantidad de datos
+            # df_cm_mo_cleas = df_cm_mo_cleas[df_cm_mo_cleas['tva'] != 'camion_cleas_si']
+            # fig15 = create_plot_orion(df_cm_mo_cleas, 'valor_ipc', 'tva','tipo_costo', 'Costo Promedio ajust. por IPC')
+            # fig15.update_traces(
+            #         mode="lines+markers",
+            #         marker=dict(size=1),)
+            # st.plotly_chart(fig15, use_container_width=True)
 
         # ----- GRAFICOS EN USD -----
         elif st.session_state['selected_variation_type'] == "USD":
@@ -1129,35 +1129,35 @@ else:
 # ==========================================================================
 
             # gráfico 6: evolución costo mano de obra cleas si vs cleas no USD
-            st.subheader('6. Comparativa variación M.O en USD - CLEAS SI vs CLEAS NO')
+        #     st.subheader('6. Comparativa variación M.O en USD - CLEAS SI vs CLEAS NO')
 
-            # muestro el dataset
-            with st.expander("Ver tabla de datos",icon=":material/query_stats:"):
-                st.dataframe(df_cm_mo_cleas, hide_index=True,
-                                column_config={
-                                "var_costo": st.column_config.NumberColumn(
-                                    "Var. Costo %", 
-                                    format="%.2f",
-                                ),
-                                "var_ipc": st.column_config.NumberColumn(
-                                    "Var. CM IPC %", 
-                                    format="%.2f",
-                                ),
-                                "var_costo_usd": st.column_config.NumberColumn(
-                                    "Var. CM en USD %", 
-                                    format="%.2f",
-                                    ),
-                                }) 
+        #     # muestro el dataset
+        #     with st.expander("Ver tabla de datos",icon=":material/query_stats:"):
+        #         st.dataframe(df_cm_mo_cleas, hide_index=True,
+        #                         column_config={
+        #                         "var_costo": st.column_config.NumberColumn(
+        #                             "Var. Costo %", 
+        #                             format="%.2f",
+        #                         ),
+        #                         "var_ipc": st.column_config.NumberColumn(
+        #                             "Var. CM IPC %", 
+        #                             format="%.2f",
+        #                         ),
+        #                         "var_costo_usd": st.column_config.NumberColumn(
+        #                             "Var. CM en USD %", 
+        #                             format="%.2f",
+        #                             ),
+        #                         }) 
 
-            # quito camion_cleas_si del df resumen por poca cantidad de datos
-            df_cm_mo_cleas = df_cm_mo_cleas[df_cm_mo_cleas['tva'] != 'camion_cleas_si']
-            fig16 = create_plot_orion(df_cm_mo_cleas, 'valor_usd', 'tva','tipo_costo', 'Costo Promedio (USD)')
-            fig16.update_traces(
-                    mode="lines+markers",
-                    marker=dict(size=1),)
-            st.plotly_chart(fig16, use_container_width=True)
+        #     # quito camion_cleas_si del df resumen por poca cantidad de datos
+        #     df_cm_mo_cleas = df_cm_mo_cleas[df_cm_mo_cleas['tva'] != 'camion_cleas_si']
+        #     fig16 = create_plot_orion(df_cm_mo_cleas, 'valor_usd', 'tva','tipo_costo', 'Costo Promedio (USD)')
+        #     fig16.update_traces(
+        #             mode="lines+markers",
+        #             marker=dict(size=1),)
+        #     st.plotly_chart(fig16, use_container_width=True)
 
-        '''Se descarta línea del gráfico de 'camion_cleas_si' por poca cantidad de datos'''
+        # '''Se descarta línea del gráfico de 'camion_cleas_si' por poca cantidad de datos'''
 # ==========================================================================
 # ---- Análisis por PROVINCIA ----------------------------------------------
 # ==========================================================================
@@ -1756,7 +1756,7 @@ else:
             "Daños Materiales": "danos_materiales",
             "Cascos": "cascos",
             "Acc. Total - Robo Total - Inc. Total": "dt_rt_it",
-            # 'Lesiones': 'lesiones'
+            'Lesiones': 'lesiones'
         }   
 
         st.markdown("##### **Seleccionar tipo de cobertura a analizar:**") 
@@ -4752,219 +4752,134 @@ else:
 # EVOLUTIVO PAGOS LESIONES
 # ========================================================================
 
-        # elif seleccion_pago == 'Lesiones':
-        #             st.markdown('## Evolución de monto de pagos de Lesiones (L2)')    
-        #             st.markdown("---")
-        #             st.markdown("#### _Fuente de datos:_ \
-        #                 \n:white_small_square: _La Segunda BI (pagos)_")
-        #             st.markdown('---')
+        elif seleccion_pago == 'Lesiones':
+                    st.markdown('## Evolución de monto de pagos de Lesiones (L2)')    
+                    st.markdown("---")
+                    st.markdown("#### _Fuente de datos:_ \
+                        \n:white_small_square: _La Segunda BI (pagos)_")
+                    st.markdown('---')
 
-        #             def create_plot_pagos(df_source, y1, y2, y3, title, x_tickangle=45):
+                    def create_plot_pagos(df_source, y1, y2, y3, title, x_tickangle=45):
 
-        #                 df_source.sort_values('año_mes_fp', inplace=True)
-        #                 df_plot = df_source.groupby('año_mes_fp').agg(
-        #                     {
-        #                     y1: 'mean',
-        #                     y2: 'mean',           
-        #                     y3: 'mean'         
-        #                     }).reset_index()
+                        df_source.sort_values('año_mes_fp', inplace=True)
+                        df_plot = df_source.groupby('año_mes_fp').agg(
+                            {
+                            y1: 'mean',
+                            y2: 'mean',           
+                            y3: 'mean'         
+                            }).reset_index()
 
-        #                 # Columnas y etiquetas específicas para el gráfico (ajustadas al gráfico de la imagen)
-        #                 y1_cols = [y1, y2] # Eje ARS (Primario)
-        #                 y2_cols = [y3]                        # Eje USD (Secundario)
+                        # Columnas y etiquetas específicas para el gráfico (ajustadas al gráfico de la imagen)
+                        y1_cols = [y1, y2] # Eje ARS (Primario)
+                        y2_cols = [y3]                        # Eje USD (Secundario)
                         
-        #                 y1_label = "Monto (ARS)"
-        #                 y2_label = "Monto (USD)"
-        #                 x_col = 'año_mes_fp'
+                        y1_label = "Monto (ARS)"
+                        y2_label = "Monto (USD)"
+                        x_col = 'año_mes_fp'
 
 
-        #                 line_colors = {
-        #                     y1: '#1f77b4', 
-        #                     y2: '#ff7f0e',       
-        #                     y3: '#2ca02c'           
-        #                 }
-        #                 legend_names = {
-        #                     y1: y1,
-        #                     y2: y2,
-        #                     y3: y3
-        #                 }
+                        line_colors = {
+                            y1: '#1f77b4', 
+                            y2: '#ff7f0e',       
+                            y3: '#2ca02c'           
+                        }
+                        legend_names = {
+                            y1: y1,
+                            y2: y2,
+                            y3: y3
+                        }
 
-        #                 fig = make_subplots(specs=[[{"secondary_y": True}]])
+                        fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        #                 #  eje primario
-        #                 for col in y1_cols:
-        #                     fig.add_trace(
-        #                         go.Scatter(
-        #                             x=df_plot[x_col], 
-        #                             y=df_plot[col], 
-        #                             name=legend_names[col],
-        #                             line=dict(color=line_colors[col], width=3), 
-        #                             showlegend=True,
-        #                             # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} ARS<extra></extra>"
-        #                         ),
-        #                         secondary_y=False, # Eje Y Izquierdo
-        #                     )
+                        #  eje primario
+                        for col in y1_cols:
+                            fig.add_trace(
+                                go.Scatter(
+                                    x=df_plot[x_col], 
+                                    y=df_plot[col], 
+                                    name=legend_names[col],
+                                    line=dict(color=line_colors[col], width=3), 
+                                    showlegend=True,
+                                    # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} ARS<extra></extra>"
+                                ),
+                                secondary_y=False, # Eje Y Izquierdo
+                            )
 
-        #                 # eje secundario
-        #                 for col in y2_cols:
-        #                     fig.add_trace(
-        #                         go.Scatter(
-        #                             x=df_plot[x_col], 
-        #                             y=df_plot[col], 
-        #                             name=legend_names[col],
-        #                             line=dict(color=line_colors[col], width=3),
-        #                             showlegend=True,
-        #                             # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} USD<extra></extra>"
-        #                         ),
-        #                         secondary_y=True, # Eje Y Derecho
-        #                     )
+                        # eje secundario
+                        for col in y2_cols:
+                            fig.add_trace(
+                                go.Scatter(
+                                    x=df_plot[x_col], 
+                                    y=df_plot[col], 
+                                    name=legend_names[col],
+                                    line=dict(color=line_colors[col], width=3),
+                                    showlegend=True,
+                                    # hovertemplate=f"{legend_names[col]}: %{{y:.2f}} USD<extra></extra>"
+                                ),
+                                secondary_y=True, # Eje Y Derecho
+                            )
 
 
-        #                 fig.update_yaxes(title_text=f"{y1_label}", secondary_y=False, nticks=14, showgrid=True)
-        #                 fig.update_yaxes(title_text=f"{y2_label}", secondary_y=True, nticks=14, showgrid=False)
+                        fig.update_yaxes(title_text=f"{y1_label}", secondary_y=False, nticks=14, showgrid=True)
+                        fig.update_yaxes(title_text=f"{y2_label}", secondary_y=True, nticks=14, showgrid=False)
 
-        #                 # Ajustes del Gráfico
-        #                 fig.update_layout(
-        #                     title_text=title,
-        #                     hovermode="x unified",
-        #                     height=700,
-        #                     legend_title_text='', # Dejar vacío ya que el nombre de la línea lo explica
-        #                     font=dict(family="Arial", size=15),
-        #                     margin=dict(t=100, b=0, l=0, r=0),
-        #                     title=dict(
-        #                         font=dict(size=20, family="Arial"),
-        #                     ),
-        #                 )
-        #                 # Mejorar el hover para que muestre 2 decimales
-        #                 fig.update_traces(
-        #                     mode="lines+markers",
-        #                     marker=dict(size=4),
-        #                     hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
-        #                 )
+                        # Ajustes del Gráfico
+                        fig.update_layout(
+                            title_text=title,
+                            hovermode="x unified",
+                            height=700,
+                            legend_title_text='', # Dejar vacío ya que el nombre de la línea lo explica
+                            font=dict(family="Arial", size=15),
+                            margin=dict(t=100, b=0, l=0, r=0),
+                            title=dict(
+                                font=dict(size=20, family="Arial"),
+                            ),
+                        )
+                        # Mejorar el hover para que muestre 2 decimales
+                        fig.update_traces(
+                            mode="lines+markers",
+                            marker=dict(size=4),
+                            hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+                        )
 
-        #                 # eje X
-        #                 fig.update_xaxes(
-        #                     tickangle=x_tickangle, 
-        #                     showticklabels=True,
-        #                     title_text=''
-        #                 )
+                        # eje X
+                        fig.update_xaxes(
+                            tickangle=x_tickangle, 
+                            showticklabels=True,
+                            title_text=''
+                        )
                                 
-        #                 return fig
+                        return fig
 
-        #             fig_pagos_lesiones = create_plot_pagos(
-        #                 df_pagos_lesiones, 
-        #                 'monto_transaccion',
-        #                 'pago_ipc',
-        #                 'pago_usd',
-        #                 title=f'Pagos promedio de Lesiones (terceros) (L2) -', 
-        #                 x_tickangle=45
-        #             )
-        #             st.plotly_chart(fig_pagos_lesiones, use_container_width=True)
+                    fig_pagos_lesiones = create_plot_pagos(
+                        df_pagos_lesiones, 
+                        'monto_transaccion',
+                        'pago_ipc',
+                        'pago_usd',
+                        title=f'Pagos promedio de Lesiones (terceros) (L2) -', 
+                        x_tickangle=45
+                    )
+                    st.plotly_chart(fig_pagos_lesiones, use_container_width=True)
                     
-        #             df_pagos_lesiones.sort_values('año_mes_fp', inplace=True)
+                    df_pagos_lesiones.sort_values('año_mes_fp', inplace=True)
 
-        #             df_pagos_lesiones_tabla = df_pagos_lesiones.groupby(['año_mes_fp']).agg(
-        #                 {'monto_transaccion': 'mean',
-        #                 'pago_ipc': 'mean',           
-        #                 'pago_usd': 'mean'}).reset_index()
+                    df_pagos_lesiones_tabla = df_pagos_lesiones.groupby(['año_mes_fp']).agg(
+                        {'monto_transaccion': 'mean',
+                        'pago_ipc': 'mean',           
+                        'pago_usd': 'mean'}).reset_index()
                     
-        #             df_pagos_lesiones_tabla.monto_transaccion = df_pagos_lesiones_tabla.monto_transaccion.round(0).astype(int) 
-        #             df_pagos_lesiones_tabla.pago_usd = df_pagos_lesiones_tabla.pago_usd.round(0).astype(int) 
-        #             df_pagos_lesiones_tabla.pago_ipc = df_pagos_lesiones_tabla.pago_ipc.round(0).astype(int)
+                    df_pagos_lesiones_tabla.monto_transaccion = df_pagos_lesiones_tabla.monto_transaccion.round(0).astype(int) 
+                    df_pagos_lesiones_tabla.pago_usd = df_pagos_lesiones_tabla.pago_usd.round(0).astype(int) 
+                    df_pagos_lesiones_tabla.pago_ipc = df_pagos_lesiones_tabla.pago_ipc.round(0).astype(int)
 
-        #             with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
-        #                 st.dataframe(df_pagos_lesiones_tabla, hide_index=True, width=900)
+                    with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
+                        st.dataframe(df_pagos_lesiones_tabla, hide_index=True, width=900)
 
 
 
 # ========================================================================
 # COMPOSICION DE CARTERA POR MARCA - PARTICIPACION DE MERCADO Y RATIOS
 # ========================================================================
-
-    elif current_analysis == opcion_0:
-        
-        def generar_grafico_comparativo(df_long):
-            
-            fig = px.bar(
-                df_long,
-                x='Variable',
-                y='Valor',
-                color='marca',
-                barmode='group',
-                title="Comparativa por Marca (Participación y Ratios)",
-                labels={'Valor': 'Valor (%)', 'Variable': 'Métrica Analizada', 'marca': 'Marca'},
-                height=700,
-                # width=1000,
-                color_discrete_sequence=px.colors.qualitative.Bold
-            )
-
-            # Ajustes estéticos
-            fig.update_layout(
-                showlegend=True,
-                legend_title_text='',
-                font=dict(family="Arial", size=11),
-                margin=dict(t=80, b=50, l=50, r=50),
-                hovermode="x unified",
-                legend=dict(
-                    orientation="h",        # leyenda horizontalmente
-                    yanchor="top",          
-                    y=-0.2, 
-                    xanchor="center",  
-                    x=0.5),
-                bargap=0.15,    
-                bargroupgap=0.1,
-                title=dict(
-                    font=dict(size=17, family="Arial")               
-            ))
-            fig.update_xaxes(title_text=None)
-            # Añadimos etiquetas sobre las barras para mayor claridad
-            fig.update_traces(
-                texttemplate='%{y:.1f}', 
-                textposition='outside',
-                cliponaxis=False # Evita que se corten los números arriba
-            )
-            
-            return fig
-        
-
-        st.markdown('### Composición de cartera - La Segunda')
-        # fuente de datos bi
-        st.markdown("#### _Fuente de datos:_ \
-            \n:white_small_square: _La Segunda BI_")
-
-        st.markdown('---') 
-
-        st.markdown('##### :calendar: Período 2024-2025')
-        st.dataframe(
-            tabla_marcas_año,
-            use_container_width=True,
-            hide_index=True,)
-        
-        st.markdown('')
-        st.markdown('##### :arrow_right: Composición de la cartera por Marca - Corte en 20 primeras marcas')
-        st.dataframe(
-            tabla_marcas_head_20[['marca', 'prima_dev_hist', 'prima_%','prima_%_acum', 'prima_dev_ipc','prima_dev_ipc_%', 'prima_dev_ipc_%_acum',
-                'ar_t', 'ar_%', 'ar_%_acum', 'ns_t', 'ns_t_%', 'ns_t_%_acum',
-                'ns_t_nro_sin', 'is_t', 'is_t_%', 'is_t_%_acum', 'is_t_ipc', 'is_t_ipc_%', 'is_t_ipc_%_acum',
-                'sin', 'sin_ipc', 'frec']],
-            use_container_width=True,
-            hide_index=True,)
-        
-        st.markdown('')
-        st.markdown('##### :arrow_right: Composición de la cartera por Marca - Corte en 8 primeras marcas')
-        st.dataframe(
-            tabla_marcas_head_8[['marca', 'prima_dev_hist', 'prima_%','prima_%_acum', 'prima_dev_ipc','prima_dev_ipc_%', 'prima_dev_ipc_%_acum',
-                'ar_t', 'ar_%', 'ar_%_acum', 'ns_t', 'ns_t_%', 'ns_t_%_acum',
-                'ns_t_nro_sin', 'is_t', 'is_t_%', 'is_t_%_acum', 'is_t_ipc', 'is_t_ipc_%', 'is_t_ipc_%_acum',
-                'sin', 'sin_ipc', 'frec']],
-            use_container_width=True,
-            hide_index=True,)
-        
-        st.markdown('')
-        # st.markdown('##### :: Gráfico comparativo de métricas clave por Marca')
-        fig_comparativo = generar_grafico_comparativo(df_graf_cartera)
-        st.plotly_chart(fig_comparativo, use_container_width=True)
-
 
     elif current_analysis == opcion_0:
         
@@ -5823,7 +5738,7 @@ else:
             'Part % H': "{:.2f}%",
             'Part % IPC': "{:.2f}%",
             'Part % USD': "{:.2f}%",
-            '% Monto Particulares': "{:.2f}%",
+            '% Monto Particulares vs. Total': "{:.2f}%",
         })
         st.dataframe(df_view2, hide_index=True, use_container_width=True,)
 
@@ -5863,6 +5778,7 @@ else:
         with tab1:
             # st.markdown("##### Indice histórico")
             cols = [c for c in df_indice_h.columns if c != 'Mes_Año']
+            # st.write(cols)
             formatos = {col: "{:,.2f}" for col in cols}
             df_view6 = df_indice_h.style.format(formatos)
 
