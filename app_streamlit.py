@@ -27,7 +27,6 @@ st.set_page_config(
 try:
     # df PKT (cristales)
     df_cristal = pd.read_csv('data/base_pkt_abril.csv')
-    df_pagos_cristal = pd.read_csv('data/pagos_pkt_ok.csv')
 
     # dfs de repuestos orion/cesvi
     df_tipo_rep = pd.read_csv('data/df_tipo_rep_marzo.csv')
@@ -64,7 +63,7 @@ try:
     df_tot_reparacion = pd.read_csv('data/df_tot_reparacion_100426.csv')
 
     # df pagos ruedas
-    df_pagos_ruedas = pd.read_csv('data/pagos_ruedas_ok.csv')
+    df_pagos_ruedas = pd.read_csv('data/pagos_ruedas.csv')
     # df pagos materiales
     df_pagos_materiales = pd.read_csv('data/pagos_dano_mat_ok.csv', keep_default_na=False, na_values=[])
     # df pagos cascos
@@ -72,36 +71,39 @@ try:
     # df pagos dt rt it
     df_pagos_dt_rt_it = pd.read_csv('data/pagos_dt_rt_it.csv')
     # df pagos lesiones
-    df_pagos_lesiones = pd.read_csv('data/pagos_lesiones.csv')
+    df_pagos_lesiones = pd.read_csv('data/pagos_lesiones_ok.csv')
+    # pagos cristales
+    df_pagos_cristal = pd.read_csv('data/pagos_cristales.csv')
 
     # tablas aux
-    tabla_marcas_año = pd.read_parquet('data/tabla_20242025_medidas.parquet')
-    tabla_marcas_head_8 = pd.read_parquet('data/tabla_marcas_head.parquet')
-    tabla_marcas_head_20 = pd.read_parquet('data/tabla_marcas_head_20.parquet')
+    tabla_marcas_año = pd.read_parquet('data/tabla_años_medidas.parquet')
+    tabla_marcas_head_8 = pd.read_parquet('data/tabla_marcas_medidas_head.parquet')
     df_graf_cartera = pd.read_parquet('data/df_grafico_cartera.parquet')
 
     # sa vs rep - info autos
-    df_sa_rep = pd.read_csv('data/df_sa_rep.csv')
+    # df_sa_rep = pd.read_csv('data/df_sa_rep.csv')
     # sa vs rep - cartera L2
-    df_sa_rep_cartera = pd.read_parquet('data/df_sa_rep_cartera.parquet') # sa cartera todos los planes y plan 30 / costo prom repuestos orion
-    df_sa_rep_cartera_marcas = pd.read_parquet('data/df_sa_rep_cartera_marcas.parquet')
+    df_sa_rep_cartera = pd.read_parquet('data/df_sa_rep_cartera_marzo.parquet') # sa cartera todos los planes y plan 30 / costo prom repuestos orion
+    df_sa_rep_cartera_marcas = pd.read_parquet('data/df_sa_rep_cartera_marcas_marzo.parquet')
 
     # ruedas - grant
     df_ruedas_grant = pd.read_parquet('data/costo_medio_ruedas_grant.parquet')
     df_neum_grant = pd.read_parquet('data/costo_prom_neumatico.parquet')
 
     # INDICE
-    df_pond = pd.read_parquet('data/df_ponderaciones.parquet')
-    df_pond_autos = pd.read_parquet('data/df_ponderaciones_autos.parquet')
+    df_pond = pd.read_parquet('data/df_ponderaciones_marzo.parquet')
+    df_pond_autos = pd.read_parquet('data/df_ponderaciones_autos_marzo.parquet')
     df_mostrar_pesos = pd.read_parquet('data/df_mostrar_pesos.parquet')
 
     df_datos_mensuales_hist = pd.read_parquet('data/df_datos_mensuales_hist.parquet')
     df_datos_mensuales_ipc = pd.read_parquet('data/df_datos_mensuales_ipc.parquet')
     df_datos_mensuales_usd = pd.read_parquet('data/df_datos_mensuales_usd.parquet')
 
-    df_indice_h = pd.read_parquet('data/df_indice_h.parquet')
-    df_indice_ipc = pd.read_parquet('data/df_indice_ipc.parquet')
-    df_indice_usd = pd.read_parquet('data/df_indice_usd.parquet')
+    df_indice_h = pd.read_parquet('data/df_indice_h_marzo.parquet')
+    df_indice_ipc = pd.read_parquet('data/df_indice_ipc_marzo.parquet')
+    df_indice_usd = pd.read_parquet('data/df_indice_usd_marzo.parquet')
+
+    df_indice_sa = pd.read_parquet('data/df_indice_sa_marzo.parquet')
 
 except FileNotFoundError as e:
     st.error(f"Error: No se encuentra el archivo CSV. \nDetalles: {e}")
@@ -487,7 +489,8 @@ else:
                 x='año_mes',
                 y=y_col,
                 color=color,
-                color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+                color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", 
+                                         "cyan", "orange", '#2CA02C', '#FFD700', '#4B0082', '#FF69B4'],
                 facet_col=facet_col,
                 # line_group='marca',
                 #title='', agrego titulo con subheader
@@ -1416,7 +1419,7 @@ else:
                 x='anio_mes',
                 y=y_col,
                 color=color,
-                color_discrete_sequence=["gray", "cyan", "#FB0D0D", '#2CA02C', "blue", "magenta", "orange", ],
+                color_discrete_sequence=["gray", "cyan", "#FB0D0D", '#2CA02C', "blue", "magenta", "orange", '#FFD700', '#4B0082', '#FF69B4' ],
                 facet_col=facet_col,
                 labels={'value': y_label, 'anio_mes': ''}
             )
@@ -1463,7 +1466,7 @@ else:
                 x='anio_mes',
                 y=y_col,
                 color=color,
-                color_discrete_sequence=["gray", "cyan", "#FB0D0D", '#2CA02C', "blue", "magenta", "orange"],
+                color_discrete_sequence=["gray", "cyan", "#FB0D0D", '#2CA02C', "blue", "magenta", "orange", '#FFD700', '#4B0082', '#FF69B4'],
                 facet_col=facet_col,
                 labels={'value': y_label, 'anio_mes': ''}
             )
@@ -1901,7 +1904,8 @@ else:
                     x='año_mes_fecha_pago',
                     y=y_col,
                     color=color,
-                    color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+                    color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", 
+                                             "magenta", "cyan", "orange", '#2CA02C', '#FFD700', '#4B0082', '#FF69B4'],
                     facet_col=facet_col,
                     labels={'año_mes_fecha_pago': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
                 )
@@ -1956,7 +1960,7 @@ else:
                 selected_tipo_cristal = st.selectbox(
                     "Tipo cristal",
                     options=available_tipo_cristal,
-                    index=0,
+                    index=4,
                     label_visibility ='collapsed',
                 )
                 st.markdown("---")
@@ -1990,6 +1994,32 @@ else:
                     final_marcas_to_filter = selected_marcas
 
     # ----- PAGOS CRISTALES EVOLUTIVO --------------------------------------------------
+
+            agg_cols = {
+                    'monto_transaccion': 'sum', # Promedio de Monto Transaccion
+                    'pago_ipc': 'sum', # Promedio de Pago IPC
+                    'pago_usd': 'sum', # Promedio de Pago USD
+                }
+
+            tabla = df_pagos_cristal.groupby('tipo_cristal').agg(agg_cols).reset_index().sort_values(by='monto_transaccion',ascending=False)
+
+            st.markdown("###### :memo: Resumen de pagos por Tipo Cristal/TV")
+            
+            tabla_view = tabla.style.format({
+                'monto_transaccion': "$ {:,.0f}",
+                'pago_ipc': "$ {:,.0f}",
+                'pago_usd': "$ {:,.0f}",
+            })
+
+            with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
+                st.dataframe(tabla_view, use_container_width=True, hide_index=True, column_config=
+                    {
+                    'tipo_cristal': 'Tipo Cristal / TV',
+                    'monto_transaccion': 'Monto Transacción', 'pago_ipc': 'Pagos ajust. IPC', 'pago_usd': 'Pagos en USD'
+                    }
+                )   
+
+
             fig_pagos_cristal = create_plot_pagos(
                 df_pagos_cristal, 
                 'monto_transaccion',
@@ -2142,8 +2172,14 @@ else:
                     [df_participacion, fila_total],
                     ignore_index=True
                 )
+                df_participacion_view = df_participacion.style.format({
+                            'monto_transaccion': "$ {:,.0f}",
+                        })
 
-                st.dataframe(df_participacion.rename(columns={'monto_transaccion':'Suma de Pagos'}), hide_index=True, width=450, height=600)
+                st.dataframe(df_participacion_view, 
+                             hide_index=True, width=450, height=600, column_config={
+                                 'marca_vehiculo': 'Marca',
+                                 'monto_transaccion': 'Suma de Pagos',})
 
     # ----- PARTICIPACION POR MODELO --------------------------------------------------
             with column_2:
@@ -2201,7 +2237,12 @@ else:
                         .astype(str) + ' %'
                     )
 
-                    st.dataframe(df_modelos_participacion, hide_index=True, width=450, height=600)
+                    df_modelos_participacion_view = df_modelos_participacion.style.format({
+                        'Suma de Pagos': "$ {:,.0f}",
+                    })
+
+                    st.dataframe(df_modelos_participacion_view, hide_index=True, width=450, height=600, column_config={
+                                 'modelo_vehiculo': 'Modelo'})
 
                 else:
                     st.info("Por favor, seleccione una marca de vehículo para ver la participación por modelo.")
@@ -2307,7 +2348,7 @@ else:
                 MONTO_COLS = ['monto_transaccion', 'pago_ipc', 'pago_usd']
 
                 # Calculamos los promedios
-                promedios_globales = df_pagos_ruedas[MONTO_COLS].mean().round(2)
+                promedios_globales = df_pagos_cristal[MONTO_COLS].mean().round(2)
 
                 promedios_marca = df_filtered_by_brand[MONTO_COLS].mean().round(2)
 
@@ -2483,7 +2524,8 @@ else:
                     x='año_mes_fecha_pago',
                     y=y_col,
                     color=color,
-                    color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+                    color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta",
+                                              "cyan", "orange", '#2CA02C', '#FFD700', '#4B0082', '#FF69B4'],
                     facet_col=facet_col,
                     labels={'año_mes_fecha_pago': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
                 )
@@ -2728,7 +2770,13 @@ else:
                     ignore_index=True
                 )
 
-                st.dataframe(df_participacion.rename(columns={'monto_transaccion':'Suma de Pagos'}), hide_index=True, width=450, height=600)
+                df_participacion_view = df_participacion.style.format({
+                            'monto_transaccion': "$ {:,.0f}",
+                        })
+
+                st.dataframe(df_participacion_view, hide_index=True, width=450, height=600, column_config={
+                                 'marca_vehiculo': 'Marca',
+                                 'monto_transaccion': 'Suma de Pagos'})
 
     # ----- PARTICIPACION POR MODELO --------------------------------------------------
             with column_2:
@@ -2785,8 +2833,12 @@ else:
                         .astype(int)
                         .astype(str) + ' %'
                     )
+                    df_modelos_participacion_view = df_modelos_participacion.style.format({
+                        'Suma de Pagos': "$ {:,.0f}",
+                    })
 
-                    st.dataframe(df_modelos_participacion, hide_index=True, width=450, height=600)
+                    st.dataframe(df_modelos_participacion_view, hide_index=True, width=450, height=600, column_config={
+                                 'modelo_vehiculo': 'Modelo'})
 
                 else:
                     st.info("Por favor, seleccione una marca de vehículo para ver la participación por modelo.")
@@ -3064,7 +3116,8 @@ else:
                         x='año_mes_fecha_pago',
                         y=y_col,
                         color=color,
-                        color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+                        color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta",
+                                                  "cyan", "orange", '#2CA02C', '#FFD700', '#4B0082', '#FF69B4'],
                         facet_col=facet_col,
                         labels={'año_mes_fecha_pago': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
                     )
@@ -3121,7 +3174,7 @@ else:
                     selected_tv = st.selectbox(
                         "TV",
                         options=available_tv,
-                        index=5,
+                        index=4,
                         label_visibility ='collapsed',
                     )
                     st.markdown("---")
@@ -3154,7 +3207,7 @@ else:
                     else:
                         final_marcas_to_filter = selected_marcas
 
-        # ----- PAGOS ROBO DE RUEDAS EVOLUTIVO --------------------------------------------------
+        # ----- PAGOS DAÑOS MATERIALES EVOLUTIVO --------------------------------------------------
                 agg_cols = {
                     'monto_transaccion': 'sum', # Promedio de Monto Transaccion
                     'pago_ipc': 'sum', # Promedio de Pago IPC
@@ -3165,8 +3218,19 @@ else:
 
                 st.markdown("###### :memo: Resumen de pagos por TV")
                 
+                tabla_view = tabla.style.format({
+                    'monto_transaccion': "$ {:,.0f}",
+                    'pago_ipc': "$ {:,.0f}",
+                    'pago_usd': "$ {:,.0f}",
+                })
+
                 with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
-                    st.dataframe(tabla, use_container_width=True, hide_index=True)
+                    st.dataframe(tabla_view, use_container_width=True, hide_index=True, column_config=
+                        {
+                        'cobertura': 'Cobertura',
+                        'monto_transaccion': 'Monto Transacción', 'pago_ipc': 'Pagos ajust. IPC', 'pago_usd': 'Pagos en USD'
+                        }
+                    )   
 
                 fig_pagos_mat = create_plot_pagos(
                     df_pagos_materiales, 
@@ -3192,13 +3256,23 @@ else:
                 pagos_mat_filtered.pago_usd = pagos_mat_filtered.pago_usd.round(0).astype(int) 
                 pagos_mat_filtered.pago_ipc = pagos_mat_filtered.pago_ipc.round(0).astype(int)
 
+                pagos_mat_filtered_view = tabla.style.format({
+                    'monto_transaccion': "$ {:,.0f}",
+                    'pago_ipc': "$ {:,.0f}",
+                    'pago_usd': "$ {:,.0f}",
+                })
+
                 with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
-                    st.dataframe(pagos_mat_filtered, hide_index=True, width=900)
+                    st.dataframe(pagos_mat_filtered_view, hide_index=True, width=900, column_config=
+                        {
+                        'año_mes_fecha_pago': 'Fecha Pago (año-mes)',
+                        'monto_transaccion': 'Monto Transacción', 'pago_ipc': 'Pagos ajust. IPC', 'pago_usd': 'Pagos en USD'
+                        })
 
                 st.subheader('', divider='grey')
 
 
-        # ----- ROBO DE RUEDAS POR MARCA --------------------------------------------------
+        # ----- DAÑOS MATERIALES POR MARCA --------------------------------------------------
 
                 fig_pagos_mat_hist = create_plot_pagos_marcas(
                     df_pagos_materiales,
@@ -3206,7 +3280,7 @@ else:
                     'marca_vehiculo',
                     None,
                     'Monto histórico',
-                    title=f'Pagos robo de ruedas históricos por marca - {selected_tv}', 
+                    title=f'Pagos Daños Materiales históricos por marca - {selected_tv}', 
                     x_tickangle=45)
                 
                 fig_pagos_mat_ipc = create_plot_pagos_marcas(
@@ -3215,7 +3289,7 @@ else:
                     'marca_vehiculo',
                     None,
                     'Monto IPC',
-                    title=f'Pagos robo de ruedas por marca ajustados por IPC - {selected_tv}', 
+                    title=f'Pagos Daños Materiales por marca ajustados por IPC - {selected_tv}', 
                     x_tickangle=45)
                 
                 fig_pagos_mat_usd = create_plot_pagos_marcas(
@@ -3224,7 +3298,7 @@ else:
                     'marca_vehiculo',
                     None,
                     'Monto USD',
-                    title=f'Pagos robo de ruedas por marca en valor USD - {selected_tv}', 
+                    title=f'Pagos Daños Materiales por marca en valor USD - {selected_tv}', 
                     x_tickangle=45)
 
 
@@ -3242,20 +3316,33 @@ else:
                     ]
                 df_tabla_mat = df_resumen_mat.groupby(['año_mes_fecha_pago','marca_vehiculo']).agg(
                     {'monto_transaccion': 'mean',
-                    'pago_usd': 'mean',           
-                    'pago_ipc': 'mean'}).reset_index()
+                    'pago_ipc': 'mean',
+                    'pago_usd': 'mean'}).reset_index()
                 
                 df_tabla_mat.monto_transaccion = df_tabla_mat.monto_transaccion.round(0).astype(int) 
                 df_tabla_mat.pago_usd = df_tabla_mat.pago_usd.round(0).astype(int) 
                 df_tabla_mat.pago_ipc = df_tabla_mat.pago_ipc.round(0).astype(int)
 
+                df_tabla_mat_view = df_tabla_mat.style.format({
+                    'monto_transaccion': "$ {:,.0f}",
+                    'pago_ipc': "$ {:,.0f}",
+                    'pago_usd': "$ {:,.0f}",
+                })
+
                 with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
-                    st.dataframe(df_tabla_mat, hide_index=True, width=900)
+                    st.dataframe(df_tabla_mat_view, hide_index=True, width=900, column_config=
+                        {
+                        'año_mes_fecha_pago': 'Fecha Pago (año-mes)',
+                        'marca_vehiculo': 'Marca',
+                        'monto_transaccion': 'Monto Transacción', 
+                        'pago_ipc': 'Pagos ajust. IPC', 
+                        'pago_usd': 'Pagos en USD'
+                        })
 
                 st.subheader('', divider='grey')
 
                 
-        # ----- COMPARATIVO PARTICIPACION DE MERCADO ROBO DE RUEDAS POR MARCA --------------------------
+        # ----- COMPARATIVO PARTICIPACION DE MERCADO Daños Materiales POR MARCA --------------------------
 
                 column_1, column_2 = st.columns(2)
 
@@ -3321,7 +3408,13 @@ else:
                         ignore_index=True
                     )
 
-                    st.dataframe(df_participacion.rename(columns={'monto_transaccion':'Suma de Pagos'}), hide_index=True, width=450, height=600)
+                    df_participacion_view = df_participacion.style.format({
+                        'monto_transaccion': "$ {:,.0f}",
+                    })
+
+                    st.dataframe(df_participacion_view, hide_index=True, width=450, height=600,
+                                 column_config={
+                                     'monto_transaccion': 'Suma de Pagos'})
 
         # ----- PARTICIPACION POR MODELO --------------------------------------------------
                 with column_2:
@@ -3379,7 +3472,11 @@ else:
                             .astype(str) + ' %'
                         )
 
-                        st.dataframe(df_modelos_participacion, hide_index=True, width=450, height=600)
+                        df_modelos_participacion_view = df_modelos_participacion.style.format({
+                            'Suma de Pagos': "$ {:,.0f}",
+                        })
+
+                        st.dataframe(df_modelos_participacion_view, hide_index=True, width=450, height=600)
 
                     else:
                         st.info("Por favor, seleccione una marca de vehículo para ver la participación por modelo.")
@@ -3658,7 +3755,8 @@ else:
                             x='año_mes_fecha_pago',
                             y=y_col,
                             color=color,
-                            color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+                            color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta",
+                                                      "cyan", "orange", '#2CA02C', '#FFD700', '#4B0082', '#FF69B4'],
                             facet_col=facet_col,
                             labels={'año_mes_fecha_pago': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
                         )
@@ -3750,7 +3848,7 @@ else:
                         else:
                             final_marcas_to_filter = selected_marcas
 
-            # ----- PAGOS ROBO DE RUEDAS EVOLUTIVO --------------------------------------------------
+            # ----- PAGOS CASCOS EVOLUTIVO --------------------------------------------------
                     agg_cols = {
                         'monto_transaccion': 'sum', # Promedio de Monto Transaccion
                         'pago_ipc': 'sum', # Promedio de Pago IPC
@@ -3760,9 +3858,20 @@ else:
                     tabla = df_pagos_cascos.groupby('cobertura_principal').agg(agg_cols).reset_index().sort_values(by='monto_transaccion',ascending=False).rename(columns={'cobertura_principal':'cobertura'})
 
                     st.markdown("###### :memo: Resumen de pagos por TV")
+
+                    tabla_view = tabla.style.format({
+                        'monto_transaccion': "$ {:,.0f}",
+                        'pago_ipc': "$ {:,.0f}",
+                        'pago_usd': "$ {:,.0f}",
+                    })
                     
                     with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
-                        st.dataframe(tabla, use_container_width=True, hide_index=True)
+                        st.dataframe(tabla_view, use_container_width=True, hide_index=True, column_config=
+                                     {  'cobertura': 'Cobertura',
+                                        'monto_transaccion': 'Monto Transacción',
+                                         'pago_ipc': 'Pagos ajust. IPC',
+                                         'pago_usd': 'Pagos en USD'}
+                                         )
 
                     fig_pagos_mat = create_plot_pagos(
                         df_pagos_cascos, 
@@ -3794,7 +3903,7 @@ else:
                     st.subheader('', divider='grey')
 
 
-            # ----- ROBO DE RUEDAS POR MARCA --------------------------------------------------
+            # ----- CASCOS POR MARCA --------------------------------------------------
 
                     fig_pagos_mat_hist = create_plot_pagos_marcas(
                         df_pagos_cascos,
@@ -3802,7 +3911,7 @@ else:
                         'marca_vehiculo',
                         None,
                         'Monto histórico',
-                        title=f'Pagos robo de ruedas históricos por marca - {selected_tv}', 
+                        title=f'Pagos Cascos históricos por marca - {selected_tv}', 
                         x_tickangle=45)
                     
                     fig_pagos_mat_ipc = create_plot_pagos_marcas(
@@ -3811,7 +3920,7 @@ else:
                         'marca_vehiculo',
                         None,
                         'Monto IPC',
-                        title=f'Pagos robo de ruedas por marca ajustados por IPC - {selected_tv}', 
+                        title=f'Pagos Cascos por marca ajustados por IPC - {selected_tv}', 
                         x_tickangle=45)
                     
                     fig_pagos_mat_usd = create_plot_pagos_marcas(
@@ -3820,7 +3929,7 @@ else:
                         'marca_vehiculo',
                         None,
                         'Monto USD',
-                        title=f'Pagos robo de ruedas por marca en valor USD - {selected_tv}', 
+                        title=f'Pagos Cascos por marca en valor USD - {selected_tv}', 
                         x_tickangle=45)
 
 
@@ -3851,7 +3960,7 @@ else:
                     st.subheader('', divider='grey')
 
                     
-            # ----- COMPARATIVO PARTICIPACION DE MERCADO ROBO DE RUEDAS POR MARCA --------------------------
+            # ----- COMPARATIVO PARTICIPACION DE MERCADO CASCOS POR MARCA --------------------------
 
                     column_1, column_2 = st.columns(2)
 
@@ -3917,7 +4026,12 @@ else:
                             ignore_index=True
                         )
 
-                        st.dataframe(df_participacion.rename(columns={'monto_transaccion':'Suma de Pagos'}), hide_index=True, width=450, height=600)
+                        df_participacion_view = df_participacion.style.format({
+                            'monto_transaccion': "$ {:,.0f}",
+                        })
+
+                        st.dataframe(df_participacion_view, hide_index=True, width=450, height=600, column_config=
+                                     {'monto_transaccion':'Suma de Pagos'})
 
             # ----- PARTICIPACION POR MODELO --------------------------------------------------
                     with column_2:
@@ -3975,7 +4089,11 @@ else:
                                 .astype(str) + ' %'
                             )
 
-                            st.dataframe(df_modelos_participacion, hide_index=True, width=450, height=600)
+                            df_modelos_participacion_view = df_modelos_participacion.style.format({
+                                'Suma de Pagos': "$ {:,.0f}",
+                            })
+
+                            st.dataframe(df_modelos_participacion_view, hide_index=True, width=450, height=600)
 
                         else:
                             st.info("Por favor, seleccione una marca de vehículo para ver la participación por modelo.")
@@ -4256,7 +4374,8 @@ else:
                             x='año_mes_fecha_pago',
                             y=y_col,
                             color=color,
-                            color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+                            color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta",
+                                                      "cyan", "orange", '#2CA02C', '#FFD700', '#4B0082', '#FF69B4'],
                             facet_col=facet_col,
                             labels={'año_mes_fecha_pago': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
                         )
@@ -4374,9 +4493,19 @@ else:
                     tabla = pagos_dt_rt_it_filtered_tabla.groupby('grupo_tipo_vehiculo_alternativo').agg(agg_cols).reset_index().sort_values(by='monto_transaccion',ascending=False).rename(columns={'grupo_tipo_vehiculo_alternativo':'TV'})
 
                     st.markdown("###### :memo: Resumen de pagos por TV")
+
+                    tabla_view = tabla.style.format({
+                        'monto_transaccion': "$ {:,.0f}",
+                        'pago_ipc': "$ {:,.0f}",
+                        'pago_usd': "$ {:,.0f}",
+                    })
                     
                     with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
-                        st.dataframe(tabla, use_container_width=True, hide_index=True)
+                        st.dataframe(tabla_view, use_container_width=True, hide_index=True, column_config=
+                                     {   'monto_transaccion': 'Monto Transacción',
+                                         'pago_ipc': 'Pagos ajust. IPC',
+                                         'pago_usd': 'Pagos en USD'}
+                                         )
 
                     fig_pagos_dt_rt_it = create_plot_pagos(
                         df_pagos_dt_rt_it, 
@@ -4402,9 +4531,21 @@ else:
                     pagos_dt_rt_it_filtered.monto_transaccion = pagos_dt_rt_it_filtered.monto_transaccion.round(0).astype(int) 
                     pagos_dt_rt_it_filtered.pago_usd = pagos_dt_rt_it_filtered.pago_usd.round(0).astype(int) 
                     pagos_dt_rt_it_filtered.pago_ipc = pagos_dt_rt_it_filtered.pago_ipc.round(0).astype(int)
+                    
+
+                    pagos_dt_rt_it_filtered_view = pagos_dt_rt_it_filtered.style.format({
+                        'monto_transaccion': "$ {:,.0f}",
+                        'pago_ipc': "$ {:,.0f}",
+                        'pago_usd': "$ {:,.0f}",
+                    })
 
                     with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
-                        st.dataframe(pagos_dt_rt_it_filtered, hide_index=True, width=900)
+                        st.dataframe(pagos_dt_rt_it_filtered_view, hide_index=True, width=900, column_config=
+                                     {   'año_mes_fecha_pago': 'Fecha Pago (año-mes)',
+                                         'monto_transaccion': 'Monto Transacción',
+                                         'pago_ipc': 'Pagos ajust. IPC',
+                                         'pago_usd': 'Pagos en USD'}
+                                         )
 
                     st.subheader('', divider='grey')
 
@@ -4534,7 +4675,12 @@ else:
                             ignore_index=True
                         )
 
-                        st.dataframe(df_participacion.rename(columns={'monto_transaccion':'Suma de Pagos'}), hide_index=True, width=450, height=600)
+                        df_participacion_view = df_participacion.style.format({
+                            'monto_transaccion': "$ {:,.0f}",
+                        })
+
+                        st.dataframe(df_participacion_view, hide_index=True, width=450, height=600, column_config={
+                                     'monto_transaccion':'Suma de Pagos'})
 
             # ----- PARTICIPACION POR MODELO --------------------------------------------------
                     with column_2:
@@ -4592,11 +4738,14 @@ else:
                                 .astype(str) + ' %'
                             )
 
+                            df_modelos_participacion_view = df_modelos_participacion.style.format({
+                                'Suma de Pagos': "$ {:,.0f}"})
+
                             # si el df esta vacio que muestre un cartel que diga "No hay pagos registrados para esta Marca"
                             if df_modelos_participacion.empty:
                                 st.info("No hay pagos registrados para esta Marca.")
                             else:
-                                st.dataframe(df_modelos_participacion, hide_index=True, width=450, height=600)
+                                st.dataframe(df_modelos_participacion_view, hide_index=True, width=450, height=600)
 
                         else:
                             st.info("Por favor, seleccione una marca de vehículo para ver la participación por modelo.")
@@ -4761,8 +4910,10 @@ else:
 
                     def create_plot_pagos(df_source, y1, y2, y3, title, x_tickangle=45):
 
-                        df_source.sort_values('año_mes_fp', inplace=True)
-                        df_plot = df_source.groupby('año_mes_fp').agg(
+                        df_filtered = df_source[(df_source['tv'] == selected_tv)].copy()
+
+                        df_filtered.sort_values('año_mes_fp', inplace=True)
+                        df_plot = df_filtered.groupby('año_mes_fp').agg(
                             {
                             y1: 'mean',
                             y2: 'mean',           
@@ -4851,6 +5002,20 @@ else:
                                 
                         return fig
 
+                    available_tv = sorted(df_pagos_lesiones['tv'].unique().tolist())
+                    with st.sidebar:
+                            st.markdown("---")
+                            st.markdown("Filtros")
+                            st.markdown("##### _Seleccionar Tipo de Vehículo:_") 
+                            selected_tv = st.selectbox(
+                                "TV",
+                                options=available_tv,
+                                index=1,
+                                label_visibility ='collapsed',
+                            )
+                            st.markdown("---")
+
+
                     fig_pagos_lesiones = create_plot_pagos(
                         df_pagos_lesiones, 
                         'monto_transaccion',
@@ -4860,20 +5025,37 @@ else:
                         x_tickangle=45
                     )
                     st.plotly_chart(fig_pagos_lesiones, use_container_width=True)
-                    
-                    df_pagos_lesiones.sort_values('año_mes_fp', inplace=True)
 
-                    df_pagos_lesiones_tabla = df_pagos_lesiones.groupby(['año_mes_fp']).agg(
-                        {'monto_transaccion': 'mean',
-                        'pago_ipc': 'mean',           
-                        'pago_usd': 'mean'}).reset_index()
-                    
-                    df_pagos_lesiones_tabla.monto_transaccion = df_pagos_lesiones_tabla.monto_transaccion.round(0).astype(int) 
-                    df_pagos_lesiones_tabla.pago_usd = df_pagos_lesiones_tabla.pago_usd.round(0).astype(int) 
-                    df_pagos_lesiones_tabla.pago_ipc = df_pagos_lesiones_tabla.pago_ipc.round(0).astype(int)
+                    df_pagos_lesiones = df_pagos_lesiones.copy()
 
+                    df_lesiones_filtro_tv = df_pagos_lesiones[df_pagos_lesiones['tv'] == selected_tv]
+                    
+                    df_lesiones_filtro_tv.sort_values('año_mes_fp', inplace=True)
+
+                    # df_pagos_lesiones_tabla = df_lesiones_filtro_tv.groupby(['año_mes_fp']).agg(
+                    #     {'monto_transaccion': 'mean',
+                    #     'pago_ipc': 'mean',           
+                    #     'pago_usd': 'mean'}).reset_index()
+                    
+                    # df_pagos_lesiones_tabla.monto_transaccion = df_pagos_lesiones_tabla.monto_transaccion.round(0).astype(int) 
+                    # df_pagos_lesiones_tabla.pago_usd = df_pagos_lesiones_tabla.pago_usd.round(0).astype(int) 
+                    # df_pagos_lesiones_tabla.pago_ipc = df_pagos_lesiones_tabla.pago_ipc.round(0).astype(int)
+
+                    # with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
+                    #     st.dataframe(df_pagos_lesiones_tabla, hide_index=True, width=900)
+
+                    df_view = df_lesiones_filtro_tv[['nro_siniestro_gw','año_mes_fecha_pago','nombre_exposicion',
+                            'cobertura_principal','monto_transaccion','ipc_factor','usd_blue','pago_ipc','pago_usd']].style.format(
+                            {
+                            'monto_transaccion': "$ {:,.0f}",
+                            'pago_ipc': "$ {:,.0f}",
+                            'pago_usd': "$ {:,.0f}",
+                            'usd_blue': "{:.0f}",
+                            'ipc_factor': "{:.2f}",
+                        })
+                    
                     with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
-                        st.dataframe(df_pagos_lesiones_tabla, hide_index=True, width=900)
+                        st.dataframe(df_view, hide_index=True)
 
 
 
@@ -4889,10 +5071,10 @@ else:
                 df_long,
                 x='Variable',
                 y='Valor',
-                color='marca',
+                color='MARCA',
                 barmode='group',
                 title="Comparativa por Marca (Participación y Ratios)",
-                labels={'Valor': 'Valor (%)', 'Variable': 'Métrica Analizada', 'marca': 'Marca'},
+                labels={'Valor': 'Valor (%)', 'Variable': 'Métrica Analizada', 'MARCA': 'Marca'},
                 height=700,
                 # width=1000,
                 color_discrete_sequence=px.colors.qualitative.Bold
@@ -4941,22 +5123,9 @@ else:
             hide_index=True,)
         
         st.markdown('')
-        st.markdown('##### :arrow_right: Composición de la cartera por Marca - Corte en 20 primeras marcas')
-        st.dataframe(
-            tabla_marcas_head_20[['marca', 'prima_dev_hist', 'prima_%','prima_%_acum', 'prima_dev_ipc','prima_dev_ipc_%', 'prima_dev_ipc_%_acum',
-                'ar_t', 'ar_%', 'ar_%_acum', 'ns_t', 'ns_t_%', 'ns_t_%_acum',
-                'ns_t_nro_sin', 'is_t', 'is_t_%', 'is_t_%_acum', 'is_t_ipc', 'is_t_ipc_%', 'is_t_ipc_%_acum',
-                'sin', 'sin_ipc', 'frec']],
-            use_container_width=True,
-            hide_index=True,)
-        
-        st.markdown('')
         st.markdown('##### :arrow_right: Composición de la cartera por Marca - Corte en 8 primeras marcas')
         st.dataframe(
-            tabla_marcas_head_8[['marca', 'prima_dev_hist', 'prima_%','prima_%_acum', 'prima_dev_ipc','prima_dev_ipc_%', 'prima_dev_ipc_%_acum',
-                'ar_t', 'ar_%', 'ar_%_acum', 'ns_t', 'ns_t_%', 'ns_t_%_acum',
-                'ns_t_nro_sin', 'is_t', 'is_t_%', 'is_t_%_acum', 'is_t_ipc', 'is_t_ipc_%', 'is_t_ipc_%_acum',
-                'sin', 'sin_ipc', 'frec']],
+            tabla_marcas_head_8,
             use_container_width=True,
             hide_index=True,)
         
@@ -4971,11 +5140,11 @@ else:
 
     elif current_analysis == opcion_9:
 
-        st.markdown("## Comparativa: Variación SA (InfoAuto) vs Coste medio de repuestos")
-        st.markdown("#### _Período: marzo - diciembre 2025_")
-        st.markdown("---")
+        # st.markdown("## Comparativa: Variación SA (InfoAuto) vs Coste medio de repuestos")
+        # st.markdown("#### _Período: marzo - diciembre 2025_")
+        # st.markdown("---")
 
-        df_sa_rep['año_mes'] = pd.to_datetime(df_sa_rep['año_mes'])
+        # df_sa_rep['año_mes'] = pd.to_datetime(df_sa_rep['año_mes'])
 
         def generar_grafico_comparativo(df, col_var_rep, col_var_sa, titulo):
 
@@ -5097,104 +5266,106 @@ else:
             return fig
         
         
-        with st.container(border=True):
-            st.subheader("1. Comparativo histórico")
-            fig_hist = generar_grafico_comparativo(
-                df_sa_rep, 'var_costo_prom', 'var_sa', 
-                "Variación Mensual: Repuestos vs SA (Nominal)"
-            )
-            st.plotly_chart(fig_hist, use_container_width=True)
+        # with st.container(border=True):
+        #     st.subheader("1. Comparativo histórico")
+        #     fig_hist = generar_grafico_comparativo(
+        #         df_sa_rep, 'var_costo_prom', 'var_sa', 
+        #         "Variación Mensual: Repuestos vs SA (Nominal)"
+        #     )
+        #     st.plotly_chart(fig_hist, use_container_width=True)
 
-        with st.container(border=True):
-            st.subheader("2. Comparativa Ajustada por IPC")
-            # st.info("Muestra si las variables ganaron o perdieron contra la inflación en términos reales.")
-            fig_ipc = generar_grafico_comparativo(
-                df_sa_rep, 'var_costo_prom_ipc', 'var_sa_ipc', 
-                "Variación Mensual Real (Ajustado por IPC)"
-            )
-            st.plotly_chart(fig_ipc, use_container_width=True)
+        # with st.container(border=True):
+        #     st.subheader("2. Comparativa Ajustada por IPC")
+        #     # st.info("Muestra si las variables ganaron o perdieron contra la inflación en términos reales.")
+        #     fig_ipc = generar_grafico_comparativo(
+        #         df_sa_rep, 'var_costo_prom_ipc', 'var_sa_ipc', 
+        #         "Variación Mensual Real (Ajustado por IPC)"
+        #     )
+        #     st.plotly_chart(fig_ipc, use_container_width=True)
 
-        with st.container(border=True):
-            st.subheader("3. Comparativa en Dólar (USD Blue)")
-            fig_usd = generar_grafico_comparativo(
-                df_sa_rep, 'var_costo_prom_usd', 'var_sa_prom_usd', 
-                "Variación Mensual en Moneda Dura (USD)"
-            )
-            st.plotly_chart(fig_usd, use_container_width=True)
+        # with st.container(border=True):
+        #     st.subheader("3. Comparativa en Dólar (USD Blue)")
+        #     fig_usd = generar_grafico_comparativo(
+        #         df_sa_rep, 'var_costo_prom_usd', 'var_sa_prom_usd', 
+        #         "Variación Mensual en Moneda Dura (USD)"
+        #     )
+        #     st.plotly_chart(fig_usd, use_container_width=True)
 
-        def calcular_resumen(df, col_rep, col_sa, label):
-            # Usamos suma simple de variaciones para una aproximación rápida del periodo
-            brecha = df[col_rep].sum() - df[col_sa].sum()
-            if brecha > 0:
-                return f"**{label}**: Los repuestos crecieron **{brecha:.1f} pts** más que la SA."
-            else:
-                return f"**{label}**: La SA creció **{abs(brecha):.1f} pts** más que los repuestos."
+        # def calcular_resumen(df, col_rep, col_sa, label):
+        #     # Usamos suma simple de variaciones para una aproximación rápida del periodo
+        #     brecha = df[col_rep].sum() - df[col_sa].sum()
+        #     if brecha > 0:
+        #         return f"**{label}**: Los repuestos crecieron **{brecha:.1f} pts** más que la SA."
+        #     else:
+        #         return f"**{label}**: La SA creció **{abs(brecha):.1f} pts** más que los repuestos."
         
-        st.markdown('')
-        st.markdown("#### Data Cruda")
+        # st.markdown('')
+        # st.markdown("#### Data Cruda")
 
-        df_sa_rep_raw = df_sa_rep[['año_mes', 'ipc', 'usd_blue',
-                                    'costo_pieza_prom_hist','sa_prom', 'var_costo_prom','var_sa', 
-                                    'costo_prom_ipc','sa_prom_ipc','var_costo_prom_ipc','var_sa_ipc',  
-                                    'costo_prom_usd', 'sa_prom_usd', 'var_costo_prom_usd',
-                                    'var_sa_prom_usd']]  
+        # df_sa_rep_raw = df_sa_rep[['año_mes', 'ipc', 'usd_blue',
+        #                             'costo_pieza_prom_hist','sa_prom', 'var_costo_prom','var_sa', 
+        #                             'costo_prom_ipc','sa_prom_ipc','var_costo_prom_ipc','var_sa_ipc',  
+        #                             'costo_prom_usd', 'sa_prom_usd', 'var_costo_prom_usd',
+        #                             'var_sa_prom_usd']]  
 
-        st.dataframe(df_sa_rep_raw, 
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config={
-                    'año_mes': st.column_config.DateColumn("Año-Mes", format="YYYY-MM"),
-                    'ipc': 'IPC',
-                    'usd_blue': 'Valor USD blue',
-                    "costo_pieza_prom_hist": st.column_config.NumberColumn("Coste medio rep. hist.", format="$ %.0f"),
-                    "sa_prom": st.column_config.NumberColumn("SA prom.", format="$ %.0f"),
-                    "var_costo_prom": st.column_config.NumberColumn(
-                        "Var. costo rep. %", 
-                        format="%.2f%%",
-                    ),
-                    "var_sa": st.column_config.NumberColumn(
-                        "Var. SA %", 
-                        format="%.2f%%",
-                        ),
-                    "costo_prom_ipc": st.column_config.NumberColumn("Coste medio rep. IPC", format="$ %.0f"),
-                    "sa_prom_ipc": st.column_config.NumberColumn("SA prom. IPC", format="$ %.0f"),
-                    "var_costo_prom_ipc": st.column_config.NumberColumn(                            
-                        "Var. Costo rep. IPC %", 
-                        format="%.2f%%",
-                        ),
-                    "var_sa_ipc": st.column_config.NumberColumn(
-                        "Var. SA IPC %", 
-                        format="%.2f%%",
-                        ),
-                    "costo_prom_usd": st.column_config.NumberColumn("Coste medio rep. USD", format="$ %.0f"),
-                    "sa_prom_usd": st.column_config.NumberColumn("SA prom. USD", format="$ %.0f"),
-                    "var_costo_prom_usd": st.column_config.NumberColumn(
-                        "Var. Costo rep. USD %", 
-                        format="%.2f%%",
-                        ),
-                    "var_sa_prom_usd": st.column_config.NumberColumn(
-                        "Var. SA USD %", 
-                        format="%.2f%%",
-                        ),
-                    })    
+        # st.dataframe(df_sa_rep_raw, 
+        #             use_container_width=True,
+        #             hide_index=True,
+        #             column_config={
+        #             'año_mes': st.column_config.DateColumn("Año-Mes", format="YYYY-MM"),
+        #             'ipc': 'IPC',
+        #             'usd_blue': 'Valor USD blue',
+        #             "costo_pieza_prom_hist": st.column_config.NumberColumn("Coste medio rep. hist.", format="$ %.0f"),
+        #             "sa_prom": st.column_config.NumberColumn("SA prom.", format="$ %.0f"),
+        #             "var_costo_prom": st.column_config.NumberColumn(
+        #                 "Var. costo rep. %", 
+        #                 format="%.2f%%",
+        #             ),
+        #             "var_sa": st.column_config.NumberColumn(
+        #                 "Var. SA %", 
+        #                 format="%.2f%%",
+        #                 ),
+        #             "costo_prom_ipc": st.column_config.NumberColumn("Coste medio rep. IPC", format="$ %.0f"),
+        #             "sa_prom_ipc": st.column_config.NumberColumn("SA prom. IPC", format="$ %.0f"),
+        #             "var_costo_prom_ipc": st.column_config.NumberColumn(                            
+        #                 "Var. Costo rep. IPC %", 
+        #                 format="%.2f%%",
+        #                 ),
+        #             "var_sa_ipc": st.column_config.NumberColumn(
+        #                 "Var. SA IPC %", 
+        #                 format="%.2f%%",
+        #                 ),
+        #             "costo_prom_usd": st.column_config.NumberColumn("Coste medio rep. USD", format="$ %.0f"),
+        #             "sa_prom_usd": st.column_config.NumberColumn("SA prom. USD", format="$ %.0f"),
+        #             "var_costo_prom_usd": st.column_config.NumberColumn(
+        #                 "Var. Costo rep. USD %", 
+        #                 format="%.2f%%",
+        #                 ),
+        #             "var_sa_prom_usd": st.column_config.NumberColumn(
+        #                 "Var. SA USD %", 
+        #                 format="%.2f%%",
+        #                 ),
+        #             })    
         
         st.markdown("---")
         st.markdown("## Variación SA (cartera L2) vs Coste medio de repuestos (Orion/Cesvi)")
-        st.markdown("#### _Período: enero 2023 - diciembre 2025_")
+        st.markdown("#### _Período: enero 2023 - marzo 2026_")
 
 
         with st.container(border=True):
 
             st.markdown("#### 1. Comparativo: Variación SA (todos los planes) vs Costo medio repuestos")
-            df_sa_rep_cartera_todos = df_sa_rep_cartera[df_sa_rep_cartera.plan=='Todos']
+            df_sa_rep_cartera_todos = df_sa_rep_cartera[df_sa_rep_cartera.plan=='todos']
             fig_hist_cart = generar_grafico_comparativo(
                 df_sa_rep_cartera_todos, 'var_costo_prom_hist', 'var_sa_prom', 
                 "Variación histórica: Costo prom. repuestos vs SA prom."
             )
+
             fig_ipc_cart = generar_grafico_comparativo(
                 df_sa_rep_cartera_todos, 'var_costo_prom_ipc', 'var_sa_prom_ipc', 
                 "Variación IPC: Costo prom. repuestos vs SA prom."
             )
+
             fig_usd_cart = generar_grafico_comparativo(
                 df_sa_rep_cartera_todos, 'var_costo_prom_usd', 'var_sa_prom_usd', 
                 "Variación USD: Costo prom. repuestos vs SA prom."
@@ -5393,8 +5564,84 @@ else:
                         "Var. IPC %", 
                         format="%.2f%%",
                         ),
-                    })    
-        
+                    })  
+
+        st.markdown("---")
+        st.markdown("## Indice SA (Plan 30) vs Indice Autos")  
+        st.markdown("##### _Fecha actualización: **dic 2023 - marzo 2026**_")
+
+        def plot_indices_comparados(df, title):
+            # Lista de las variables que quieres graficar
+            columnas_indices = ['Indice SA_Prom H', 'Indice Autos H']
+            
+            # Asegúrate de que el dataframe esté ordenado por fecha
+            df = df.sort_values('Mes_Año')
+
+            # Crear el gráfico (Formato "Wide")
+            fig = px.line(
+                df, 
+                x='Mes_Año', 
+                y=columnas_indices,
+                labels={'Mes_Año': 'Período', 'value': 'Índice', 'variable': 'Indicador'},
+                title=title,
+                markers=True # Puntos en cada mes para mayor precisión
+            )
+
+            fig.for_each_trace(lambda trace: 
+                    # Si el nombre de la traza es exactamente 'Indice Autos'
+                    trace.update(line=dict(color="orange", width=4, dash='solid')) # Grosor mayor y línea continua
+                    if trace.name == 'Indice Autos H'
+                    # Para todas las DEMÁS trazas
+                    else trace.update(line=dict(width=2, dash='dash')) # Grosor normal y línea discontinua (dash)
+                )
+
+            # Configuración estética y Hover Unificado
+            fig.update_layout(
+                height=600,
+                hovermode="x unified", # Ver todos los índices al mismo tiempo
+                # plot_bgcolor="white",
+                legend=dict(
+                    orientation="h",
+                    yanchor="top",
+                    y=-0.2,
+                    xanchor="center",
+                    x=0.5,
+                    title_text=""
+                ),
+                margin=dict(t=80, b=100, l=50, r=20),
+                title=dict(font=dict(size=20))#, family="Arial Black"))
+            )
+
+            # Mejorar el hover para que muestre 2 decimales
+            fig.update_traces(
+                mode="lines+markers",
+                marker=dict(size=4),
+                hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>"
+            )
+
+            return fig        
+
+        # st.markdown("##### Indice histórico")
+        cols_format = [c for c in df_indice_sa.columns if c != 'Mes_Año' and c.startswith('SA')]
+        formatos = {col: "{:,.0f}" for col in cols_format}
+        df_view_sa = df_indice_sa.style.format(formatos)
+
+        with st.expander("Ver tabla de datos históricos", icon=":material/query_stats:"):
+            st.dataframe(df_view_sa, hide_index=True, use_container_width=True, column_config={
+                'Indice SA_Prom H': st.column_config.DateColumn("Indice SA Prom H", format="{:.2f}"),
+                'Indice SA_Prom IPC': st.column_config.DateColumn("Indice SA Prom IPC", format="{:.2f}"),
+                'Indice Autos H': st.column_config.DateColumn("Indice Autos H", format="{:.2f}"),
+                'Indice Autos IPC': st.column_config.DateColumn("Indice Autos IPC", format="{:.2f}"),})
+            
+        fig_indice_sa_hist = plot_indices_comparados(df_indice_sa, 'Indice SA (Plan 30) vs Indice Autos')
+        st.plotly_chart(fig_indice_sa_hist, use_container_width=True)
+
+
+    #####################################################################
+    # INCORPORAR INDICE SA
+    #####################################################################
+    # df_indice_sa
+
     # ======================================================================================
     # --- VARIACION CM RUEDAS - GRANT ======================================================
     # ======================================================================================
@@ -5415,7 +5662,8 @@ else:
                         df,
                         x='año_mes',
                         y=y_col,
-                        color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", "cyan", "orange", '#2CA02C'],
+                        color_discrete_sequence=["#FB0D0D", "lightgreen", "blue", "gray", "magenta", 
+                                                 "cyan", "orange", '#2CA02C', '#FFD700', '#4B0082', '#FF69B4'],
                         title=titulo,
                         labels={'año_mes': '', y_col: y_label,}# 'marca': 'Marca', 'tipo_cristal': 'Tipo de Cristal'}
                     )
@@ -5658,7 +5906,7 @@ else:
             
     elif current_analysis == opcion_11:
         st.title('Indice: Ponderaciones y cálculo')
-        st.markdown("##### _Fecha actualización: **enero 2026**_")
+        st.markdown("##### _Fecha actualización: **dic 2023 - marzo 2026**_")
         st.markdown('---')
 
         def plot_indices_comparados(df, title):
