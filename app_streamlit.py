@@ -1168,7 +1168,7 @@ else:
         st.title('Análisis Coste Medio por Provincia')     
         st.markdown("---")   
         st.header('Coste Medio de repuestos por provincia')
-        st.markdown("#### _Fuente de datos: Orion/Cesvi_ \n Actualización: **enero 2025**")
+        st.markdown("#### _Fuente de datos: Orion/Cesvi_ \n Actualización: **diciembre 2025**")
         
 
         def create_map_chart(df, color, selected_fecha):
@@ -1387,7 +1387,8 @@ else:
 # ==========================================================================
 
     elif current_analysis == opcion_5:
-        st.title('Comparativo Mano de obra - La Segunda vs CESVI/Sancor/San Cristobal')    
+        st.title('Comparativo Mano de obra - La Segunda vs CESVI/Grupo SLS')
+        st.markdown('#### Actualización: **enero 2026**')    
         st.markdown("---")
         
         # sidebar por tipo de variación: histórico, ipc, usd
@@ -5103,7 +5104,8 @@ else:
             fig.update_traces(
                 texttemplate='%{y:.1f}', 
                 textposition='outside',
-                cliponaxis=False # Evita que se corten los números arriba
+                cliponaxis=False, # Evita que se corten los números arriba
+                hovertemplate="<b>%{fullData.name}</b>: %{y:.1f}%<extra></extra>"
             )
             
             return fig
@@ -5116,16 +5118,44 @@ else:
 
         st.markdown('---') 
 
-        st.markdown('##### :calendar: Período 2024-2025')
+        st.markdown('##### :calendar: Período 2024-2026')
+        df_view = tabla_marcas_año.style.format({
+            'Prima Dev. Total': "{:,.0f}",
+            'Prima Dev. Total IPC': "{:,.0f}",
+            'AR Total': "{:,.0f}",
+            'Cantidad de Siniestros Total': "{:,.0f}",
+            'Cantidad de Siniestros Total (Nro. Sin.)': "{:,.0f}",
+            'Incurrido Total RG': "{:,.0f}",
+            'Incurrido Total IPC': "{:,.0f}",
+            'sin': "{:,.2f} %",
+            'sin_ipc': "{:,.2f} %"
+        })
+
         st.dataframe(
-            tabla_marcas_año,
+            df_view,
             use_container_width=True,
             hide_index=True,)
         
         st.markdown('')
         st.markdown('##### :arrow_right: Composición de la cartera por Marca - Corte en 8 primeras marcas')
+        df_view = tabla_marcas_head_8.style.format({
+            'PRIMA': "{:,.0f}",
+            'Prima %': "{:,.1f} %",
+            'PRIMA IPC': "{:,.0f}",
+            'AR T': "{:,.0f}",
+            'AR T %': "{:,.1f} %",
+            'NS T': "{:,.0f}",
+            'NS T %': "{:,.1f} %",
+            'NS T (Nro. Sin.)': "{:,.0f}",
+            'IS T RG': "{:,.0f}",
+            'IS T %': "{:,.1f} %",
+            'IS T IPC': "{:,.0f}",
+            'Frec %': "{:,.1f} %",
+            'Sin H': "{:,.1f} %",
+            'Sin IPC': "{:,.1f} %",
+        })
         st.dataframe(
-            tabla_marcas_head_8,
+            df_view,
             use_container_width=True,
             hide_index=True,)
         
