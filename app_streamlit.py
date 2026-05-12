@@ -95,7 +95,7 @@ try:
     df_pond_autos = pd.read_parquet('data/df_ponderaciones_autos_marzo.parquet')
     df_mostrar_pesos = pd.read_parquet('data/df_mostrar_pesos.parquet')
 
-    df_datos_mensuales_hist = pd.read_parquet('data/df_datos_mensuales_hist.parquet')
+    df_datos_mensuales_hist = pd.read_parquet('data/df_datos_mensuales_hist_marzo.parquet')
     df_datos_mensuales_ipc = pd.read_parquet('data/df_datos_mensuales_ipc.parquet')
     df_datos_mensuales_usd = pd.read_parquet('data/df_datos_mensuales_usd.parquet')
 
@@ -1758,7 +1758,7 @@ else:
             "Cristales": "cristales",
             "Robo de Ruedas": "robo_ruedas",
             "Daños Materiales": "danos_materiales",
-            "Cascos": "cascos",
+            "Daño Parcial (Cascos)": "cascos",
             "Acc. Total - Robo Total - Inc. Total": "dt_rt_it",
             'Lesiones': 'lesiones'
         }   
@@ -3626,7 +3626,7 @@ else:
 # --- PAGOS CASCOS -----------------------------------------------------
 # =====================================================================================
 
-        elif seleccion_pago == 'Cascos':
+        elif seleccion_pago == 'Daño Parcial (Cascos)':
                     st.markdown('## Evolución de monto de pagos de Cascos (L2)')    
                     st.markdown("---")
 
@@ -5658,19 +5658,18 @@ else:
 
         with st.expander("Ver tabla de datos históricos", icon=":material/query_stats:"):
             st.dataframe(df_view_sa, hide_index=True, use_container_width=True, column_config={
-                'Indice SA_Prom H': st.column_config.DateColumn("Indice SA Prom H", format="{:.2f}"),
-                'Indice SA_Prom IPC': st.column_config.DateColumn("Indice SA Prom IPC", format="{:.2f}"),
-                'Indice Autos H': st.column_config.DateColumn("Indice Autos H", format="{:.2f}"),
-                'Indice Autos IPC': st.column_config.DateColumn("Indice Autos IPC", format="{:.2f}"),})
+                'Mes_Año': st.column_config.DateColumn("Mes-Año", format="MM-YYYY"),
+                'SA_PROM': "SA Prom",
+                'SA_PROM_IPC': "SA Prom IPC",
+                'Indice SA_Prom H': st.column_config.NumberColumn("Indice SA Prom H", format="{:.2f}"),
+                'Indice SA_Prom IPC': st.column_config.NumberColumn("Indice SA Prom IPC", format="{:.2f}"),
+                'Indice Autos H': st.column_config.NumberColumn("Indice Autos H", format="{:.2f}"),
+                'Indice Autos IPC': st.column_config.NumberColumn("Indice Autos IPC", format="{:.2f}"),})
             
         fig_indice_sa_hist = plot_indices_comparados(df_indice_sa, 'Indice SA (Plan 30) vs Indice Autos')
         st.plotly_chart(fig_indice_sa_hist, use_container_width=True)
 
 
-    #####################################################################
-    # INCORPORAR INDICE SA
-    #####################################################################
-    # df_indice_sa
 
     # ======================================================================================
     # --- VARIACION CM RUEDAS - GRANT ======================================================
@@ -5941,7 +5940,7 @@ else:
 
         def plot_indices_comparados(df, title):
             # Lista de las variables que quieres graficar
-            columnas_indices = [c for c in df.columns if c.startswith('Indice') ]
+            columnas_indices = [c for c in df.columns if c != 'Año_Mes']
             
             # Asegúrate de que el dataframe esté ordenado por fecha
             df = df.sort_values('Mes_Año')
@@ -5951,18 +5950,23 @@ else:
                 df, 
                 x='Mes_Año', 
                 y=columnas_indices,
-                labels={'Mes_Año': 'Período', 'value': 'Índice', 'variable': 'Indicador'},
+                labels={'Mes_Año': '', 'value': 'Índice', 'variable': 'Indicador'},
                 title=title,
                 markers=True # Puntos en cada mes para mayor precisión
             )
+            for trace in fig.data:
+                    # 1. Limpiamos el nombre para la leyenda (esto afecta a TODAS)
+                    nombre_limpio = trace.name.replace('Indice ', '')
+                    trace.name = nombre_limpio
+                    
+                    # 2. Aplicamos estilos condicionales basados en el nombre ya limpio
+                    if nombre_limpio == 'Autos':
+                        # Estilo destacado para Autos
+                        trace.update(line=dict(width=4, dash='solid', color='white'))
+                    else:
+                        # Estilo sutil para el resto (SA_Prom, etc.)
+                        trace.update(line=dict(width=2, dash='dash'))
 
-            fig.for_each_trace(lambda trace: 
-                    # Si el nombre de la traza es exactamente 'Indice Autos'
-                    trace.update(line=dict(width=4, dash='solid')) # Grosor mayor y línea continua
-                    if trace.name == 'Indice Autos'
-                    # Para todas las DEMÁS trazas
-                    else trace.update(line=dict(width=2, dash='dash')) # Grosor normal y línea discontinua (dash)
-                )
 
             # Configuración estética y Hover Unificado
             fig.update_layout(
@@ -6000,7 +6004,7 @@ else:
         df_view = df_pond.style.format({
             'Monto Transaccion': "$ {:,.0f}",
             'Pago IPC x Fecha de Pago': "$ {:,.0f}",
-            'Pago USD x Fecha Pago': "$ {:,.0f}",
+            'Pago USD x Fecha Pago': "USD {:,.0f}",
             'Part % H': "{:.2f}%",
             'Part % IPC': "{:.2f}%",
             'Part % USD': "{:.2f}%"
@@ -6012,11 +6016,11 @@ else:
         df_view2 = df_pond_autos.style.format({
             'Monto Transaccion': "$ {:,.0f}",
             'Pago IPC x Fecha de Pago': "$ {:,.0f}",
-            'Pago USD x Fecha Pago': "$ {:,.0f}",
+            'Pago USD x Fecha Pago': "USD {:,.0f}",
             'Part % H': "{:.2f}%",
             'Part % IPC': "{:.2f}%",
             'Part % USD': "{:.2f}%",
-            '% Monto Particulares vs. Total': "{:.2f}%",
+            '% Monto Autos Part. vs. Total': "{:.2f}%",
         })
         st.dataframe(df_view2, hide_index=True, use_container_width=True,)
 
@@ -6043,7 +6047,7 @@ else:
         with tab3:
             st.markdown("##### Datos mensuales en USD (Pagos)")
             cols = [c for c in df_datos_mensuales_usd.columns if c != 'Mes_Año']
-            formatos = {col: "$ {:,.0f}" for col in cols}
+            formatos = {col: "USD {:,.0f}" for col in cols}
             df_view5 = df_datos_mensuales_usd.style.format(formatos)
             st.dataframe(df_view5, hide_index=True, use_container_width=True, column_config={
                 'Mes_Año': st.column_config.DateColumn("Año_Mes", format="YYYY-MM")})
@@ -6063,7 +6067,7 @@ else:
             with st.expander("Ver tabla de datos históricos", icon=":material/query_stats:"):
                 st.dataframe(df_view6, hide_index=True, use_container_width=True, column_config={
                     'Mes_Año': st.column_config.DateColumn("Año_Mes", format="YYYY-MM")})
-                st.markdown('Pesos de cada variable:')
+                st.markdown('Ponderación de cada variable:')
                 st.dataframe(df_mostrar_pesos.style.format("{:.2f}"), hide_index=True, use_container_width=True)
                 
             fig_indice_hist = plot_indices_comparados(df_indice_h, 'Indice Histórico')
