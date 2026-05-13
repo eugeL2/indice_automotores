@@ -530,7 +530,7 @@ else:
             # muestro el dataset
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
                 # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_rep_tv[['tva','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
+                st.dataframe(df_rep_tv[['tva','año_mes','cant_ocompra','cant_piezas_total',
                                         'cant_piezas_prom','costo_pieza_prom_hist','var_costo_prom_%','ipc','ipc_empalme_ipim','var_ipc_%','monto_total_compras']], 
                                         hide_index=True,)
 
@@ -638,8 +638,8 @@ else:
 
             # muestro distribución MARCA AUTOS
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
-                st.dataframe(df_tipo_rep[['tipo_repuesto','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
-                                        'cant_piezas_prom','costo_pieza_prom_hist','var_costo_prom_%','ipc','ipc_empalme_ipim','var_ipc_%','monto_total_compras']], 
+                st.dataframe(df_tipo_rep[['tipo_repuesto','año_mes','cant_ocompra','cant_piezas_total',
+                                        'costo_pieza_prom_hist','var_costo_prom_%','ipc','ipc_empalme_ipim','var_ipc_%','monto_total_compras']], 
                                         hide_index=True)
 
             fig6 = create_plot_orion(df_tipo_rep, 'costo_pieza_prom_hist', 'tipo_repuesto', None,'Costo Promedio')
@@ -684,7 +684,7 @@ else:
 
             # muestro el dataset 
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
-                st.dataframe(df_rtos_marca_mes[['marca','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
+                st.dataframe(df_rtos_marca_mes[['marca','año_mes','cant_ocompra','cant_piezas_total',
                                         'cant_piezas_prom','costo_pieza_prom_hist','var_costo_prom_%','ipc','ipc_empalme_ipim','var_ipc_%','monto_total_compras']], 
                                         hide_index=True,)
 
@@ -729,7 +729,7 @@ else:
 # ----- GRAFICO 4: evolución costo repuestos por marca camiones -
             st.subheader('4. Costo de piezas prom. histórico por Marca (camiones)')
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
-                st.dataframe(df_rtos_marca_mes_cam[['marca','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
+                st.dataframe(df_rtos_marca_mes_cam[['marca','año_mes','cant_ocompra','cant_piezas_total',
                                         'cant_piezas_prom','costo_pieza_prom_hist','var_costo_prom_%','ipc','ipc_empalme_ipim','var_ipc_%','monto_total_compras']],
                                         hide_index=True,)
 
@@ -895,7 +895,7 @@ else:
             # muestro el dataset
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
                 # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_rep_tv[['tva','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
+                st.dataframe(df_rep_tv[['tva','año_mes','cant_ocompra','cant_piezas_total',
                                         'cant_piezas_prom','monto_total_compras','ipc','monto_ipc','costo_prom_ipc','var_costo_prom_ipc']], hide_index=True,)
 
             fig7 = create_plot_orion(df_rep_tv, 'costo_prom_ipc', 'tva', None, 'Costo Promedio Ajust. por IPC')
@@ -910,7 +910,7 @@ else:
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
                 # st.subheader("Tabla de Datos de Ejemplo")
                 st.dataframe(df_tipo_rep[['año', 'año_mes', 'cant_ocompra', 'cant_piezas_total',
-                            'cant_piezas_prom', 'ipc', 'monto_ipc', 'costo_prom_ipc',
+                            'ipc', 'monto_ipc', 'costo_prom_ipc',
                             'var_costo_prom_ipc', 'tipo_repuesto']], hide_index=True)
 
             fig8 = create_plot_orion(df_tipo_rep, 'costo_prom_ipc', 'tipo_repuesto', None,'Costo Promedio ajust. por IPC')
@@ -1031,7 +1031,7 @@ else:
             # muestro el dataset
             with st.expander("Ver tabla de datos", icon=":material/query_stats:"):
                 # st.subheader("Tabla de Datos de Ejemplo")
-                st.dataframe(df_rep_tv[['tva','año_mes','cant_ocompra','cant_piezas_total','var_cant_piezas',
+                st.dataframe(df_rep_tv[['tva','año_mes','cant_ocompra','cant_piezas_total',
                                         'cant_piezas_prom','monto_total_compras','usd_blue','monto_usd','costo_prom_usd','var_costo_prom_usd']], hide_index=True,)
 
             fig9 = create_plot_orion(df_rep_tv, 'costo_prom_usd', 'tva', None, 'Costo Promedio (USD)')
@@ -1332,55 +1332,55 @@ else:
 
 # ==========================================================================
 
-# ----- Comparativo BI La Segunda por provincia --------------------------------------------------
-        st.header('Coste Medio siniestral por provincia')
-        st.markdown("#### _Fuente de datos: BI La Segunda_")
+# # ----- Comparativo BI La Segunda por provincia --------------------------------------------------
+#         st.header('Coste Medio siniestral por provincia')
+#         st.markdown("#### _Fuente de datos: BI La Segunda_")
 
-        available_fechas = sorted(df_cm_prov['año'].unique().tolist())
+#         available_fechas = sorted(df_cm_prov['año'].unique().tolist())
 
-        # 2 cols para separar grafico y contenedor de filtros
-        col1, col2 = st.columns([1, 4], gap='large') # la segunda col es 4 veces el ancho de la primera 
+#         # 2 cols para separar grafico y contenedor de filtros
+#         col1, col2 = st.columns([1, 4], gap='large') # la segunda col es 4 veces el ancho de la primera 
         
-        with col1:  
-            with st.container(border=True):
-        # contenedor para seleccionar fecha
-                selected_fecha = st.selectbox(
-                "Seleccionar año:",
-                options=available_fechas,   
-                index=len(available_fechas)-1, 
-                key="fecha_analisis_provincias"
-                )
+#         with col1:  
+#             with st.container(border=True):
+#         # contenedor para seleccionar fecha
+#                 selected_fecha = st.selectbox(
+#                 "Seleccionar año:",
+#                 options=available_fechas,   
+#                 index=len(available_fechas)-1, 
+#                 key="fecha_analisis_provincias"
+#                 )
 
 
-        with col2:
-            with st.container(border=True):
-                # st.subheader(f'Análisis Coste Medio por Provincia - {selected_coverable_map}')
-                st.markdown(f"#### Coverable: AUT")
-                st.markdown(f"#### Año: {selected_fecha}")
-                fig_prov = create_map_chart(df_cm_prov, 'coste_medio', selected_fecha)
-                st.plotly_chart(fig_prov, use_container_width=False)    
+#         with col2:
+#             with st.container(border=True):
+#                 # st.subheader(f'Análisis Coste Medio por Provincia - {selected_coverable_map}')
+#                 st.markdown(f"#### Coverable: AUT")
+#                 st.markdown(f"#### Año: {selected_fecha}")
+#                 fig_prov = create_map_chart(df_cm_prov, 'coste_medio', selected_fecha)
+#                 st.plotly_chart(fig_prov, use_container_width=False)    
 
-        st.markdown("#### Tabla comparativa: Coste Medio siniestral por provincia")  
-        st.dataframe(comparativo_cm_siniestral, 
-                     use_container_width=True,
-                     hide_index=True,
-                    #  width=700,
-                     column_config={
-                         'provincia': 'Provincia',
-                         "coste_medio_2024": st.column_config.NumberColumn("Coste medio 2024", format="$ %.0f"),
-                         "coste_medio_2025": st.column_config.NumberColumn("Coste medio 2025", format="$ %.0f"),
-                         "var_coste_medio": st.column_config.NumberColumn(
-                            "Var. CM %", 
-                            format="%.1f%%",
-                            help="Variación coste medio siniestral (2024-2025)"
-                         )})
+#         st.markdown("#### Tabla comparativa: Coste Medio siniestral por provincia")  
+#         st.dataframe(comparativo_cm_siniestral, 
+#                      use_container_width=True,
+#                      hide_index=True,
+#                     #  width=700,
+#                      column_config={
+#                          'provincia': 'Provincia',
+#                          "coste_medio_2024": st.column_config.NumberColumn("Coste medio 2024", format="$ %.0f"),
+#                          "coste_medio_2025": st.column_config.NumberColumn("Coste medio 2025", format="$ %.0f"),
+#                          "var_coste_medio": st.column_config.NumberColumn(
+#                             "Var. CM %", 
+#                             format="%.1f%%",
+#                             help="Variación coste medio siniestral (2024-2025)"
+#                          )})
 
-        # with st.expander("Ver data cruda",icon=":material/query_stats:"):
-        #     st.markdown("#### Data Cruda")
-        #     # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
-        #     df_cm_filtered_raw = df_cm_prov[(df_cm_prov['coverable'] == selected_coverable_map) &
-        #                                                     (df_cm_prov['año'] == selected_fecha)]
-        #     st.dataframe(df_cm_filtered_raw, use_container_width=True)   
+#         # with st.expander("Ver data cruda",icon=":material/query_stats:"):
+#         #     st.markdown("#### Data Cruda")
+#         #     # Para mostrar los datos crudos filtrados (opcional, ajusta tu lógica de datos)
+#         #     df_cm_filtered_raw = df_cm_prov[(df_cm_prov['coverable'] == selected_coverable_map) &
+#         #                                                     (df_cm_prov['año'] == selected_fecha)]
+#         #     st.dataframe(df_cm_filtered_raw, use_container_width=True)   
 
 # ==========================================================================
 # ----- Comparativo Mano de obra -------------------------------------------
@@ -5118,11 +5118,11 @@ else:
 
         st.markdown('---') 
 
-        st.markdown('##### :calendar: Período 2024-2026')
+        st.markdown('##### :calendar: Período: enero 2024 - marzo 2026')
         df_view = tabla_marcas_año.style.format({
             'Prima Dev. Total': "{:,.0f}",
             'Prima Dev. Total IPC': "{:,.0f}",
-            'AR Total': "{:,.0f}",
+            'AR Total': "{:,.0f}",  
             'Cantidad de Siniestros Total': "{:,.0f}",
             'Cantidad de Siniestros Total (Nro. Sin.)': "{:,.0f}",
             'Incurrido Total RG': "{:,.0f}",
@@ -5452,39 +5452,53 @@ else:
                 st.plotly_chart(fig_usd_cart_plan30, use_container_width=True)
 
 
+
+        df_view = df_sa_rep_cartera.drop(columns=['coverable','ipc_empalme_ipim']).style.format({
+            'suma_asegurada_exp_a_riesgos': "$ {:,.0f}",
+            'suma_asegurada_ipc': "$ {:,.0f}",
+            'sa_prom': "$ {:,.0f}",
+            'suma_asegurada_exp_a_riesgos_ipc': "$ {:,.0f}",
+            'sa_prom_ipc': "$ {:,.0f}",
+            'suma_asegurada_exp_a_riesgos_usd': "$ {:,.0f}",
+            'sa_prom_usd': "$ {:,.0f}",
+        })
+        
         st.markdown('')
         st.markdown("#### Data Cruda")
-        st.dataframe(df_sa_rep_cartera.drop(columns=['coverable','ipc_empalme_ipim']), 
+        st.dataframe(df_view, 
                     use_container_width=True,
                     hide_index=True,
                     column_config={
                     'año_mes': st.column_config.DateColumn("Año-Mes", format="YYYY-MM"),
                     'usd_blue': 'Valor USD blue',
                     'años_riesgos_total': st.column_config.NumberColumn("Años Riesgo", format="%.0f"),
+                    'var_%_ar': st.column_config.NumberColumn("Var % AR", format="%.2f%%"),
                     'plan': 'Plan',
                     "suma_asegurada": st.column_config.NumberColumn("SA", format="$ %.0f"),
-                    "suma_asegurada_ipc": st.column_config.NumberColumn("SA IPC", format="$ %.0f"),
-                    "suma_asegurada_exp_a_riesgos": st.column_config.NumberColumn("SA Exp. a Riesgos", format="$ %.0f"),
-                    "sa_prom": st.column_config.NumberColumn("SA Prom", format="$ %.0f"),
+                    "suma_asegurada_ipc": st.column_config.NumberColumn("SA IPC"),
+                    "suma_asegurada_exp_a_riesgos": st.column_config.NumberColumn("SA Exp. a Riesgos"),
+                    "sa_prom": st.column_config.NumberColumn("SA Prom"),
+                    "cantidad_de_siniestros_total": st.column_config.NumberColumn("Cant. Stros Total"),
+                    "cantidad_de_siniestros_total_(nro_sin)": st.column_config.NumberColumn("Cant. Stros Total (nro sin)"),
+                    'var_%_ns': st.column_config.NumberColumn("Var % NS", format="%.2f%%"),
                     "var_sa_prom": st.column_config.NumberColumn(
                         "Var. SA Prom %", 
                         format="%.2f%%",
                     ),
-                    "suma_asegurada_exp_a_riesgos_ipc": st.column_config.NumberColumn("SA Exp. a Riesgos IPC", format="$ %.0f"),
-                    "sa_prom_ipc": st.column_config.NumberColumn("SA Prom IPC", format="$ %.0f"),
+                    "suma_asegurada_exp_a_riesgos_ipc": st.column_config.NumberColumn("SA Exp. a Riesgos IPC"),
                     "var_sa_prom_ipc": st.column_config.NumberColumn(
                         "Var. SA Prom IPC %", 
                         format="%.2f%%",
                     ),
-                    "suma_asegurada_usd": st.column_config.NumberColumn("SA USD", format="$ %.0f"),
-                    "suma_asegurada_exp_a_riesgos_usd": st.column_config.NumberColumn("SA Exp. a Riesgos USD", format="$ %.0f"),
-                    "sa_prom_usd": st.column_config.NumberColumn("SA Prom USD", format="$ %.0f"),
+                    "suma_asegurada_usd": st.column_config.NumberColumn("SA USD"),
+                    "suma_asegurada_exp_a_riesgos_usd": st.column_config.NumberColumn("SA Exp. a Riesgos USD"),
+                    "sa_prom_usd": st.column_config.NumberColumn("SA Prom USD"),
                     "var_sa_prom_usd": st.column_config.NumberColumn(
                         "Var. SA Prom USD %", 
                         format="%.2f%%",
                         ),
                     "costo_prom_ipc": st.column_config.NumberColumn("Coste medio rep. IPC", format="$ %.0f"),
-                    "sa_prom_ipc": st.column_config.NumberColumn("SA prom. IPC", format="$ %.0f"),
+                    "sa_prom_ipc": st.column_config.NumberColumn("SA prom. IPC"),
                     "var_costo_prom_ipc": st.column_config.NumberColumn(                            
                         "Var. Costo rep. IPC %", 
                         format="%.2f%%",
@@ -5518,7 +5532,7 @@ else:
                     'var_costo_prom_hist', 
                     'var_sa_prom', 
                     "Variación Mensual: Histórico",
-                    col_ref='var_ipc' 
+                    col_ref='var_ipc'   
                 )
 
                 st.plotly_chart(fig_marcas_h, use_container_width=True)
@@ -5541,10 +5555,18 @@ else:
                 )
                 st.plotly_chart(fig_marcas_usd, use_container_width=True)
 
-
+        df_view_marcas = df_sa_rep_cartera_marcas.drop(columns=['coverable','plan','ipc_empalme_ipim']).style.format({
+            'suma_asegurada_exp_a_riesgos': "$ {:,.0f}",
+            'suma_asegurada_ipc': "$ {:,.0f}",
+            'sa_prom': "$ {:,.0f}",
+            'suma_asegurada_exp_a_riesgos_ipc': "$ {:,.0f}",
+            'sa_prom_ipc': "$ {:,.0f}",
+            'suma_asegurada_exp_a_riesgos_usd': "$ {:,.0f}",
+            'sa_prom_usd': "$ {:,.0f}",
+        })
         st.markdown('')
         st.markdown("#### Data Cruda")
-        st.dataframe(df_sa_rep_cartera_marcas.drop(columns=['coverable','plan','ipc_empalme_ipim']), 
+        st.dataframe(df_view_marcas, 
                     use_container_width=True,
                     hide_index=True,
                     column_config={
@@ -5552,28 +5574,27 @@ else:
                     'usd_blue': 'Valor USD blue',
                     'años_riesgos_total': st.column_config.NumberColumn("Años Riesgo", format="%.0f"),
                     "suma_asegurada": st.column_config.NumberColumn("SA", format="$ %.0f"),
-                    "suma_asegurada_ipc": st.column_config.NumberColumn("SA IPC", format="$ %.0f"),
-                    "suma_asegurada_exp_a_riesgos": st.column_config.NumberColumn("SA Exp. a Riesgos", format="$ %.0f"),
+                    "suma_asegurada_ipc": st.column_config.NumberColumn("SA IPC"),
+                    "suma_asegurada_exp_a_riesgos": st.column_config.NumberColumn("SA Exp. a Riesgos"),
                     "sa_prom": st.column_config.NumberColumn("SA Prom", format="$ %.0f"),
                     "var_sa_prom": st.column_config.NumberColumn(
                         "Var. SA Prom %", 
                         format="%.2f%%",
                     ),
-                    "suma_asegurada_exp_a_riesgos_ipc": st.column_config.NumberColumn("SA Exp. a Riesgos IPC", format="$ %.0f"),
-                    "sa_prom_ipc": st.column_config.NumberColumn("SA Prom IPC", format="$ %.0f"),
+                    "suma_asegurada_exp_a_riesgos_ipc": st.column_config.NumberColumn("SA Exp. a Riesgos IPC"),
+                    "sa_prom_ipc": st.column_config.NumberColumn("SA Prom IPC"),
                     "var_sa_prom_ipc": st.column_config.NumberColumn(
                         "Var. SA Prom IPC %", 
                         format="%.2f%%",
                     ),
-                    "suma_asegurada_usd": st.column_config.NumberColumn("SA USD", format="$ %.0f"),
-                    "suma_asegurada_exp_a_riesgos_usd": st.column_config.NumberColumn("SA Exp. a Riesgos USD", format="$ %.0f"),
-                    "sa_prom_usd": st.column_config.NumberColumn("SA Prom USD", format="$ %.0f"),
+                    "suma_asegurada_usd": st.column_config.NumberColumn("SA USD"),
+                    "suma_asegurada_exp_a_riesgos_usd": st.column_config.NumberColumn("SA Exp. a Riesgos USD"),
+                    "sa_prom_usd": st.column_config.NumberColumn("SA Prom USD"),
                     "var_sa_prom_usd": st.column_config.NumberColumn(
                         "Var. SA Prom USD %", 
                         format="%.2f%%",
                         ),
                     "costo_prom_ipc": st.column_config.NumberColumn("Coste medio rep. IPC", format="$ %.0f"),
-                    "sa_prom_ipc": st.column_config.NumberColumn("SA prom. IPC", format="$ %.0f"),
                     "var_costo_prom_ipc": st.column_config.NumberColumn(                            
                         "Var. Costo rep. IPC %", 
                         format="%.2f%%",
@@ -5658,13 +5679,13 @@ else:
 
         with st.expander("Ver tabla de datos históricos", icon=":material/query_stats:"):
             st.dataframe(df_view_sa, hide_index=True, use_container_width=True, column_config={
-                'Mes_Año': st.column_config.DateColumn("Mes-Año", format="MM-YYYY"),
+                'Mes_Año': st.column_config.DateColumn("Año-Mes", format="YYYY-MM"),
                 'SA_PROM': "SA Prom",
                 'SA_PROM_IPC': "SA Prom IPC",
-                'Indice SA_Prom H': st.column_config.NumberColumn("Indice SA Prom H", format="{:.2f}"),
-                'Indice SA_Prom IPC': st.column_config.NumberColumn("Indice SA Prom IPC", format="{:.2f}"),
-                'Indice Autos H': st.column_config.NumberColumn("Indice Autos H", format="{:.2f}"),
-                'Indice Autos IPC': st.column_config.NumberColumn("Indice Autos IPC", format="{:.2f}"),})
+                'Indice SA_Prom H': st.column_config.NumberColumn("Indice SA Prom H", format="%.2f"),
+                'Indice SA_Prom IPC': st.column_config.NumberColumn("Indice SA Prom IPC", format="%.2f"),
+                'Indice Autos H': st.column_config.NumberColumn("Indice Autos H", format="%.2f"),
+                'Indice Autos IPC': st.column_config.NumberColumn("Indice Autos IPC", format="%.2f"),})
             
         fig_indice_sa_hist = plot_indices_comparados(df_indice_sa, 'Indice SA (Plan 30) vs Indice Autos')
         st.plotly_chart(fig_indice_sa_hist, use_container_width=True)
