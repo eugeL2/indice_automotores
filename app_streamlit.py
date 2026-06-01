@@ -187,9 +187,6 @@ opcion_11 = "INDICE"
 opcion_13 = 'Evolutivo pagos Lesiones'
 opcion_pagos = 'Análisis Evolutivos de Pagos'
 
-# OPTIONS = [opcion_0, opcion_1, opcion_3, opcion_4, opcion_5, 
-#            opcion_pagos_pkt, opcion_6, opcion_7, opcion_8, opcion_12, opcion_13, 
-#            opcion_9, opcion_10, opcion_11]
 OPTIONS = [opcion_0, opcion_1, opcion_3, opcion_4, opcion_5, opcion_pagos,
            opcion_9, opcion_10, opcion_11]
 
@@ -239,7 +236,6 @@ else:
     
     # 2. Renderizado del Contenido del Análisis
     current_analysis = st.session_state.analysis_selected
-
 
 
 # ==========================================================================
@@ -562,29 +558,42 @@ else:
 # ==========================================================================
 
 # ----- GRAFICO 2: evolución costo repuestos por tipo repuesto
+
             def create_pie_chart_repuestos(df, value_col):
                 fig = px.pie(
                     df,
                     names='Repuesto',
                     values=value_col,
                     hover_data=[value_col],
-                    title='Distribución de montos por Tipo de Repuesto',
+                    title='Distribución de Montos de compra por Tipo de Repuesto',
                     color_discrete_sequence=px.colors.qualitative.G10,
                     labels={value_col: value_col.title()},
                     hole=0.3
                 )
-                fig.update_traces(textinfo='percent+label',
-                                  insidetextfont=dict(size=14, color='white', family='Arial'))
+                
+                # Definimos el hovertemplate personalizado
+                # <extra></extra> se usa para ocultar el cuadro secundario con el nombre de la traza
+                custom_hovertemplate = (
+                        "<b>Repuesto:</b> %{label}<br>" +
+                        f"<b>{value_col.title()}:</b> $%{{value:,.0f}}<br>" +
+                        "<b>Porcentaje:</b> %{percent}<extra></extra>"
+                    )
+                
+                fig.update_traces(
+                    textinfo='percent+label',
+                    insidetextfont=dict(size=14, color='white', family='Arial'),
+                    hovertemplate=custom_hovertemplate # <-- Agregamos el template aquí
+                )
+                
                 fig.update_layout(
                     height=500,
                     font=dict(family="Arial", size=12, color='white'),
-                    # title_font_size=16
                     showlegend=False
                 )
                 return fig
             
             st.subheader('2. Costo de piezas prom. histórico por Tipo Repuesto')
-            UMBRAL_PORCENTAJE = 0.03
+            UMBRAL_PORCENTAJE = 3
 
             try:
                 df_rep_torta['Monto Total Compras'] = (
@@ -598,11 +607,8 @@ else:
             except Exception as e:
                 st.error(f"Error al limpiar la columna 'Monto Total': {e}") 
 
-            monto_total_general = df_rep_torta['Monto Total Compras'].sum()
-            df_rep_torta['% Monto Total'] = df_rep_torta['Monto Total Compras'] / monto_total_general
-
             df_rep_torta['Repuesto_Agrupado'] = np.where(
-                df_rep_torta['% Monto Total'] < UMBRAL_PORCENTAJE,
+                df_rep_torta['% Monto Compras'] < UMBRAL_PORCENTAJE,
                 'OTRAS',
                 df_rep_torta['Pieza']
             )
@@ -623,15 +629,19 @@ else:
             if st.session_state.show_pie_chart_4:   
                 fig_pie_rep = create_pie_chart_repuestos(df_torta_final, 'Monto Total Compras')
                 st.plotly_chart(fig_pie_rep, use_container_width=True)
-                st.markdown(f"Total ord. compra (ene23-oct25): **{df_torta_final['Cant. O.Compra'].sum():,.0f}**")
+                st.markdown(f"Total ord. compra: **{df_torta_final['Cant. O.Compra'].sum():,.0f}**")
                 # Formateo del monto total (suponiendo que es dinero)
-                st.markdown(f"Monto Total de Órdenes (ene23-oct25): **${df_torta_final['Monto Total Compras'].sum():,.0f}**") 
+                st.markdown(f"Monto Total de Compras: **${df_torta_final['Monto Total Compras'].sum():,.0f}**") 
                 st.markdown(f"Total repuestos únicos: **{df_rep_torta.Pieza.nunique()}**")
-                df_rep_torta['% Monto Total'] = df_rep_torta['% Monto Total'] * 100
-                df_rep_torta['% Monto Total'] = df_rep_torta['% Monto Total'].round(2).astype(str) + ' %'
+                # df_rep_torta['% Monto Compras'] = df_rep_torta['% Monto Compras'] * 100
+                # df_rep_torta['% Monto Compras'] = df_rep_torta['% Monto Compras'].round(2).astype(str) + ' %'
 
                 st.dataframe(df_rep_torta.drop(columns=['Repuesto_Agrupado', 'Cant. Piezas (Prom)', 'Cant. Piezas Total'],
-                                                axis=1).sort_values(by='Monto Total Compras', ascending=False),
+                                                axis=1,).sort_values(by='Monto Total Compras', ascending=False),
+                                                column_config={
+                                            "% Monto Compras": st.column_config.NumberColumn(
+                                            "% Monto Compras", 
+                                            format="%.1f%%")},
                                                 hide_index=True)
 
                 st.markdown("---")
@@ -820,73 +830,11 @@ else:
                 st.plotly_chart(fig11_ipc2, width='content', )
 
             '''Se grafica aparte variación de cm_hs_mec para Autos (gran salto de CM en junio y sept 2024)'''
-
-
-            
+          
             st.subheader('', divider='grey')
+
 # ==========================================================================
-
-            # # GRAFICO 6: evolución costo mano de obra cleas si vs cleas no
-            # st.subheader('6. Comparativa variación M.O - CLEAS SI vs CLEAS NO')
-            # # muestro el dataset
-            # with st.expander("Ver tabla de datos",icon=":material/query_stats:"):
-            #     st.dataframe(df_cm_mo_cleas[df_cm_mo_cleas['tva'] != 'camion_cleas_si'], 
-            #                 hide_index=True,          
-            #                 column_config={
-            #                     "var_costo": st.column_config.NumberColumn(
-            #                         "Var. Costo %", 
-            #                         format="%.2f",
-            #                     ),
-            #                     "var_ipc": st.column_config.NumberColumn(
-            #                         "Var. CM IPC %", 
-            #                         format="%.2f",
-            #                     ),
-            #                     "var_costo_usd": st.column_config.NumberColumn(
-            #                         "Var. CM en USD %", 
-            #                         format="%.2f",
-            #                         ),
-            #                     })    
-                                                 
-            # # quito camion_cleas_si del df resumen por poca cantidad de datos
-            # df_cm_mo_cleas = df_cm_mo_cleas[df_cm_mo_cleas['tva'] != 'camion_cleas_si']
-            # fig14 = create_plot_orion(df_cm_mo_cleas, 'valor_costo', 'tva','tipo_costo', 'Costo Promedio', 45)
-            # fig14.update_traces(
-            #         mode="lines+markers",
-            #         marker=dict(size=1),)
-
-            # df_cm_mo_cleas2 = df_cm_mo_cleas[
-            #     (df_cm_mo_cleas['tva'] == 'auto_cleas_no') & (df_cm_mo_cleas['tipo_costo'] != 'cm_hs_mec') |
-            #     (df_cm_mo_cleas['tva'] != 'auto_cleas_no')
-            # ]
-            # fig14_ipc = create_plot_orion(df_cm_mo_cleas2, 'var_costo', 'tva', 'tipo_costo', 'Variación (base 1)')
-
-            # NUM_COLUMNS = 5
-        
-            # for col_num in range (1, NUM_COLUMNS + 1):
-
-            #     mostrar_leyenda = (col_num==1)
-        
-            #     fig14_ipc.add_trace(go.Scatter(
-            #         x=df_ipc_data['año_mes'],
-            #         y=df_ipc_data['var_ipc'],
-            #         name='IPC', 
-            #         mode='lines',
-            #         line=dict(color='white', dash='dot'), # Cambié a negro para asegurar visibilidad
-            #         showlegend=mostrar_leyenda,     
-            #     ),
-            #     row=1, col=col_num)
-            
-            # fig14_ipc.update_layout(legend_title_text='Variación')
-            # fig14_ipc.update_traces(hovertemplate="<b>%{fullData.name}:</b> %{y:,.2f}<extra></extra>")
-                
-            # tab1, tab2 = st.tabs(["Evolutivo CM ",'Variación vs IPC'])
-            # with tab1:
-            #     st.plotly_chart(fig14, use_container_width=True)
-            # with tab2:
-            #     st.plotly_chart(fig14_ipc, use_container_width=True)
-
-            
-# ----- GRAFICOS AJUSTADOS POR IPC --------------------------------------------------
+# ----- GRAFICOS AJUSTADOS POR IPC -----------------------------------------
         elif st.session_state['selected_variation_type'] == "IPC":
 
             # gráfico 1: evolución costo repuestos por tva IPC
@@ -2192,7 +2140,6 @@ else:
                     # Si TOYOTA existe, encontramos su índice en la lista FINAL (que tiene el placeholder en la pos 0)
                     default_index = available_marcas_for_tipo_crist.index(TARGET_BRAND)
                 else:
-
                     default_index = 0
 
                 selected_brand_for_model = st.selectbox(
@@ -2301,8 +2248,6 @@ else:
 
                 df_historico['Fecha Agrupación'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
                 
-                # df_historico['Año mes Fecha Pago'] = df_historico['año_mes_fecha_pago'] 
-                
                 agg_cols = {
                     'monto_transaccion': 'mean', # Promedio de Monto Transaccion
                     'pago_ipc': 'mean', # Promedio de Pago IPC
@@ -2321,18 +2266,6 @@ else:
 
                 df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
                 
-                # 3.4. Agregar la fila de "Total Resultado" (Promedio General)
-                
-                promedio_general = df_tabla_final.mean(numeric_only=True)
-                
-                fila_total = pd.DataFrame([{
-                    'Año mes Fecha Pago': 'Total Resultado',
-                    'Promedio de Monto Transaccion': promedio_general['Promedio de Monto Transaccion'],
-                    'Promedio de Pago IPC x Fecha de Pago': promedio_general['Promedio de Pago IPC x Fecha de Pago'],
-                    'Promedio de Pago USD x Fecha de Pago': promedio_general['Promedio de Pago USD x Fecha de Pago'],
-                }])
-                
-                df_tabla_final = pd.concat([df_tabla_final, fila_total], ignore_index=True)
                 
                 
                 # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
@@ -2341,11 +2274,12 @@ else:
                 # Formatear las columnas USD/IPC (0 decimales)
                 for col in ['Promedio de Pago IPC x Fecha de Pago', 'Promedio de Pago USD x Fecha de Pago']:
                     df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
-                
-                
+                             
                 st.dataframe(df_tabla_final, use_container_width=True, hide_index=True, height=500, width=900)
 
+                # -------------------------------------------------------
 
+                st.markdown("#### :memo: Resumen de promedios y comparativa")
                 MONTO_COLS = ['monto_transaccion', 'pago_ipc', 'pago_usd']
 
                 # Calculamos los promedios
@@ -2359,8 +2293,6 @@ else:
                     (promedios_modelo - promedios_marca) / promedios_marca
                 ) * 100
                 diferencias_porcentuales = diferencias_porcentuales.round(1)
-
-                st.markdown("#### :memo: Resumen de promedios y comparativa")
 
                 data_resumen = {
                     'Métrica': [
@@ -2386,7 +2318,6 @@ else:
                     df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
 
                 st.dataframe(df_resumen, hide_index=True, use_container_width=True)
-
 
 
 # ==========================================================================
@@ -2915,20 +2846,7 @@ else:
                     'pago_usd': 'Promedio de Pago USD x Fecha de Pago',
                 }, inplace=True)
 
-                df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
-                
-                # 3.4. Agregar la fila de "Total Resultado" (Promedio General)
-                
-                promedio_general = df_tabla_final.mean(numeric_only=True)
-                
-                fila_total = pd.DataFrame([{
-                    'Año mes Fecha Pago': 'Total Resultado',
-                    'Promedio de Monto Transaccion': promedio_general['Promedio de Monto Transaccion'],
-                    'Promedio de Pago IPC x Fecha de Pago': promedio_general['Promedio de Pago IPC x Fecha de Pago'],
-                    'Promedio de Pago USD x Fecha de Pago': promedio_general['Promedio de Pago USD x Fecha de Pago'],
-                }])
-                
-                df_tabla_final = pd.concat([df_tabla_final, fila_total], ignore_index=True)
+                df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)       
                 
                 
                 # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
@@ -3555,19 +3473,6 @@ else:
 
                     df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
                     
-                    # 3.4. Agregar la fila de "Total Resultado" (Promedio General)
-                    
-                    promedio_general = df_tabla_final.mean(numeric_only=True)
-                    
-                    fila_total = pd.DataFrame([{
-                        'Año mes Fecha Pago': 'Total Resultado',
-                        'Promedio de Monto Transaccion': promedio_general['Promedio de Monto Transaccion'],
-                        'Promedio de Pago IPC x Fecha de Pago': promedio_general['Promedio de Pago IPC x Fecha de Pago'],
-                        'Promedio de Pago USD x Fecha de Pago': promedio_general['Promedio de Pago USD x Fecha de Pago'],
-                    }])
-                    
-                    df_tabla_final = pd.concat([df_tabla_final, fila_total], ignore_index=True)
-                    
                     
                     # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
                     df_tabla_final['Promedio de Monto Transaccion'] = df_tabla_final['Promedio de Monto Transaccion'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
@@ -4171,19 +4076,6 @@ else:
                         }, inplace=True)
 
                         df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
-                        
-                        # 3.4. Agregar la fila de "Total Resultado" (Promedio General)
-                        
-                        promedio_general = df_tabla_final.mean(numeric_only=True)
-                        
-                        fila_total = pd.DataFrame([{
-                            'Año mes Fecha Pago': 'Total Resultado',
-                            'Promedio de Monto Transaccion': promedio_general['Promedio de Monto Transaccion'],
-                            'Promedio de Pago IPC x Fecha de Pago': promedio_general['Promedio de Pago IPC x Fecha de Pago'],
-                            'Promedio de Pago USD x Fecha de Pago': promedio_general['Promedio de Pago USD x Fecha de Pago'],
-                        }])
-                        
-                        df_tabla_final = pd.concat([df_tabla_final, fila_total], ignore_index=True)
                         
                         
                         # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
@@ -4825,20 +4717,7 @@ else:
                         }, inplace=True)
 
                         df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
-                        
-                        # 3.4. Agregar la fila de "Total Resultado" (Promedio General)
-                        
-                        promedio_general = df_tabla_final.mean(numeric_only=True)
-                        
-                        fila_total = pd.DataFrame([{
-                            'Año mes Fecha Pago': 'Total Resultado',
-                            'Promedio de Monto Transaccion': promedio_general['Promedio de Monto Transaccion'],
-                            'Promedio de Pago IPC x Fecha de Pago': promedio_general['Promedio de Pago IPC x Fecha de Pago'],
-                            'Promedio de Pago USD x Fecha de Pago': promedio_general['Promedio de Pago USD x Fecha de Pago'],
-                        }])
-                        
-                        df_tabla_final = pd.concat([df_tabla_final, fila_total], ignore_index=True)
-                        
+
                         
                         # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
                         df_tabla_final['Promedio de Monto Transaccion'] = df_tabla_final['Promedio de Monto Transaccion'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
@@ -5623,7 +5502,7 @@ else:
 
         def plot_indices_comparados(df, title):
             # Lista de las variables que quieres graficar
-            columnas_indices = ['Indice SA_Prom H', 'Indice Autos H']
+            columnas_indices = ['Indice SA Prom H', 'Indice Autos H']
             
             # Asegúrate de que el dataframe esté ordenado por fecha
             df = df.sort_values('Mes_Año')
@@ -5633,7 +5512,7 @@ else:
                 df, 
                 x='Mes_Año', 
                 y=columnas_indices,
-                labels={'Mes_Año': 'Período', 'value': 'Índice', 'variable': 'Indicador'},
+                labels={'Mes_Año': 'Período', 'value': 'Índice', 'variable': 'Indicador', },
                 title=title,
                 markers=True # Puntos en cada mes para mayor precisión
             )
@@ -5673,6 +5552,7 @@ else:
             return fig        
 
         # st.markdown("##### Indice histórico")
+        df_indice_sa = df_indice_sa.rename(columns={'Indice SA_Prom H': 'Indice SA Prom H'})
         cols_format = [c for c in df_indice_sa.columns if c != 'Mes_Año' and c.startswith('SA')]
         formatos = {col: "{:,.0f}" for col in cols_format}
         df_view_sa = df_indice_sa.style.format(formatos)
@@ -5682,7 +5562,7 @@ else:
                 'Mes_Año': st.column_config.DateColumn("Año-Mes", format="YYYY-MM"),
                 'SA_PROM': "SA Prom",
                 'SA_PROM_IPC': "SA Prom IPC",
-                'Indice SA_Prom H': st.column_config.NumberColumn("Indice SA Prom H", format="%.2f"),
+                'Indice SA Prom H': st.column_config.NumberColumn("Indice SA Prom H", format="%.2f"),
                 'Indice SA_Prom IPC': st.column_config.NumberColumn("Indice SA Prom IPC", format="%.2f"),
                 'Indice Autos H': st.column_config.NumberColumn("Indice Autos H", format="%.2f"),
                 'Indice Autos IPC': st.column_config.NumberColumn("Indice Autos IPC", format="%.2f"),})
