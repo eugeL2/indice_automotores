@@ -63,13 +63,13 @@ try:
     df_tot_reparacion = pd.read_csv('data/df_tot_reparacion_100426.csv')
 
     # df pagos ruedas
-    df_pagos_ruedas = pd.read_csv('data/pagos_ruedas.csv')
+    df_pagos_ruedas = pd.read_csv('data/pagos_ruedas_marzo_ok.csv')
     # df pagos materiales
-    df_pagos_materiales = pd.read_csv('data/pagos_dano_mat_ok.csv', keep_default_na=False, na_values=[])
+    df_pagos_materiales = pd.read_csv('data/pagos_dano_mat_marzo_ok.csv', keep_default_na=False, na_values=[], low_memory=False)
     # df pagos cascos
     df_pagos_cascos = pd.read_csv('data/pagos_cascos_ok.csv')
     # df pagos dt rt it
-    df_pagos_dt_rt_it = pd.read_csv('data/pagos_dt_rt_it.csv')
+    df_pagos_dt_rt_it = pd.read_csv('data/pagos_dt_rt_it_marzo_ok.csv')
     # df pagos lesiones
     df_pagos_lesiones = pd.read_csv('data/pagos_lesiones_ok.csv')
     # pagos cristales
@@ -2246,7 +2246,7 @@ else:
                 
                 st.markdown(f"#### Histórico de Pagos: **{selected_brand_for_model} - {display_title}**")
 
-                df_historico['Fecha Agrupación'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
+                df_historico['Año mes Fecha Pago'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
                 
                 agg_cols = {
                     'monto_transaccion': 'mean', # Promedio de Monto Transaccion
@@ -2254,28 +2254,26 @@ else:
                     'pago_usd': 'mean', # Promedio de Pago USD
                 }
                 
-                df_tabla_final = df_historico.groupby('Fecha Agrupación').agg(agg_cols).reset_index()
+                df_tabla_final = df_historico.groupby('Año mes Fecha Pago').agg(agg_cols).reset_index()
 
                 # 3.3. Renombrar las columnas para visualización
                 df_tabla_final.rename(columns={
-                    'Fecha Agrupación': 'Año mes Fecha Pago',
-                    'monto_transaccion': 'Promedio de Monto Transaccion',
-                    'pago_ipc': 'Promedio de Pago IPC x Fecha de Pago',
-                    'pago_usd': 'Promedio de Pago USD x Fecha de Pago',
+                    'monto_transaccion': 'Promedio de Pago Histórico',
+                    'pago_ipc': 'Promedio de Pago IPC',
+                    'pago_usd': 'Promedio de Pago USD',
                 }, inplace=True)
 
                 df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
                 
-                
-                
-                # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
-                df_tabla_final['Promedio de Monto Transaccion'] = df_tabla_final['Promedio de Monto Transaccion'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
-                
-                # Formatear las columnas USD/IPC (0 decimales)
-                for col in ['Promedio de Pago IPC x Fecha de Pago', 'Promedio de Pago USD x Fecha de Pago']:
-                    df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
-                             
-                st.dataframe(df_tabla_final, use_container_width=True, hide_index=True, height=500, width=900)
+                df_tabla_final_view = df_tabla_final.style.format({
+                    'Promedio de Pago Histórico': "$ {:,.0f}",
+                    'Promedio de Pago IPC': "$ {:,.0f}",
+                    'Promedio de Pago USD': "USD {:,.0f}",
+                })
+                if df_modelos_participacion.empty:
+                    st.info("No hay pagos registrados para esta Marca.")
+                else:         
+                    st.dataframe(df_tabla_final_view, use_container_width=True, hide_index=True, height=500, width=900)
 
                 # -------------------------------------------------------
 
@@ -2312,12 +2310,16 @@ else:
 
                 df_resumen = pd.DataFrame(data_resumen)
 
-                # Formatear las columnas de Promedio (Monetario, para mejor visualización)
-                for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
-                    # Usamos f-string para formatear con separadores de miles y 0 decimales
-                    df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
+                df_resumen = df_resumen.style.format({
+                    'Todas las Marcas (General)': "$ {:,.0f}",
+                    f'{selected_brand_for_model} (General)': "$ {:,.0f}",
+                    f'{display_title} (Modelo)': "$ {:,.0f}",
+                })
 
-                st.dataframe(df_resumen, hide_index=True, use_container_width=True)
+                if df_modelos_participacion.empty:
+                    st.info("No hay pagos registrados para esta Marca.")
+                else:
+                    st.dataframe(df_resumen, hide_index=True, use_container_width=True)
 
 
 # ==========================================================================
@@ -2567,11 +2569,13 @@ else:
             pagos_ruedas_filtered = pagos_ruedas_filtered.groupby(['año_mes_fecha_pago']).agg(
                 {'monto_transaccion': 'mean',
                 'pago_ipc': 'mean',           
-                'pago_usd': 'mean'}).reset_index()
+                'pago_usd': 'mean',
+                'usd_blue':'first'}).reset_index()
             
             pagos_ruedas_filtered.monto_transaccion = pagos_ruedas_filtered.monto_transaccion.round(0).astype(int) 
             pagos_ruedas_filtered.pago_usd = pagos_ruedas_filtered.pago_usd.round(0).astype(int) 
             pagos_ruedas_filtered.pago_ipc = pagos_ruedas_filtered.pago_ipc.round(0).astype(int)
+            pagos_ruedas_filtered.usd_blue = pagos_ruedas_filtered.usd_blue.round(0).astype(int)
 
             with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
                 st.dataframe(pagos_ruedas_filtered, hide_index=True, width=900)
@@ -2826,7 +2830,7 @@ else:
                 
                 st.markdown(f"#### Histórico de Pagos: **{selected_brand_for_model} - {display_title}**")
 
-                df_historico['Fecha Agrupación'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
+                df_historico['Año mes Fecha Pago'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
                 
                 # df_historico['Año mes Fecha Pago'] = df_historico['año_mes_fecha_pago'] 
                 
@@ -2836,28 +2840,35 @@ else:
                     'pago_usd': 'mean', # Promedio de Pago USD
                 }
                 
-                df_tabla_final = df_historico.groupby('Fecha Agrupación').agg(agg_cols).reset_index()
+                df_tabla_final = df_historico.groupby('Año mes Fecha Pago').agg(agg_cols).reset_index()
 
                 # 3.3. Renombrar las columnas para visualización
                 df_tabla_final.rename(columns={
-                    'Fecha Agrupación': 'Año mes Fecha Pago',
-                    'monto_transaccion': 'Promedio de Monto Transaccion',
-                    'pago_ipc': 'Promedio de Pago IPC x Fecha de Pago',
-                    'pago_usd': 'Promedio de Pago USD x Fecha de Pago',
+                    'monto_transaccion': 'Promedio de Pago Histórico',
+                    'pago_ipc': 'Promedio de Pago IPC',
+                    'pago_usd': 'Promedio de Pago USD',
                 }, inplace=True)
 
                 df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)       
                 
                 
                 # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
-                df_tabla_final['Promedio de Monto Transaccion'] = df_tabla_final['Promedio de Monto Transaccion'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                # df_tabla_final['Promedio de Pago Histórico'] = df_tabla_final['Promedio de Pago Histórico'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
                 
                 # Formatear las columnas USD/IPC (0 decimales)
-                for col in ['Promedio de Pago IPC x Fecha de Pago', 'Promedio de Pago USD x Fecha de Pago']:
-                    df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                # for col in ['Promedio de Pago IPC', 'Promedio de Pago USD']:
+                #     df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
                 
-                
-                st.dataframe(df_tabla_final, use_container_width=True, hide_index=True, height=500, width=900)
+                df_tabla_final_view = df_tabla_final.style.format({
+                    'Promedio de Pago Histórico': "$ {:,.0f}",
+                    'Promedio de Pago IPC': "$ {:,.0f}",
+                    'Promedio de Pago USD': "USD {:,.0f}",
+                })
+
+                if df_modelos_participacion.empty:
+                    st.info("No hay pagos registrados para esta Marca.")
+                else:
+                    st.dataframe(df_tabla_final_view, use_container_width=True, hide_index=True, height=500, width=900)
 
 
                 MONTO_COLS = ['monto_transaccion', 'pago_ipc', 'pago_usd']
@@ -2894,12 +2905,20 @@ else:
 
                 df_resumen = pd.DataFrame(data_resumen)
 
-                # Formatear las columnas de Promedio (Monetario, para mejor visualización)
-                for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
-                    # Usamos f-string para formatear con separadores de miles y 0 decimales
-                    df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
+                # # Formatear las columnas de Promedio (Monetario, para mejor visualización)
+                # for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
+                #     # Usamos f-string para formatear con separadores de miles y 0 decimales
+                #     df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
 
-                st.dataframe(df_resumen, hide_index=True, use_container_width=True)
+                df_resumen = df_resumen.style.format({
+                    'Todas las Marcas (General)': "$ {:,.0f}",
+                    f'{selected_brand_for_model} (General)': "$ {:,.0f}",
+                    f'{display_title} (Modelo)': "$ {:,.0f}",
+                })
+                if df_modelos_participacion.empty:
+                    st.info("No hay pagos registrados para esta Marca.")
+                else:
+                    st.dataframe(df_resumen, hide_index=True, use_container_width=True)
 
 # =====================================================================================
 # --- Evolución de monto de pagos de Daños Materiales 
@@ -3093,7 +3112,7 @@ else:
                     selected_tv = st.selectbox(
                         "TV",
                         options=available_tv,
-                        index=4,
+                        index=0,
                         label_visibility ='collapsed',
                     )
                     st.markdown("---")
@@ -3451,7 +3470,7 @@ else:
                     
                     st.markdown(f"#### Histórico de Pagos: **{selected_brand_for_model} - {display_title}**")
 
-                    df_historico['Fecha Agrupación'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
+                    df_historico['Año mes Fecha Pago'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
                     
                     # df_historico['Año mes Fecha Pago'] = df_historico['año_mes_fecha_pago'] 
                     
@@ -3461,28 +3480,35 @@ else:
                         'pago_usd': 'mean', # Promedio de Pago USD
                     }
                     
-                    df_tabla_final = df_historico.groupby('Fecha Agrupación').agg(agg_cols).reset_index()
+                    df_tabla_final = df_historico.groupby('Año mes Fecha Pago').agg(agg_cols).reset_index()
 
                     # 3.3. Renombrar las columnas para visualización
                     df_tabla_final.rename(columns={
-                        'Fecha Agrupación': 'Año mes Fecha Pago',
-                        'monto_transaccion': 'Promedio de Monto Transaccion',
-                        'pago_ipc': 'Promedio de Pago IPC x Fecha de Pago',
-                        'pago_usd': 'Promedio de Pago USD x Fecha de Pago',
+                        'monto_transaccion': 'Promedio de Pago Histórico',
+                        'pago_ipc': 'Promedio de Pago IPC',
+                        'pago_usd': 'Promedio de Pago USD',
                     }, inplace=True)
 
                     df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
                     
                     
                     # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
-                    df_tabla_final['Promedio de Monto Transaccion'] = df_tabla_final['Promedio de Monto Transaccion'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                    # df_tabla_final['Promedio de Pago Histórico'] = df_tabla_final['Promedio de Pago Histórico'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
                     
-                    # Formatear las columnas USD/IPC (0 decimales)
-                    for col in ['Promedio de Pago IPC x Fecha de Pago', 'Promedio de Pago USD x Fecha de Pago']:
-                        df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                    # # Formatear las columnas USD/IPC (0 decimales)
+                    # for col in ['Promedio de Pago IPC', 'Promedio de Pago USD']:
+                    #     df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
                     
-                    
-                    st.dataframe(df_tabla_final, use_container_width=True, hide_index=True, height=500, width=900)
+                    df_tabla_final_view = df_tabla_final.style.format({
+                        'Promedio de Pago Histórico': "$ {:,.0f}",
+                        'Promedio de Pago IPC': "$ {:,.0f}",
+                        'Promedio de Pago USD': "USD {:,.0f}",
+                    })
+
+                    if df_modelos_participacion.empty:
+                        st.info("No hay pagos registrados para esta Marca.")
+                    else:
+                        st.dataframe(df_tabla_final_view, use_container_width=True, hide_index=True, height=500, width=900)
 
 
                     MONTO_COLS = ['monto_transaccion', 'pago_ipc', 'pago_usd']
@@ -3519,12 +3545,21 @@ else:
 
                     df_resumen = pd.DataFrame(data_resumen)
 
-                    # Formatear las columnas de Promedio (Monetario, para mejor visualización)
-                    for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
-                        # Usamos f-string para formatear con separadores de miles y 0 decimales
-                        df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
+                    # # Formatear las columnas de Promedio (Monetario, para mejor visualización)
+                    # for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
+                    #     # Usamos f-string para formatear con separadores de miles y 0 decimales
+                    #     df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
 
-                    st.dataframe(df_resumen, hide_index=True, use_container_width=True)
+                    df_resumen = df_resumen.style.format({
+                        'Todas las Marcas (General)': "$ {:,.0f}",
+                        f'{selected_brand_for_model} (General)': "$ {:,.0f}",
+                        f'{display_title} (Modelo)': "$ {:,.0f}",
+                    })
+
+                    if df_modelos_participacion.empty:
+                        st.info("No hay pagos registrados para esta Marca.")
+                    else:
+                        st.dataframe(df_resumen, hide_index=True, use_container_width=True)
 
 
 # =====================================================================================
@@ -4055,7 +4090,7 @@ else:
                         
                         st.markdown(f"#### Histórico de Pagos: **{selected_brand_for_model} - {display_title}**")
 
-                        df_historico['Fecha Agrupación'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
+                        df_historico['Año mes Fecha Pago'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
                         
                         # df_historico['Año mes Fecha Pago'] = df_historico['año_mes_fecha_pago'] 
                         
@@ -4065,28 +4100,35 @@ else:
                             'pago_usd': 'mean', # Promedio de Pago USD
                         }
                         
-                        df_tabla_final = df_historico.groupby('Fecha Agrupación').agg(agg_cols).reset_index()
+                        df_tabla_final = df_historico.groupby('Año mes Fecha Pago').agg(agg_cols).reset_index()
 
                         # 3.3. Renombrar las columnas para visualización
                         df_tabla_final.rename(columns={
-                            'Fecha Agrupación': 'Año mes Fecha Pago',
-                            'monto_transaccion': 'Promedio de Monto Transaccion',
-                            'pago_ipc': 'Promedio de Pago IPC x Fecha de Pago',
-                            'pago_usd': 'Promedio de Pago USD x Fecha de Pago',
+                            'monto_transaccion': 'Promedio de Pago Histórico',
+                            'pago_ipc': 'Promedio de Pago IPC',
+                            'pago_usd': 'Promedio de Pago USD',
                         }, inplace=True)
 
                         df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
                         
                         
                         # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
-                        df_tabla_final['Promedio de Monto Transaccion'] = df_tabla_final['Promedio de Monto Transaccion'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                        # df_tabla_final['Promedio de Pago Histórico'] = df_tabla_final['Promedio de Pago Histórico'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
                         
-                        # Formatear las columnas USD/IPC (0 decimales)
-                        for col in ['Promedio de Pago IPC x Fecha de Pago', 'Promedio de Pago USD x Fecha de Pago']:
-                            df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                        # # Formatear las columnas USD/IPC (0 decimales)
+                        # for col in ['Promedio de Pago IPC', 'Promedio de Pago USD']:
+                        #     df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
                         
-                        
-                        st.dataframe(df_tabla_final, use_container_width=True, hide_index=True, height=500, width=900)
+                        df_tabla_final_view = df_tabla_final.style.format({
+                            'Promedio de Pago Histórico': "$ {:,.0f}",
+                            'Promedio de Pago IPC': "$ {:,.0f}",
+                            'Promedio de Pago USD': "USD {:,.0f}",
+                        })
+
+                        if df_modelos_participacion.empty:
+                            st.info("No hay pagos registrados para esta Marca.")
+                        else:
+                            st.dataframe(df_tabla_final_view, use_container_width=True, hide_index=True, height=500, width=900)
 
 
                         MONTO_COLS = ['monto_transaccion', 'pago_ipc', 'pago_usd']
@@ -4124,11 +4166,20 @@ else:
                         df_resumen = pd.DataFrame(data_resumen)
 
                         # Formatear las columnas de Promedio (Monetario, para mejor visualización)
-                        for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
-                            # Usamos f-string para formatear con separadores de miles y 0 decimales
-                            df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
+                        # for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
+                        #     # Usamos f-string para formatear con separadores de miles y 0 decimales
+                        #     df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
 
-                        st.dataframe(df_resumen, hide_index=True, use_container_width=True)
+                        df_resumen = df_resumen.style.format({
+                            'Todas las Marcas (General)': "$ {:,.0f}",
+                            f'{selected_brand_for_model} (General)': "$ {:,.0f}",
+                            f'{display_title} (Modelo)': "$ {:,.0f}",
+                        })
+
+                        if df_modelos_participacion.empty:
+                            st.info("No hay pagos registrados para esta Marca.")
+                        else:
+                            st.dataframe(df_resumen, hide_index=True, use_container_width=True)
 
 
 # ========================================================================
@@ -4696,7 +4747,7 @@ else:
                         
                         st.markdown(f"#### Histórico de Pagos: **{selected_brand_for_model} - {display_title}**")
 
-                        df_historico['Fecha Agrupación'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
+                        df_historico['Año mes Fecha Pago'] = pd.to_datetime(df_historico['año_mes_fecha_pago']).dt.strftime('%Y-%m')
                         
                         # df_historico['Año mes Fecha Pago'] = df_historico['año_mes_fecha_pago'] 
                         
@@ -4706,30 +4757,35 @@ else:
                             'pago_usd': 'mean', # Promedio de Pago USD
                         }
                         
-                        df_tabla_final = df_historico.groupby('Fecha Agrupación').agg(agg_cols).reset_index()
+                        df_tabla_final = df_historico.groupby('Año mes Fecha Pago').agg(agg_cols).reset_index()
 
                         # 3.3. Renombrar las columnas para visualización
                         df_tabla_final.rename(columns={
-                            'Fecha Agrupación': 'Año mes Fecha Pago',
-                            'monto_transaccion': 'Promedio de Monto Transaccion',
-                            'pago_ipc': 'Promedio de Pago IPC x Fecha de Pago',
-                            'pago_usd': 'Promedio de Pago USD x Fecha de Pago',
+                            'monto_transaccion': 'Promedio de Pago Histórico',
+                            'pago_ipc': 'Promedio de Pago IPC',
+                            'pago_usd': 'Promedio de Pago USD',
                         }, inplace=True)
 
                         df_tabla_final.sort_values(by='Año mes Fecha Pago', inplace=True)
 
                         
-                        # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
-                        df_tabla_final['Promedio de Monto Transaccion'] = df_tabla_final['Promedio de Monto Transaccion'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                        # # Formatear la columna ARS/Total sin separador de miles (solo 0 decimales)
+                        # df_tabla_final['Promedio de Pagos Histórico'] = df_tabla_final['Promedio de Pagos Histórico'].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
                         
-                        # Formatear las columnas USD/IPC (0 decimales)
-                        for col in ['Promedio de Pago IPC x Fecha de Pago', 'Promedio de Pago USD x Fecha de Pago']:
-                            df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+                        # # Formatear las columnas USD/IPC (0 decimales)
+                        # for col in ['Promedio de Pago IPC', 'Promedio de Pago USD']:
+                        #     df_tabla_final[col] = df_tabla_final[col].map(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
                         
+                        df_tabla_final_view = df_tabla_final.style.format({
+                            'Promedio de Pago Histórico': "$ {:,.0f}",
+                            'Promedio de Pago IPC': "$ {:,.0f}",
+                            'Promedio de Pago USD': "USD {:,.0f}",
+                        })
+
                         if df_modelos_participacion.empty:
                                 st.info("No hay pagos registrados para esta Marca.")
                         else:
-                            st.dataframe(df_tabla_final, use_container_width=True, hide_index=True, height=500, width=900)
+                            st.dataframe(df_tabla_final_view, use_container_width=True, hide_index=True, height=500, width=900)
 
 
                         MONTO_COLS = ['monto_transaccion', 'pago_ipc', 'pago_usd']
@@ -4767,9 +4823,15 @@ else:
                         df_resumen = pd.DataFrame(data_resumen)
 
                         # Formatear las columnas de Promedio (Monetario, para mejor visualización)
-                        for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
-                            # Usamos f-string para formatear con separadores de miles y 0 decimales
-                            df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
+                        # for col in [f'Todas las Marcas (General)', f'{selected_brand_for_model} (General)', f'{display_title} (Modelo)']:
+                        #     # Usamos f-string para formatear con separadores de miles y 0 decimales
+                        #     df_resumen[col] = df_resumen[col].apply(lambda x: f"{x:,.0f}") 
+
+                        df_resumen = df_resumen.style.format({
+                            'Todas las Marcas (General)': "$ {:,.0f}",
+                            f'{selected_brand_for_model} (General)': "$ {:,.0f}",
+                            f'{display_title} (Modelo)': "$ {:,.0f}",
+                        })
 
                         if df_modelos_participacion.empty:
                             st.info("No hay pagos registrados para esta Marca.")
@@ -4906,23 +4968,11 @@ else:
                     )
                     st.plotly_chart(fig_pagos_lesiones, use_container_width=True)
 
-                    df_pagos_lesiones = df_pagos_lesiones.copy()
+                    df_pagos_lesiones_copy = df_pagos_lesiones.copy()
 
-                    df_lesiones_filtro_tv = df_pagos_lesiones[df_pagos_lesiones['tv'] == selected_tv]
+                    df_lesiones_filtro_tv = df_pagos_lesiones_copy[df_pagos_lesiones_copy['tv'] == selected_tv]
                     
                     df_lesiones_filtro_tv.sort_values('año_mes_fp', inplace=True)
-
-                    # df_pagos_lesiones_tabla = df_lesiones_filtro_tv.groupby(['año_mes_fp']).agg(
-                    #     {'monto_transaccion': 'mean',
-                    #     'pago_ipc': 'mean',           
-                    #     'pago_usd': 'mean'}).reset_index()
-                    
-                    # df_pagos_lesiones_tabla.monto_transaccion = df_pagos_lesiones_tabla.monto_transaccion.round(0).astype(int) 
-                    # df_pagos_lesiones_tabla.pago_usd = df_pagos_lesiones_tabla.pago_usd.round(0).astype(int) 
-                    # df_pagos_lesiones_tabla.pago_ipc = df_pagos_lesiones_tabla.pago_ipc.round(0).astype(int)
-
-                    # with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
-                    #     st.dataframe(df_pagos_lesiones_tabla, hide_index=True, width=900)
 
                     df_view = df_lesiones_filtro_tv[['nro_siniestro_gw','año_mes_fecha_pago','nombre_exposicion',
                             'cobertura_principal','monto_transaccion','ipc_factor','usd_blue','pago_ipc','pago_usd']].style.format(
@@ -4936,7 +4986,6 @@ else:
                     
                     with st.expander("Ver tabla de datos (resumen)", icon=":material/query_stats:"):
                         st.dataframe(df_view, hide_index=True)
-
 
 
 # ========================================================================
